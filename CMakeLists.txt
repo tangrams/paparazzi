@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8)
 project(tangram)
 
 # helper functions
-include(${PROJECT_SOURCE_DIR}/master/toolchains/utils.cmake)
+include(${PROJECT_SOURCE_DIR}/tangram-es/toolchains/utils.cmake)
 
 # cmake output configuration
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
@@ -37,8 +37,8 @@ find_sources_and_include_directories(
 
 # add sources and include headers
 find_sources_and_include_directories(
-    ${PROJECT_SOURCE_DIR}/master/linux/src/urlWorker.*
-    ${PROJECT_SOURCE_DIR}/master/linux/src/urlWorker.*)
+    ${PROJECT_SOURCE_DIR}/tangram-es/linux/src/urlWorker.*
+    ${PROJECT_SOURCE_DIR}/tangram-es/linux/src/urlWorker.*)
 
 # include headers for rpi-installed libraries
 include_directories(/opt/vc/include/)
@@ -46,7 +46,7 @@ include_directories(/opt/vc/include/interface/vcos/pthreads)
 include_directories(/opt/vc/include/interface/vmcs_host/linux)
 
 # load core library
-add_subdirectory(${PROJECT_SOURCE_DIR}/master/core)
+add_subdirectory(${PROJECT_SOURCE_DIR}/tangram-es/core)
 include_directories(${CORE_INCLUDE_DIRS})
 include_directories(${CORE_LIBRARIES_INCLUDE_DIRS})
 
@@ -54,7 +54,7 @@ include_directories(${CORE_LIBRARIES_INCLUDE_DIRS})
 add_executable(${EXECUTABLE_NAME} ${SOURCES})
 
 # copy resources
-file(GLOB_RECURSE RESOURCES ${PROJECT_SOURCE_DIR}/master/core/resources/*)
+file(GLOB_RECURSE RESOURCES ${PROJECT_SOURCE_DIR}/tangram-es/core/resources/*)
 foreach(_resource ${RESOURCES})
     file(COPY ${_resource} DESTINATION ${PROJECT_SOURCE_DIR}/build/bin)
 endforeach()
