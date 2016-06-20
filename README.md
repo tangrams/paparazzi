@@ -13,7 +13,7 @@ export CXX=/usr/bin/g++-4.9
 cd ~
 git clone --recursive https://github.com/tangrams/paparazzi.git
 cd paparazzi
-
+git submodule update --init --recursive
 mkdir build
 cd build
 cmake ..
