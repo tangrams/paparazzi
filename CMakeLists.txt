@@ -46,6 +46,7 @@ include_directories(/opt/vc/include/interface/vcos/pthreads)
 include_directories(/opt/vc/include/interface/vmcs_host/linux)
 
 # load core library
+add_subdirectory(${PROJECT_SOURCE_DIR}/tangram-es/external)
 add_subdirectory(${PROJECT_SOURCE_DIR}/tangram-es/core)
 include_directories(${CORE_INCLUDE_DIRS})
 include_directories(${CORE_LIBRARIES_INCLUDE_DIRS})
@@ -54,12 +55,9 @@ include_directories(${CORE_LIBRARIES_INCLUDE_DIRS})
 add_executable(${EXECUTABLE_NAME} ${SOURCES})
 
 # copy resources
-file(GLOB_RECURSE RESOURCES ${PROJECT_SOURCE_DIR}/tangram-es/core/resources/*)
-foreach(_resource ${RESOURCES})
-    file(COPY ${_resource} DESTINATION ${PROJECT_SOURCE_DIR}/build/bin)
-endforeach()
+add_resources(${EXECUTABLE_NAME} "${PROJECT_SOURCE_DIR}/tangram-es/scenes")
 
 # link libraries
 target_link_libraries(${EXECUTABLE_NAME} -lcurl)
-target_link_libraries(${EXECUTABLE_NAME} core)
+target_link_libraries(${EXECUTABLE_NAME} ${CORE_LIBRARY})
 
