@@ -148,7 +148,6 @@ void cancelUrlRequest(const std::string& _url) {
         }
     }
 }
-
 void setCurrentThreadPriority(int priority) {}
 
 void initGLExtensions() {}
@@ -157,3 +156,4 @@ void initGLExtensions() {}
 GL_APICALL void GL_APIENTRY glBindVertexArray(GLuint array) {}
 GL_APICALL void GL_APIENTRY glDeleteVertexArrays(GLsizei n, const GLuint *arrays) {}
 GL_APICALL void GL_APIENTRY glGenVertexArrays(GLsizei n, GLuint *arrays) {}
+

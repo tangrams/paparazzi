@@ -20,7 +20,7 @@
 #include <iostream>
 #include "glm/trigonometric.hpp"
 
-#include "stb_image_write.hpp"
+#include "image_out.h"
 
 #define KEY_ESC      113    // q
 #define KEY_ZOOM_IN  45     // -
@@ -41,7 +41,6 @@ static std::string outputFile = "out.png";
 //==============================================================================
 void setup(int argc, char **argv);
 void newFrame();
-bool savePixels(const std::string& _path, unsigned char* _pixels, int _width, int _height);
 
 int main(int argc, char **argv){
 
@@ -129,7 +128,7 @@ void setup(int argc, char **argv) {
 
     Tangram::initialize(scene.c_str());
     Tangram::setupGL();
-    Tangram::resize(width, height);
+    Tangram::resize(iWidth, iHeight);
     Tangram::setPosition(lon,lat);
     Tangram::setZoom(zoom);
     Tangram::setTilt(glm::radians(tilt));
@@ -154,11 +153,10 @@ void newFrame() {
     renderGL();
 
     if (bFinish) {
-        int width = iWidth;
-        int height = iHeight;
-        unsigned char* pixels = new unsigned char[width*iHeight*4];
-        glReadPixels(0, 0, width, iHeight, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
-        savePixels(outputFile, pixels, width, iHeight);
+        unsigned char* pixels = new unsigned char[iWidth*iHeight*4];
+        glReadPixels(0, 0, iWidth, iHeight, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+        bool saveState = savePixels(outputFile, pixels, iWidth, iHeight);
+        bUpdate = false;
     }
 }
 
@@ -235,25 +233,3 @@ void onViewportResize(int _newWidth, int _newHeight) {
     requestRender();
 }
 
-bool savePixels(const std::string& _path, unsigned char* _pixels, int _width, int _height) {
-    // Flip the image on Y
-    int depth = 4;
-    unsigned char *result = new unsigned char[_width*_height*depth];
-    memcpy(result, _pixels, _width*_height*depth);
-    int row,col,z;
-    stbi_uc temp;
-
-    for (row = 0; row < (_height>>1); row++) {
-     for (col = 0; col < _width; col++) {
-        for (z = 0; z < depth; z++) {
-           temp = result[(row * _width + col) * depth + z];
-           result[(row * _width + col) * depth + z] = result[((_height - row - 1) * _width + col) * depth + z];
-           result[((_height - row - 1) * _width + col) * depth + z] = temp;
-        }
-     }
-    }
-    stbi_write_png(_path.c_str(), _width, _height, 4, result, _width * 4);
-    delete [] result;
-    
-    return true;
-}
