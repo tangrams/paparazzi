@@ -62,10 +62,10 @@ int main(int argc, char **argv){
 
         processNetworkQueue();
 
-        if (getRenderRequest()) {
-            setRenderRequest(false);
+        //if (getRenderRequest()) {
+        //    setRenderRequest(false);
             newFrame();
-        }
+        //}
     }
 
     curl_global_cleanup();
@@ -150,12 +150,15 @@ void newFrame() {
     // Render
     Tangram::render();
 
+    LOG("VIEW COMPLETE %d", bFinish);
+
     renderGL();
 
     if (bFinish) {
+        LOG("SAVING PNG %s", outputFile.c_str());
         unsigned char* pixels = new unsigned char[iWidth*iHeight*4];
         glReadPixels(0, 0, iWidth, iHeight, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
-        bool saveState = savePixels(outputFile, pixels, iWidth, iHeight);
+        savePixels(outputFile.c_str(), pixels, iWidth, iHeight);
         bUpdate = false;
     }
 }
