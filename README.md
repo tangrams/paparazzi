@@ -5,6 +5,8 @@ Sneaky version of [Tangram-ES](https://github.com/tangrams/tangram-es) to take s
 
 ## Install
 
+Compile `tangramPaparazzi`:
+
 ```bash
 sudo apt-get update
 sudo apt-get install make libcurl4-openssl-dev
@@ -20,6 +22,14 @@ cmake ..
 make
 cd bin
 sudo cp tangramPaparazzi /usr/local/bin
+```
+
+Install and run a PHP server:
+
+```bash
+sudo apt-get install php5-common php5-cgi php5
+cd ~/paparazzi
+php -S localhost:8000
 ```
 
 ## Use
