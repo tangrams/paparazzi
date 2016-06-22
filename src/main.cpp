@@ -77,10 +77,10 @@ void setup(int argc, char **argv) {
     iWidth = getWindowWidth();
     iHeight = getWindowHeight();
     float rot = 0.0f;
-    float zoom = 16.0f;
+    float zoom = 0.0f;
     float tilt = 0.0f;
-    double lat = 40.70589;
-    double lon = -74.01321;
+    double lat = 0.0f;
+    double lon = 0.0f;
     std::string scene = "scene.yaml";
 
     for (int i = 1; i < argc ; i++) {
@@ -120,19 +120,24 @@ void setup(int argc, char **argv) {
             std::string argument = std::string(argv[i+1]);
             std::istringstream cur(argument);
             cur >> rot;
-        } else if (std::string(argv[i]) == "-o" ||
-                   std::string(argv[i]) == "--out") {
-            outputFile = std::string(argv[i+1]);
         }
     }
 
     Tangram::initialize(scene.c_str());
     Tangram::setupGL();
     Tangram::resize(iWidth, iHeight);
-    Tangram::setPosition(lon,lat);
-    Tangram::setZoom(zoom);
-    Tangram::setTilt(glm::radians(tilt));
-    Tangram::setRotation(glm::radians(rot));
+    if (lon != 0.0f && lat != 0.0f) {
+        Tangram::setPosition(lon,lat);
+    }
+    if (zoom != 0.0f) {
+        Tangram::setZoom(zoom);
+    }
+    if (tilt != 0.0f) {
+        Tangram::setTilt(glm::radians(tilt));
+    }
+    if (rot != 0.0f) {
+        Tangram::setRotation(glm::radians(rot));
+    }
 }
 
 void newFrame() {
