@@ -17,6 +17,19 @@ function parseQuery (qstr) {
     return query;
 }
 
+function download(url, dest, cb) {
+    var file = fs.createWriteStream(dest);
+    var request = http.get(url, function(response) {
+        response.pipe(file);
+        file.on('finish', function() {
+            file.close(cb);  // close() is async, call cb after close completes.
+        });
+    }).on('error', function(err) { // Handle errors
+        fs.unlink(dest); // Delete the file async. (But we don't check the result)
+        if (cb) cb(err.message);
+    });
+};
+
 var server = http.createServer( function (req, res) {
     var request = url.parse(req.url);
 
@@ -26,8 +39,16 @@ var server = http.createServer( function (req, res) {
         var query = parseQuery(request.query);
 
         console.log('Query', query);
+        var isReady = true;
 
         var command = 'build/bin/./tangramPaparazzi';
+        if (query['scene']) {
+            console.log(query['scene']);
+            isReady = false;
+            download(query['scene'],'out.png', () => {
+                isReady = true;
+            })
+        } 
         if (query['lat'] && typeof parseFloat(query['lat']) === 'number') {
             command += ' -lat ' + query['lat'];
         }
@@ -43,11 +64,6 @@ var server = http.createServer( function (req, res) {
         if (query['rot'] && typeof parseFloat(query['rot']) === 'number') {
             command += ' -r ' + query['rot'];
         }
-    
-        if (query['scene']) {
-            console.log(query['scene']);
-        }
-
         if (query['width'] && typeof query['width'] === 'number') {
             command += ' -w ' + query['width'];
         }
@@ -56,6 +72,11 @@ var server = http.createServer( function (req, res) {
         }
         command += ' -o out.png';
         console.log('Command',command);
+
+        while (!isReady) {
+            console.log('Waiting for scene to download');
+        }
+        
         exec(command);
         console.log('Done');
         var img = fs.readFileSync('out.png');
