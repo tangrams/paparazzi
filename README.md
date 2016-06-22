@@ -24,14 +24,6 @@ cd bin
 sudo cp tangramPaparazzi /usr/local/bin
 ```
 
-Install and run a PHP server:
-
-```bash
-sudo apt-get install php5-common php5-cgi php5
-cd ~/paparazzi
-php -S localhost:8000
-```
-
 ## Use
 
 Run `tangramPaparazzi` with the following arguments and will give you back an image of the specify YAML scene file at the given position, zoom, tilt and rotation.

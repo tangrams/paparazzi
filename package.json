@@ -1,0 +1,26 @@
+{
+    "name": "paparazzi",
+    "version": "0.0.1",
+    "description": "Screenshot taker for Tangram-ES",
+    "main": "server.js",
+    "scripts": {
+        "test": "node server.js",
+        "start": "node server.js"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/tangrams/paparazzi"
+    },
+    "keywords": [
+        "maps",
+        "tangram",
+        "screenshot",
+        "raspberryPi"
+    ],
+    "private": true,
+    "author": "Patricio Gonzalez Vivo",
+    "license": "MIT",
+    "dependencies": {
+        "formidable": "^1.0.17"
+    }
+}
