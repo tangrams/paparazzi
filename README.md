@@ -63,3 +63,8 @@ Here is a list of arguments to pass to the URL
 | `tilt=[tilt deg]` | Tilt degree of the camera |
 | `rot=[rot deg]`   | Rotation degree of the map |
 
+## Thins to read
+
+- http://github.prideout.net/headless-rendering
+- https://aws.amazon.com/marketplace/pp/B00FYCDDTE
+- http://stackoverflow.com/questions/12157646/how-to-render-offscreen-on-opengl
