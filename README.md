@@ -1,3 +1,5 @@
+![](imgs/5846.jpg)
+
 # Tangram Paparazzi
 
 Sneaky version of [Tangram-ES](https://github.com/tangrams/tangram-es) to take snapshots of Tangram using a RaspberryPi.
