@@ -22,7 +22,7 @@ set(EXECUTABLE_NAME "paparazzi")
         ${PROJECT_SOURCE_DIR}/src/common/*.h 
         ${PROJECT_SOURCE_DIR}/src/common/*.cpp)
 
-if (PLATFORM_TARGET EQUALS "rpi")
+if(${PLATFORM_TARGET} MATCHES "rpi")
 
     #
     #   RASPBERRY PI
@@ -90,7 +90,13 @@ if (PLATFORM_TARGET EQUALS "rpi")
     target_link_libraries(${EXECUTABLE_NAME} ${CORE_LIBRARY})
 
 else()
+
+    #
+    #   LINUX
+    #
+    #############################################################################
     message("Linux")
+
     # set for test in other cmake files
     set(PLATFORM_LINUX ON)
     cmake_minimum_required(VERSION 2.8)
@@ -108,7 +114,6 @@ else()
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -fpermissive -g -std=c++1y")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-omit-frame-pointer")
     set(CXX_FLAGS_DEBUG "-g -O0")
-    set(EXECUTABLE_NAME "tangramPaparazzi")
 
     if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-gnu-zero-variadic-macro-arguments")
@@ -136,13 +141,21 @@ else()
 
     # add sources and include headers
     find_sources_and_include_directories(
-    ${PROJECT_SOURCE_DIR}/src/*.h
-    ${PROJECT_SOURCE_DIR}/src/*.cpp)
+        ${PROJECT_SOURCE_DIR}/src/linux/*.h 
+        ${PROJECT_SOURCE_DIR}/src/linux/*.cpp)
 
     # add sources and include headers
     find_sources_and_include_directories(
-    ${PROJECT_SOURCE_DIR}/tangram-es/linux/src/urlWorker.*
-    ${PROJECT_SOURCE_DIR}/tangram-es/linux/src/urlWorker.*)
+        ${PROJECT_SOURCE_DIR}/tangram-es/linux/src/urlWorker.h
+        ${PROJECT_SOURCE_DIR}/tangram-es/linux/src/urlWorker.cpp)
+
+    # add sources and include headers
+    find_sources_and_include_directories(
+        ${PROJECT_SOURCE_DIR}/tangram-es/linux/src/context.h
+        ${PROJECT_SOURCE_DIR}/tangram-es/linux/src/context.cpp)
+    find_sources_and_include_directories(
+        ${PROJECT_SOURCE_DIR}/tangram-es/linux/src/platform_linux.h
+        ${PROJECT_SOURCE_DIR}/tangram-es/linux/src/platform_linux.cpp)
 
     # load core library
     add_subdirectory(${PROJECT_SOURCE_DIR}/tangram-es/external)

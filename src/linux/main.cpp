@@ -10,7 +10,6 @@
 #include <cstdlib>
 #include <signal.h>
 
-
 using namespace Tangram;
 
 // Forward declaration

@@ -4,7 +4,7 @@ os=$(uname)
 arq=$(uname -m)
 
 deps_common="cmake "
-deps_linux_rpi = "curl "
+deps_linux_rpi= "curl "
 deps_linux_common="libcurl4-openssl-dev nodejs "
 deps_linux_ubuntu="xorg-dev libgl1-mesa-dev npm "
 
