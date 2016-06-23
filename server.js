@@ -1,12 +1,12 @@
-var http = require('http'),   // http server
-    https = require('https'),
-      fs = require('fs'),     // filesystem.
+var http = require('http'),   // http Server
+    https = require('https'), // https Server
+      fs = require('fs'),     // FileSystem.
     path = require('path'),   // used for traversing your OS.
-     url = require('url'),
+     url = require('url'),    // Url
     exec = require('child_process').execSync;
 
+var BIN = 'build/bin/paparazzi';
 var HTTP_PORT = 8080;
-var child;
 
 function parseQuery (qstr) {
     var query = {};
@@ -40,7 +40,7 @@ var server = http.createServer( function (req, res) {
         var query = parseQuery(request.query);
         console.log('Query', query);
 
-        var command = 'build/bin/./tangramPaparazzi';
+        var command = BIN;
        
         if (query['lat'] && typeof parseFloat(query['lat']) === 'number') {
             command += ' -lat ' + query['lat'];

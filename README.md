@@ -8,25 +8,16 @@ Sneaky version of [Tangram-ES](https://github.com/tangrams/tangram-es) to take s
 Compile `tangramPaparazzi`:
 
 ```bash
-sudo apt-get update
-sudo apt-get install make libcurl4-openssl-dev
-export CXX=/usr/bin/g++-4.9
-
-cd ~
 git clone --recursive https://github.com/tangrams/paparazzi.git
 cd paparazzi
-git submodule update --init --recursive
-mkdir build
+./install.sh
 cd build
-cmake ..
 make
-cd bin
-sudo cp tangramPaparazzi /usr/local/bin
 ```
 
-## Use
+## Use `tangramPaparazzi`
 
-Run `tangramPaparazzi` with the following arguments and will give you back an image of the specify YAML scene file at the given position, zoom, tilt and rotation.
+Run `build/bin/./paparazzi` with the following arguments and will give you back an image of the specify YAML scene file at the given position, zoom, tilt and rotation.
 
 | Argument       | Description                                |
 |----------------|--------------------------------------------|
@@ -39,4 +30,6 @@ Run `tangramPaparazzi` with the following arguments and will give you back an im
 | `-z [zoom]`    | Zoom Level |
 | `-t [tilt]`    | Tilt degree of the camera |
 | `-r [rot]`     | Rotation degree of the map |
+
+## Use Node `server.js`
 

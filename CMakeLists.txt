@@ -13,7 +13,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -fpermissive -g")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_CXX_FLAGS} -L/opt/vc/lib/ -lGLESv2 -lEGL -lbcm_host -lvchiq_arm -lvcos -lrt -lpthread")
 set(CXX_FLAGS_DEBUG "-g -O0")
-set(EXECUTABLE_NAME "tangramPaparazzi")
+set(EXECUTABLE_NAME "paparazzi")
 
 add_definitions(-DPLATFORM_RPI)
 
