@@ -57,10 +57,10 @@ var server = http.createServer( function (req, res) {
         if (query['rot'] && typeof parseFloat(query['rot']) === 'number') {
             command += ' -r ' + query['rot'];
         }
-        if (query['width'] && typeof query['width'] === 'number') {
+        if (query['width'] && typeof parseFloat(query['width']) === 'number') {
             command += ' -w ' + query['width'];
         }
-        if (query['height'] && typeof query['heihgt'] === 'number') {
+        if (query['height'] && typeof parseFloat(query['height']) === 'number') {
             command += ' -h ' + query['height'];
         }
         command += ' -o out.png';
