@@ -26,6 +26,7 @@ if [ $os == "Linux" ]; then
     else
         sudo apt-get install $deps_linux_ubuntu
         cmake_arg="-DPLATFORM_TARGET=linux"
+        sudo ln -s /usr/bin/nodejs /usr/local/bin/node
     fi
 elif [ $os == "Darwin" ]; then
     
