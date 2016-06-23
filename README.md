@@ -2,24 +2,49 @@
 
 # Tangram Paparazzi
 
-Sneaky version of [Tangram-ES](https://github.com/tangrams/tangram-es) to take snapshots of Tangram using a RaspberryPi.
-
+Sneaky version of [Tangram-ES](https://github.com/tangrams/tangram-es) that loads a YAML scene file, take snapshots and runs away. Currently compiles in RaspberryPi and Ubuntu.
 
 ## Install
-
-Compile `tangramPaparazzi`:
 
 ```bash
 git clone --recursive https://github.com/tangrams/paparazzi.git
 cd paparazzi
 ./install.sh
-cd build
-make
 ```
 
-## Use `paparazzi` binnary
+## Use paparazzi Node.js `server.js`
 
-You can use the paparazzi binnary (`build/bin/./paparazzi`) with the following arguments. It will return an image of the specify YAML scene file at the given position, zoom, tilt and rotation.
+The Node.js `server.js` set a HTTP server that listen for calls and use the query calls to the URL path as arguments to construct a picture of a map using `paparazzi` binary.
+
+To run the server simply do:
+
+```bash
+cd paparazzi
+nam start
+```
+
+Then on a browser do something like
+
+```
+http://localhost:8080/?zoom=17&lat=40.7086&lon=-73.9924&scene=https://dl.dropboxusercontent.com/u/335522/openframe/tangram/blueprint.yaml
+```
+
+Here is a list of arguments to pass to the URL
+
+| Query Arguments   | Description                                |
+|-------------------|------------------------------------------|
+| `scene=[url]`   | Specify a valid url to the YAML scene file |
+| `width=[number]`  | Width of the final image |
+| `heigth=[number]` | Height of the final image |
+| `lat=[LAT]`       | Latitud    |
+| `lot=[LON]`       | Longitud |
+| `zoom=[zoom]`     | Zoom Level |
+| `tilt=[tilt deg]` | Tilt degree of the camera |
+| `rot=[rot deg]`   | Rotation degree of the map |
+
+## Use `paparazzi` binary
+
+You can use the paparazzi binary (`build/bin/./paparazzi`) with the following arguments. It will return an image of the specify YAML scene file at the given position, zoom, tilt and rotation.
 
 | Argument       | Description                                |
 |----------------|--------------------------------------------|
@@ -33,35 +58,6 @@ You can use the paparazzi binnary (`build/bin/./paparazzi`) with the following a
 | `-t [tilt]`    | Tilt degree of the camera |
 | `-r [rot]`     | Rotation degree of the map |
 
-## Use paparazzi Node.js `server.js`
-
-The Node.js `server.js` set a HTTP server that listen for calls and use the query calls to the URL path as arguments to construct a picture of a map using `paparazzi` binnary.
-
-To run the server simply do:
-
-```bash
-cd paparazzi
-npm start
-```
-
-Then on a browser do something like
-
-```
-http://server.local:8080/?zoom=17&lat=40.7086&lon=-73.9924&scene=https://dl.dropboxusercontent.com/u/335522/openframe/tangram/blueprint.yaml
-```
-
-Here is a list of arguments to pass to the URL
-
-| Query Arguments   | Description                                |
-|-------------------|--------------------------------------------|
-| `scene=[url]`     | Specify a valid url to the YAML scene file |
-| `width=[number]`  | Width of the final image |
-| `heigth=[number]` | Height of the final image |
-| `lat=[LAT]`       | Latitud    |
-| `lot=[LON]`       | Longitud |
-| `zoom=[zoom]`     | Zoom Level |
-| `tilt=[tilt deg]` | Tilt degree of the camera |
-| `rot=[rot deg]`   | Rotation degree of the map |
 
 ## Thins to read
 
