@@ -42,7 +42,7 @@ static std::string outputFile = "out.png";
 void setup(int argc, char **argv);
 void newFrame();
 
-int main(int argc, char **argv){
+int main(int argc, char **argv) {
 
     // Start OpenGL context
     initGL(argc, argv);
