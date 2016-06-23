@@ -10,16 +10,29 @@
 #include <cstdlib>
 #include <signal.h>
 
+#include <sstream>
+#include <iostream>
+#include "glm/trigonometric.hpp"
+
+#include "image_out.h"
+
+int width = 800;
+int height = 600;
+float rot = 0.0f;
+float zoom = 0.0f;
+float tilt = 0.0f;
+double lat = 0.0f;
+double lon = 0.0f;
+std::string sceneFile = "scene.yaml";
+std::string outputFile = "out.png";
+
+
 using namespace Tangram;
 
 // Forward declaration
 void init_main_window(bool recreate);
 
-std::string sceneFile = "scene.yaml";
-
 GLFWwindow* main_window = nullptr;
-int width = 800;
-int height = 600;
 bool recreate_context;
 float pixel_scale = 1.0;
 
@@ -300,6 +313,48 @@ void init_main_window(bool recreate) {
 
 int main(int argc, char* argv[]) {
 
+    for (int i = 1; i < argc ; i++) {
+        if (std::string(argv[i]) == "-s" ||
+            std::string(argv[i]) == "--scene") {
+            sceneFile = std::string(argv[i+1]);
+        } else if (std::string(argv[i]) == "-lat" ) {
+            std::string argument = std::string(argv[i+1]);
+            std::istringstream cur(argument);
+            cur >> lat;
+        } else if (std::string(argv[i]) == "-lon" ) {
+            std::string argument = std::string(argv[i+1]);
+            std::istringstream cur(argument);
+            cur >> lon;
+        } else if (std::string(argv[i]) == "-z" ||
+                   std::string(argv[i]) == "--zoom" ) {
+            std::string argument = std::string(argv[i+1]);
+            std::istringstream cur(argument);
+            cur >> zoom;
+        } else if (std::string(argv[i]) == "-w" ||
+                   std::string(argv[i]) == "--width") {
+            std::string argument = std::string(argv[i+1]);
+            std::istringstream cur(argument);
+            cur >> width;
+        } else if (std::string(argv[i]) == "-h" ||
+                   std::string(argv[i]) == "--height") {
+            std::string argument = std::string(argv[i+1]);
+            std::istringstream cur(argument);
+            cur >> height;
+        } else if (std::string(argv[i]) == "-t" ||
+                   std::string(argv[i]) == "--tilt") {
+            std::string argument = std::string(argv[i+1]);
+            std::istringstream cur(argument);
+            cur >> tilt;
+        } else if (std::string(argv[i]) == "-r" ||
+                   std::string(argv[i]) == "--rotation") {
+            std::string argument = std::string(argv[i+1]);
+            std::istringstream cur(argument);
+            cur >> rot;
+        } else if (std::string(argv[i]) == "-o" ) {
+            outputFile = std::string(argv[i+1]);
+        }
+    }
+
     static bool keepRunning = true;
 
     // Give it a chance to shutdown cleanly on CTRL-C
@@ -336,6 +391,19 @@ int main(int argc, char* argv[]) {
 
     init_main_window(false);
 
+    if (lon != 0.0f && lat != 0.0f) {
+        Tangram::setPosition(lon,lat);
+    }
+    if (zoom != 0.0f) {
+        Tangram::setZoom(zoom);
+    }
+    if (tilt != 0.0f) {
+        Tangram::setTilt(glm::radians(tilt));
+    }
+    if (rot != 0.0f) {
+        Tangram::setRotation(glm::radians(rot));
+    }
+
     // Initialize cURL
     curl_global_init(CURL_GLOBAL_DEFAULT);
 
@@ -356,8 +424,16 @@ int main(int argc, char* argv[]) {
         processNetworkQueue();
 
         // Render
-        Tangram::update(delta);
+        bool bFinish = Tangram::update(delta);
         Tangram::render();
+
+        if (bFinish) {
+            LOG("SAVING PNG %s", outputFile.c_str());
+            unsigned char* pixels = new unsigned char[width*height*4];
+            glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+            savePixels(outputFile.c_str(), pixels, width, height);
+            glfwSetWindowShouldClose(main_window, true);
+        }
 
         // Swap front and back buffers
         glfwSwapBuffers(main_window);

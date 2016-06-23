@@ -20,8 +20,6 @@
 #include <iostream>
 #include "glm/trigonometric.hpp"
 
-#include "image_out.h"
-
 #define KEY_ESC      113    // q
 #define KEY_ZOOM_IN  45     // -
 #define KEY_ZOOM_OUT 61     // =
@@ -32,6 +30,8 @@
 
 struct timeval tv;
 unsigned long long timePrev, timeStart;
+
+#include "image_out.h"
 
 static int iWidth = 0;
 static int iHeight = 0;
@@ -123,7 +123,6 @@ void setup(int argc, char **argv) {
         } else if (std::string(argv[i]) == "-o" ) {
             outputFile = std::string(argv[i+1]);
         }
-
     }
 
     Tangram::initialize(scene.c_str());

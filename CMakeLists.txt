@@ -18,9 +18,9 @@ endif()
 set(EXECUTABLE_NAME "paparazzi")
 
 # add sources and include headers
-    find_sources_and_include_directories(
-        ${PROJECT_SOURCE_DIR}/src/common/*.h 
-        ${PROJECT_SOURCE_DIR}/src/common/*.cpp)
+find_sources_and_include_directories(
+    ${PROJECT_SOURCE_DIR}/src/common/*.h 
+    ${PROJECT_SOURCE_DIR}/src/common/*.cpp)
 
 if(${PLATFORM_TARGET} MATCHES "rpi")
 
@@ -28,7 +28,7 @@ if(${PLATFORM_TARGET} MATCHES "rpi")
     #   RASPBERRY PI
     #
     #############################################################################
-    message("Raspberrypi")
+    message(STATUS "Building config for RaspberryPI")
 
     # compiler options
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -fpermissive -g")
@@ -95,7 +95,7 @@ else()
     #   LINUX
     #
     #############################################################################
-    message("Linux")
+    message(STATUS "Building config for Linux")
 
     # set for test in other cmake files
     set(PLATFORM_LINUX ON)
