@@ -26,9 +26,6 @@ double lon = 0.0f;
 std::string sceneFile = "scene.yaml";
 std::string outputFile = "out.png";
 
-
-using namespace Tangram;
-
 // Forward declaration
 void init_main_window(bool recreate);
 
@@ -54,8 +51,8 @@ double last_x_velocity = 0.0;
 double last_y_velocity = 0.0;
 bool scene_editing_mode = false;
 
-std::shared_ptr<ClientGeoJsonSource> data_source;
-LngLat last_point;
+std::shared_ptr<Tangram::ClientGeoJsonSource> data_source;
+Tangram::LngLat last_point;
 
 template<typename T>
 static constexpr T clamp(T val, T min, T max) {
@@ -90,7 +87,7 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 
     if ((time - last_time_released) < double_tap_time) {
 
-        LngLat p { x, y };
+        Tangram::LngLat p { x, y };
         Tangram::screenToWorldCoordinates(p.longitude, p.latitude);
         Tangram::setPosition(p.longitude, p.latitude, 1.f);
 
@@ -106,11 +103,11 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
             }
         }
     } else if ((time - last_time_pressed) < single_tap_time) {
-        LngLat p1 {x, y};
+        Tangram::LngLat p1 {x, y};
         Tangram::screenToWorldCoordinates(p1.longitude, p1.latitude);
 
-        if (!(last_point == LngLat{0, 0})) {
-            LngLat p2 = last_point;
+        if (!(last_point == Tangram::LngLat{0, 0})) {
+            Tangram::LngLat p2 = last_point;
 
             logMsg("add line %f %f - %f %f\n",
                    p1.longitude, p1.latitude,
@@ -119,10 +116,10 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
             // Let's make variant public!
             // data_source->addLine(Properties{{"type", "line" }}, {p1, p2});
             // data_source->addPoint(Properties{{"type", "point" }}, p2);
-            Properties prop1;
+            Tangram::Properties prop1;
             prop1.set("type", "line");
             data_source->addLine(prop1, {p1, p2});
-            Properties prop2;
+            Tangram::Properties prop2;
             prop2.set("type", "point");
             data_source->addPoint(prop2, p2);
         }
@@ -303,7 +300,7 @@ void init_main_window(bool recreate) {
     Tangram::setupGL();
     Tangram::resize(width, height);
 
-    data_source = std::make_shared<ClientGeoJsonSource>("touch", "");
+    data_source = std::make_shared<Tangram::ClientGeoJsonSource>("touch", "");
     Tangram::addDataSource(data_source);
 }
 
