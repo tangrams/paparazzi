@@ -64,3 +64,4 @@ You can use the paparazzi binary (`build/bin/./paparazzi`) with the following ar
 - http://github.prideout.net/headless-rendering
 - https://aws.amazon.com/marketplace/pp/B00FYCDDTE
 - http://stackoverflow.com/questions/12157646/how-to-render-offscreen-on-opengl
+- http://stackoverflow.com/questions/4041682/android-opengl-es-framebuffer-objects-rendering-to-texture

@@ -414,6 +414,14 @@ int main(int argc, char* argv[]) {
 
     recreate_context = false;
 
+    GLuint fbo, render_buf;
+    glGenFramebuffers(1, &fbo);
+    glGenRenderbuffers(1, &render_buf);
+    glBindRenderbuffer(render_buf);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_BGRA8, width, height);
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER​,fbo);
+    glFramebufferRenderbuffer(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, render_buf);
+
     // Loop until the user closes the window
     while (keepRunning && !glfwWindowShouldClose(main_window)) {
 
@@ -425,6 +433,10 @@ int main(int argc, char* argv[]) {
 
         // Render
         bool bFinish = Tangram::update(delta);
+
+        //Before drawing
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER​,fbo);
+
         Tangram::render();
 
         if (bFinish) {
@@ -434,6 +446,8 @@ int main(int argc, char* argv[]) {
             savePixels(outputFile.c_str(), pixels, width, height);
             glfwSetWindowShouldClose(main_window, true);
         }
+
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER​,0);
 
         // Swap front and back buffers
         glfwSwapBuffers(main_window);
@@ -465,6 +479,12 @@ int main(int argc, char* argv[]) {
     finishUrlRequests();
 
     curl_global_cleanup();
+
+    //At deinit:
+    glDeleteFramebuffers(1,&fbo);
+    glDeleteRenderbuffers(1,&render_buf);
+
+
     glfwTerminate();
     return 0;
 }
