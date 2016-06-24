@@ -467,11 +467,6 @@ int main(int argc, char* argv[]) {
 
     curl_global_cleanup();
 
-    //At deinit:
-    glDeleteFramebuffers(1,&fbo);
-    glDeleteRenderbuffers(1,&render_buf);
-
-
     glfwTerminate();
     return 0;
 }
