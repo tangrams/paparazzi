@@ -61,7 +61,13 @@ You can use the paparazzi binary (`build/bin/./paparazzi`) with the following ar
 
 ## Thins to read
 
+- http://www.songho.ca/opengl/gl_fbo.html
+- http://stackoverflow.com/questions/4041682/android-opengl-es-framebuffer-objects-rendering-to-texture
+- http://stackoverflow.com/questions/12157646/how-to-render-offscreen-on-opengl
+- http://stackoverflow.com/questions/12662227/opengl-es2-0-offscreen-context-for-fbo-rendering
+- https://github.com/openframeworks/openFrameworks/blob/ac79b88f0c290c7842a3da81b683085f3527eefc/libs/openFrameworks/gl/ofFbo.cpp#L696-L715
+
+- http://renderingpipeline.com/2012/05/windowless-opengl/
+- http://renderingpipeline.com/2012/05/remote-opengl/
 - http://github.prideout.net/headless-rendering
 - https://aws.amazon.com/marketplace/pp/B00FYCDDTE
-- http://stackoverflow.com/questions/12157646/how-to-render-offscreen-on-opengl
-- http://stackoverflow.com/questions/4041682/android-opengl-es-framebuffer-objects-rendering-to-texture
