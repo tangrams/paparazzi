@@ -115,12 +115,17 @@ void setup(int argc, char **argv) {
         }
     }
 
-    // Start OpenGL context
+    // Start Tangram
     Tangram::initialize(scene.c_str());
 
+    // Start OpenGL context
     initGL(width, height);
+    fbo.resize(width, height);
+    fbo.bind();
+
     Tangram::setupGL();
     Tangram::resize(width, height);
+
     if (lon != 0.0f && lat != 0.0f) {
         Tangram::setPosition(lon,lat);
     }

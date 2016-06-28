@@ -62,6 +62,7 @@ You can use the paparazzi binary (`build/bin/./paparazzi`) with the following ar
 ## Thins to read
 
 - http://www.songho.ca/opengl/gl_fbo.html
+- http://www.glfw.org/docs/latest/context.html#context_offscreen
 - http://stackoverflow.com/questions/4041682/android-opengl-es-framebuffer-objects-rendering-to-texture
 - http://stackoverflow.com/questions/12157646/how-to-render-offscreen-on-opengl
 - http://stackoverflow.com/questions/12662227/opengl-es2-0-offscreen-context-for-fbo-rendering
