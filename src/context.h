@@ -8,6 +8,4 @@ void    initGL(int width, int height);
 void    renderGL();
 void    closeGL();
 
-bool    doTerminate();
-
 double  getTime();

@@ -179,16 +179,6 @@ void closeGL() {
     #endif
 }
 
-bool doTerminate() {
-    #ifdef PLATFORM_RPI
-    return false;
-    #else
-    //  ---------------------------------------- using GLFW
-    //
-    return glfwWindowShouldClose(window);
-    #endif
-}
-
 double getTime() {
     #ifdef PLATFORM_RPI
     gettimeofday(&tv, NULL);
