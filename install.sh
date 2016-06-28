@@ -42,4 +42,4 @@ fi
 
 git submodule update --init --recursive
 cmake . -Bbuild $cmake_arg
-cmake --build build 
+cmake --build build

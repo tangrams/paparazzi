@@ -25,6 +25,4 @@ protected:
 
     GLuint  m_color_texture;
     GLuint  m_depth_texture;
-
-    GLuint  m_render_buffer;
 };

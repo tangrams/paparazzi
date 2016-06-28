@@ -19,8 +19,8 @@ set(EXECUTABLE_NAME "paparazzi")
 
 # add sources and include headers
 find_sources_and_include_directories(
-    ${PROJECT_SOURCE_DIR}/src/common/*.h 
-    ${PROJECT_SOURCE_DIR}/src/common/*.cpp)
+    ${PROJECT_SOURCE_DIR}/src/*.h 
+    ${PROJECT_SOURCE_DIR}/src/*.cpp)
 
 if(${PLATFORM_TARGET} MATCHES "rpi")
 
@@ -52,21 +52,8 @@ if(${PLATFORM_TARGET} MATCHES "rpi")
 
     # add sources and include headers
     find_sources_and_include_directories(
-        ${PROJECT_SOURCE_DIR}/src/rpi/*.h 
-        ${PROJECT_SOURCE_DIR}/src/rpi/*.cpp)
-
-    # add sources and include headers
-    find_sources_and_include_directories(
         ${PROJECT_SOURCE_DIR}/tangram-es/linux/src/urlWorker.h
         ${PROJECT_SOURCE_DIR}/tangram-es/linux/src/urlWorker.cpp)
-
-    # add sources and include headers
-    find_sources_and_include_directories(
-        ${PROJECT_SOURCE_DIR}/tangram-es/rpi/src/context.h
-        ${PROJECT_SOURCE_DIR}/tangram-es/rpi/src/context.cpp)
-    find_sources_and_include_directories(
-        ${PROJECT_SOURCE_DIR}/tangram-es/rpi/src/platform_rpi.h
-        ${PROJECT_SOURCE_DIR}/tangram-es/rpi/src/platform_rpi.cpp)
 
     # include headers for rpi-installed libraries
     include_directories(/opt/vc/include/)
@@ -97,6 +84,8 @@ else()
     #############################################################################
     message(STATUS "Building config for Linux")
 
+    find_package(OpenGL REQUIRED)
+
     # set for test in other cmake files
     set(PLATFORM_LINUX ON)
     cmake_minimum_required(VERSION 2.8)
@@ -126,7 +115,6 @@ else()
     set(PLATFORM_LINUX ON)
     set(CORE_COMPILE_DEFS PLATFORM_LINUX)
 
-
     if (CMAKE_COMPILER_IS_GNUCC)
         execute_process(COMMAND ${CMAKE_CXX_COMPILER} -dumpversion OUTPUT_VARIABLE GCC_VERSION)
         string(REGEX MATCHALL "[0-9]+" GCC_VERSION_COMPONENTS ${GCC_VERSION})
@@ -141,21 +129,8 @@ else()
 
     # add sources and include headers
     find_sources_and_include_directories(
-        ${PROJECT_SOURCE_DIR}/src/linux/*.h 
-        ${PROJECT_SOURCE_DIR}/src/linux/*.cpp)
-
-    # add sources and include headers
-    find_sources_and_include_directories(
         ${PROJECT_SOURCE_DIR}/tangram-es/linux/src/urlWorker.h
         ${PROJECT_SOURCE_DIR}/tangram-es/linux/src/urlWorker.cpp)
-
-    # add sources and include headers
-    find_sources_and_include_directories(
-        ${PROJECT_SOURCE_DIR}/tangram-es/linux/src/context.h
-        ${PROJECT_SOURCE_DIR}/tangram-es/linux/src/context.cpp)
-    find_sources_and_include_directories(
-        ${PROJECT_SOURCE_DIR}/tangram-es/linux/src/platform_linux.h
-        ${PROJECT_SOURCE_DIR}/tangram-es/linux/src/platform_linux.cpp)
 
     # load core library
     add_subdirectory(${PROJECT_SOURCE_DIR}/tangram-es/external)

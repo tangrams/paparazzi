@@ -3,10 +3,8 @@
 #include "platform.h"
 #include "tangram.h"
 
-#ifdef PLATFORM_LINUX
 #define GL_GLEXT_PROTOTYPES
 #include <GLFW/glfw3.h>
-#endif
 
 Fbo::Fbo():m_width(0), m_height(0), m_id(0), m_color_texture(0), m_depth_texture(0) {
     // Create a frame buffer
@@ -17,9 +15,6 @@ Fbo::Fbo():m_width(0), m_height(0), m_id(0), m_color_texture(0), m_depth_texture
 
     // Create a texture to hold the depth buffer
     glGenTextures(1, &m_depth_texture);
-
-    // Create renderBuffer
-    glGenRenderbuffers(1, &m_render_buffer);
 }
 
 Fbo::Fbo(unsigned int _width, unsigned int _height):Fbo() {
@@ -29,7 +24,6 @@ Fbo::Fbo(unsigned int _width, unsigned int _height):Fbo() {
 
 Fbo::~Fbo() {
     glDeleteFramebuffers(1, &m_id);
-    glDeleteRenderbuffers(1,&m_render_buffer);
 }
 
 void Fbo::resize(const unsigned int _width, const unsigned int _height) {
@@ -68,11 +62,6 @@ void Fbo::resize(const unsigned int _width, const unsigned int _height) {
                             GL_TEXTURE_2D, m_depth_texture, 0);
     unbind();
 
-    glBindRenderbuffer(GL_RENDERBUFFER, m_render_buffer);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA, m_width, m_height);
-    glBindFramebuffer(GL_DRAW_FRAMEBUFFER​, m_id);
-    glFramebufferRenderbuffer(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, m_render_buffer);
-
     if (!checkStatus()) {
         LOGE("Failed to create FBO");
     }
@@ -84,12 +73,10 @@ bool Fbo::checkStatus() {
 }
 
 void Fbo::bind() {
-    //glGetIntegerv(GL_FRAMEBUFFER_BINDING, (GLint *)&m_old_fbo_id);
-    //glBindFramebuffer(GL_FRAMEBUFFER, m_id);
-    glBindFramebuffer(GL_DRAW_FRAMEBUFFER​, m_id);
+    glGetIntegerv(GL_FRAMEBUFFER_BINDING, (GLint *)&m_old_fbo_id);
+    glBindFramebuffer(GL_FRAMEBUFFER, m_id);
 }
 
 void Fbo::unbind() {
-    // glBindFramebuffer(GL_FRAMEBUFFER, m_old_fbo_id);
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glBindFramebuffer(GL_FRAMEBUFFER, m_old_fbo_id);
 }

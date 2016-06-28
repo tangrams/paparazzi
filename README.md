@@ -67,6 +67,7 @@ You can use the paparazzi binary (`build/bin/./paparazzi`) with the following ar
 - http://stackoverflow.com/questions/12662227/opengl-es2-0-offscreen-context-for-fbo-rendering
 - https://github.com/openframeworks/openFrameworks/blob/ac79b88f0c290c7842a3da81b683085f3527eefc/libs/openFrameworks/gl/ofFbo.cpp#L696-L715
 
+- http://arrayfire.com/remote-off-screen-rendering-with-opengl/
 - http://renderingpipeline.com/2012/05/windowless-opengl/
 - http://renderingpipeline.com/2012/05/remote-opengl/
 - http://github.prideout.net/headless-rendering

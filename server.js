@@ -6,6 +6,8 @@ var http = require('http'),   // http Server
     exec = require('child_process').execSync;
 
 var BIN = 'build/bin/paparazzi';
+// BIN = './paparazzi';
+
 var HTTP_PORT = 8080;
 
 function parseQuery (qstr) {
