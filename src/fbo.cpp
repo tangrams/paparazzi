@@ -3,8 +3,7 @@
 #include "platform.h"
 #include "tangram.h"
 
-#define GL_GLEXT_PROTOTYPES
-#include <GLFW/glfw3.h>
+#include "platform_headless.h"
 
 Fbo::Fbo():m_width(0), m_height(0), m_id(0), m_color_texture(0), m_depth_texture(0) {
     // Create a frame buffer
