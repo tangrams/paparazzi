@@ -20,9 +20,6 @@
 #include <iostream>
 #include "glm/trigonometric.hpp"
 
-struct timeval tv;
-unsigned long long timePrev, timeStart;
-
 #include "image_out.h"
 #include "fbo.h"
 
