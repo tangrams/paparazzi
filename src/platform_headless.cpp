@@ -1,6 +1,8 @@
-// #include "platform.h"
-// #include "gl.h"
-// #include "context.h"
+#ifdef PLATFORM_RPI
+#include "platform.h"
+#include "gl.h"
+#include "context.h"
+#endif
 
 #include <stdio.h>
 #include <stdarg.h>
@@ -188,8 +190,9 @@ void initGLExtensions() {
 }
 
 #ifdef PLATFORM_RPI
-// // Dummy VertexArray functions
+// Dummy VertexArray functions
 GL_APICALL void GL_APIENTRY glBindVertexArray(GLuint array) {}
 GL_APICALL void GL_APIENTRY glDeleteVertexArrays(GLsizei n, const GLuint *arrays) {}
 GL_APICALL void GL_APIENTRY glGenVertexArrays(GLsizei n, GLuint *arrays) {}
 #endif
+
