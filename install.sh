@@ -7,7 +7,7 @@ deps_common="cmake "
 deps_linux_rpi="curl "
 deps_linux_common="libcurl4-openssl-dev nodejs "
 deps_linux_ubuntu="xorg-dev libgl1-mesa-dev npm "
-deps_linux_amazon="libX*-devel mesa-libGL-devel curl-devel glx-utils git "
+deps_linux_amazon="libX*-devel mesa-libGL-devel curl-devel glx-utils git libmpc-devel mpfr-devel gmp-devel"
 cmake_arg=""
 
 if [ $os == "Linux" ]; then
@@ -17,31 +17,42 @@ if [ $os == "Linux" ]; then
         sudo yum groupinstall "Development Tools"
         sudo yum install $deps_linux_amazon -y
 
-        # Run X in the back with out screen
-        echo '/usr/bin/X :0 &' | sudo tee -a /etc/rc.d/rc.local
-        echo 'export DISPLAY=:0' >> .bashrc
-
-        # Install Cmake 3.6
-        wget https://cmake.org/files/v3.6/cmake-3.6.0-rc3-Linux-x86_64.sh
-        chmod +x cmake-3.6.0-rc3-Linux-x86_64.sh
-        mv cmake-3.6.0-rc3-Linux-x86_64.sh /usr/local/
-        /usr/local/cmake-3.6.0-rc3-Linux-x86_64.sh
+        if [ ! -e /usr/local/bin/cmake ]; then
+            # Install Cmake 3.6
+            wget https://cmake.org/files/v3.6/cmake-3.6.0-rc3-Linux-x86_64.sh
+            chmod +x cmake-3.6.0-rc3-Linux-x86_64.sh
+            sudo mv cmake-3.6.0-rc3-Linux-x86_64.sh /usr/local/
+            cd /usr/local/
+            sudo ./cmake-3.6.0-rc3-Linux-x86_64.sh
+            rm cmake-3.6.0-rc3-Linux-x86_64.sh
+            cd ~/paparazzi
+        fi
 
         # Install GCC 4.9
-        sudo yum install libmpc-devel mpfr-devel gmp-devel
-        cd ..
-        curl ftp://ftp.mirrorservice.org/sites/sourceware.org/pub/gcc/releases/gcc-4.9.2/gcc-4.9.2.tar.bz2 -O
-        tar xvfj gcc-4.9.2.tar.bz2
-        cd gcc-4.9.2
-        ./contrib/download_prerequisites
-        ./configure --disable-multilib --enable-languages=c,c++
-        make -j 8
-        make install
-        cd ../paparazzi
+        if [ ! -e /usr/local/bin/gcc ]; then
+            cd ..
+            curl ftp://ftp.mirrorservice.org/sites/sourceware.org/pub/gcc/releases/gcc-4.9.2/gcc-4.9.2.tar.bz2 -O
+            tar xvfj gcc-4.9.2.tar.bz2
+            cd gcc-4.9.2
+            ./contrib/download_prerequisites
+            ./configure --disable-multilib --enable-languages=c,c++
+            make -j 8
+            make install
+            cd ..
+            rm -rf gcc-4.9.2*
+            cd ~/paparazzi
+        fi
 
         # Install Node
-        curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.31.0/install.sh | bash
-        #nvm install node
+        if [ ! -e ~/.nvm/ ]; then
+            # Run X in the back with out screen
+            echo '/usr/bin/X :0 &' | sudo tee -a /etc/rc.d/rc.local
+            echo 'export DISPLAY=:0' >> .bashrc
+
+            curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.31.0/install.sh | bash
+        else
+            nvm install node
+        fi
 
     else 
         # on Debian Linux distributions
