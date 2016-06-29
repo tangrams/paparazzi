@@ -148,6 +148,7 @@ void update(double delta) {// Update
         unsigned char* pixels = new unsigned char[width*height*4];
         glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
         savePixels(outputFile.c_str(), pixels, width, height);
+        fbo.unbind();
         bUpdate = false;
     }
     renderGL();
