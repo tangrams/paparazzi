@@ -50,8 +50,8 @@ if [ $os == "Linux" ]; then
             echo 'export DISPLAY=:0' >> .bashrc
 
             curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.31.0/install.sh | bash
-        else
-            nvm install node
+
+            #nvm install node
         fi
 
     else 
