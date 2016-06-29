@@ -35,27 +35,18 @@ void initGL(int width, int height) {
     bcm_host_init();
 
     // Clear application state
-    int32_t success = 0;
     EGLBoolean result;
     EGLint num_config;
-
-    static EGL_DISPMANX_WINDOW_T nativeviewport;
-
-    DISPMANX_ELEMENT_HANDLE_T dispman_element;
-    DISPMANX_DISPLAY_HANDLE_T dispman_display;
-    DISPMANX_UPDATE_HANDLE_T dispman_update;
-    VC_RECT_T dst_rect;
-    VC_RECT_T src_rect;
-
-    uint32_t screen_width = width;
-    uint32_t screen_height = height;
 
     static const EGLint attribute_list[] = {
         EGL_RED_SIZE, 8,
         EGL_GREEN_SIZE, 8,
         EGL_BLUE_SIZE, 8,
         EGL_ALPHA_SIZE, 8,
+        EGL_SAMPLE_BUFFERS, 1,
+        EGL_SAMPLES, 4,
         EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
+        EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
         EGL_DEPTH_SIZE, 16,
         EGL_NONE
     };
@@ -91,10 +82,20 @@ void initGL(int width, int height) {
     context = eglCreateContext(display, config, EGL_NO_CONTEXT, context_attributes);
     assert(context!=EGL_NO_CONTEXT);
     check();
+    
+    static EGL_DISPMANX_WINDOW_T nativeviewport;
 
-    // create an EGL viewport surface
-    success = graphics_get_display_size(0 /* LCD */, &screen_width, &screen_height);
-    assert( success >= 0 );
+    DISPMANX_RESOURCE_HANDLE_T dispman_resource;
+    DISPMANX_ELEMENT_HANDLE_T dispman_element;
+    DISPMANX_DISPLAY_HANDLE_T dispman_display;
+    DISPMANX_UPDATE_HANDLE_T dispman_update;
+
+    VC_RECT_T dst_rect;
+    VC_RECT_T src_rect;
+
+    uint32_t dest_image_handle;
+    uint32_t screen_width = width;
+    uint32_t screen_height = height;
 
     //  Initially the viewport is for all the screen
     dst_rect.x = 0;
@@ -107,12 +108,15 @@ void initGL(int width, int height) {
     src_rect.width = screen_width << 16;
     src_rect.height = screen_height << 16;
 
-    dispman_display = vc_dispmanx_display_open( 0 /* LCD */);
+    dispman_resource = vc_dispmanx_resource_create(VC_IMAGE_RGBA32, screen_width, screen_height, &dest_image_handle);
+    dispman_display = vc_dispmanx_display_open_offscreen(dispman_resource, DISPMANX_NO_ROTATE);
+
     dispman_update = vc_dispmanx_update_start( 0 );
 
     dispman_element = vc_dispmanx_element_add( dispman_update, dispman_display,
-                                       0/*layer*/, &dst_rect, 0/*src*/,
-                                       &src_rect, DISPMANX_PROTECTION_NONE, 0 /*alpha*/, 0/*clamp*/, (DISPMANX_TRANSFORM_T)0/*transform*/);
+                                                0/*layer*/, &dst_rect, 0/*src*/,
+                                                &src_rect, DISPMANX_PROTECTION_NONE, 
+                                                0 /*alpha*/, 0/*clamp*/, (DISPMANX_TRANSFORM_T)0/*transform*/);
 
     nativeviewport.element = dispman_element;
     nativeviewport.width = screen_width;
@@ -130,8 +134,8 @@ void initGL(int width, int height) {
     check();
 
     // Set background color and clear buffers
-    // glClearColor(0.15f, 0.25f, 0.35f, 1.0f);
-    // glClear( GL_COLOR_BUFFER_BIT );
+    //glClearColor(0.f, 0.f, 0.f, 0.0f);
+    //glClear( GL_COLOR_BUFFER_BIT );
 
     glViewport(0.0f, 0.0f, (float)screen_width, (float)screen_height);
     check();
