@@ -9,7 +9,7 @@ Sneaky version of [Tangram-ES](https://github.com/tangrams/tangram-es) that load
 ```bash
 git clone --recursive https://github.com/tangrams/paparazzi.git
 cd paparazzi
-./install.sh
+./configure.sh
 ```
 
 ## Use paparazzi Node.js `server.js`
