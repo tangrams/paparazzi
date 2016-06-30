@@ -46,15 +46,26 @@ if [ $OS == "Linux" ]; then
             cd ..
             rm -rf gcc-4.9.2*
             cd ~/paparazzi
-            echo 'export CXX=/usr/local/bin/g++' >> .bashrc
-            echo 'export CC=/usr/local/bin/gcc' >> .bashrc
+            echo 'export CXX=/usr/local/bin/g++' >> ~/.bashrc
+            echo 'export CC=/usr/local/bin/gcc' >> ~/.bashrc
+
+            if [ ! -e ~/.zshrc ]; then
+                echo 'export CXX=/usr/local/bin/g++' >> ~/.zshrc
+                echo 'export CC=/usr/local/bin/gcc' >> ~/.zshrc
+            fi
         fi
+        export CXX=/usr/local/bin/g++
+        export CC=/usr/local/bin/gcc
         
         # Install Node
         if [ ! -e ~/.nvm/ ]; then
             # Run X in the back with out screen
             echo '/usr/bin/X :0 &' | sudo tee -a /etc/rc.d/rc.local
-            echo 'export DISPLAY=:0' >> .bashrc
+            echo 'export DISPLAY=:0' >> ~/.bashrc
+
+            if [ ! -e ~/.zshrc ]; then
+                echo 'export DISPLAY=:0' >> ~/.zshrc
+            fi
 
             curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.31.0/install.sh | bash
             #nvm install node
