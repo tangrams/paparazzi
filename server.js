@@ -9,6 +9,7 @@ var BIN = 'build/bin/paparazzi';
 // BIN = './paparazzi';
 
 var HTTP_PORT = 8080;
+HTTP_PORT = 80;
 
 function parseQuery (qstr) {
     var query = {};
@@ -65,24 +66,15 @@ var server = http.createServer( function (req, res) {
         if (query['height'] && typeof parseFloat(query['height']) === 'number') {
             command += ' -h ' + query['height'];
         }
-        command += ' -o out.png';
-         if (query['scene']) {
-            download(query['scene'],'infile.yaml', () => {
-                //console.log('File '+query['scene'] +' downloaded');
-                //command += ' -s infile.yaml';
-                command += '-s ' + query['scene'];
-                exec(command);
-                console.log('Done');
-                var img = fs.readFileSync('out.png');
-                res.writeHead(200, {'Content-Type': 'image/png' });
-                res.end(img, 'binary');
-            });
-        } else {
-            exec(command);
-            console.log('Done');
-            var img = fs.readFileSync('out.png');
-            res.writeHead(200, {'Content-Type': 'image/png' });
-            res.end(img, 'binary');
+        if (query['scene']) {
+            command += ' -s ' + query['scene'];
         }
+        command += ' -o out.png';
+        console.log(command);
+        exec(command);
+        console.log('Done');
+        var img = fs.readFileSync('out.png');
+        res.writeHead(200, {'Content-Type': 'image/png' });
+        res.end(img, 'binary');
     }
 }).listen(HTTP_PORT);
