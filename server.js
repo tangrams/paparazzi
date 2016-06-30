@@ -68,8 +68,9 @@ var server = http.createServer( function (req, res) {
         command += ' -o out.png';
          if (query['scene']) {
             download(query['scene'],'infile.yaml', () => {
-                console.log('File '+query['scene'] +' downloaded');
-                command += ' -s infile.yaml';
+                //console.log('File '+query['scene'] +' downloaded');
+                //command += ' -s infile.yaml';
+                command += '-s ' + query['scene'];
                 exec(command);
                 console.log('Done');
                 var img = fs.readFileSync('out.png');

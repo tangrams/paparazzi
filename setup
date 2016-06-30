@@ -1,0 +1,106 @@
+#!/bin/bash
+
+OS=$(uname)
+ARQ=$(uname -m)
+DIST="UNKNOWN"
+if [ -f /etc/os-release ]; then
+    . /etc/os-release
+    DIST=$NAME
+fi
+
+deps_common="cmake "
+deps_linux_common="libcurl4-openssl-dev "
+deps_linux_rpi="curl "
+deps_linux_ubuntu="xorg-dev libgl1-mesa-dev npm nodejs "
+deps_linux_amazon="libX*-devel mesa-libGL-devel curl-devel glx-utils git libmpc-devel mpfr-devel gmp-devel"
+cmake_arg=""
+
+if [ $OS == "Linux" ]; then
+    echo "Install dependeces for Linux - $DIST"
+    if [ "$DIST" == "Amazon Linux AMI" ]; then
+        # Amazon Linux
+        sudo yum groupinstall "Development Tools"
+        sudo yum install $deps_linux_amazon -y
+
+        if [ ! -e /usr/local/bin/cmake ]; then
+            # Install Cmake 3.6
+            wget https://cmake.org/files/v3.6/cmake-3.6.0-rc3-Linux-x86_64.sh
+            chmod +x cmake-3.6.0-rc3-Linux-x86_64.sh
+            sudo mv cmake-3.6.0-rc3-Linux-x86_64.sh /usr/local/
+            cd /usr/local/
+            sudo ./cmake-3.6.0-rc3-Linux-x86_64.sh
+            rm cmake-3.6.0-rc3-Linux-x86_64.sh
+            cd ~/paparazzi
+        fi
+
+        # Install GCC 4.9
+        if [ ! -e /usr/local/bin/gcc ]; then
+            cd ..
+            curl ftp://ftp.mirrorservice.org/sites/sourceware.org/pub/gcc/releases/gcc-4.9.2/gcc-4.9.2.tar.bz2 -O
+            tar xvfj gcc-4.9.2.tar.bz2
+            cd gcc-4.9.2
+            ./contrib/download_prerequisites
+            ./configure --disable-multilib --enable-languages=c,c++
+            make -j 8
+            make install
+            cd ..
+            rm -rf gcc-4.9.2*
+            cd ~/paparazzi
+            echo 'export CXX=/usr/local/bin/g++' >> ~/.bashrc
+            echo 'export CC=/usr/local/bin/gcc' >> ~/.bashrc
+
+            if [ ! -e ~/.zshrc ]; then
+                echo 'export CXX=/usr/local/bin/g++' >> ~/.zshrc
+                echo 'export CC=/usr/local/bin/gcc' >> ~/.zshrc
+            fi
+        fi
+        export CXX=/usr/local/bin/g++
+        export CC=/usr/local/bin/gcc
+        
+        # Install Node
+        if [ ! -e ~/.nvm/ ]; then
+            # Run X in the back with out screen
+            echo '/usr/bin/X :0 &' | sudo tee -a /etc/rc.d/rc.local
+            echo 'export DISPLAY=:0' >> ~/.bashrc
+
+            if [ ! -e ~/.zshrc ]; then
+                echo 'export DISPLAY=:0' >> ~/.zshrc
+            fi
+
+            curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.31.0/install.sh | bash
+            #nvm install node
+        fi
+
+    elif [ "$DIST" == "Ubuntu" ]; then
+        sudo apt-get update
+        sudo apt-get upgrade
+        sudo apt-get install $deps_common $deps_linux_common $deps_linux_ubuntu
+        cmake_arg="-DPLATFORM_TARGET=linux"
+        sudo ln -s /usr/bin/nodejs /usr/local/bin/node
+
+    elif [ "$DIST" == "Raspbian GNU/Linux" ]; then
+        sudo apt-get update
+        sudo apt-get upgrade
+        sudo apt-get install $deps_common $deps_linux_common $deps_linux_rpi
+        curl -sL https://deb.nodesource.com/setup_6.x | sudo -E bash -
+        sudo apt-get install nodejs -y
+        export CXX=/usr/bin/g++-4.9
+        cmake_arg="-DPLATFORM_TARGET=rpi"
+    fi
+
+elif [ $OS == "Darwin" ]; then
+    
+    # ON MacOX 
+    if [ ! -e /usr/local/bin/brew ]; then
+        ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+    fi
+
+    brew update
+    brew upgrade
+    brew install $deps_common
+fi
+
+git submodule update --init --recursive
+cmake . -Bbuild $cmake_arg
+cd build
+make -j 4

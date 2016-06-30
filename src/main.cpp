@@ -113,7 +113,8 @@ void setup(int argc, char **argv) {
     }
 
     // Start Tangram
-    Tangram::initialize(scene.c_str());
+    Tangram::initialize("scene.yaml");
+    Tangram::loadSceneAsync(scene.c_str());
 
     // Start OpenGL context
     initGL(width, height);
