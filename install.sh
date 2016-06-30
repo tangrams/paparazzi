@@ -41,9 +41,10 @@ if [ $os == "Linux" ]; then
             cd ..
             rm -rf gcc-4.9.2*
             cd ~/paparazzi
-            export CXX=/usr/local/bin/g++
-            export CC=/usr/local/bin/gcc
+            echo 'export CXX=/usr/local/bin/g++' >> .bashrc
+            echo 'export CC=/usr/local/bin/gcc' >> .bashrc
         fi
+        
 
         # Install Node
         if [ ! -e ~/.nvm/ ]; then
