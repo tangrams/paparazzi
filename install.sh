@@ -1,18 +1,23 @@
 #!/bin/bash
 
-os=$(uname)
-arq=$(uname -m)
+OS=$(uname)
+ARQ=$(uname -m)
+DIST="UNKNOWN"
+if [ -f /etc/os-release ]; then
+    . /etc/os-release
+    DIST=$NAME
+fi
 
 deps_common="cmake "
+deps_linux_common="libcurl4-openssl-dev "
 deps_linux_rpi="curl "
-deps_linux_common="libcurl4-openssl-dev nodejs "
-deps_linux_ubuntu="xorg-dev libgl1-mesa-dev npm "
+deps_linux_ubuntu="xorg-dev libgl1-mesa-dev npm nodejs "
 deps_linux_amazon="libX*-devel mesa-libGL-devel curl-devel glx-utils git libmpc-devel mpfr-devel gmp-devel"
 cmake_arg=""
 
-if [ $os == "Linux" ]; then
+if [ $OS == "Linux" ]; then
 
-    if [ $arq == "x86_64" ]; then
+    if [ $DIST == "Amazon Linux AMI" ]; then
         # Amazon Linux
         sudo yum groupinstall "Development Tools"
         sudo yum install $deps_linux_amazon -y
@@ -45,7 +50,6 @@ if [ $os == "Linux" ]; then
             echo 'export CC=/usr/local/bin/gcc' >> .bashrc
         fi
         
-
         # Install Node
         if [ ! -e ~/.nvm/ ]; then
             # Run X in the back with out screen
@@ -53,31 +57,27 @@ if [ $os == "Linux" ]; then
             echo 'export DISPLAY=:0' >> .bashrc
 
             curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.31.0/install.sh | bash
-
             #nvm install node
         fi
 
-    else 
-        # on Debian Linux distributions
+    elif [ $OS == "Ubuntu" ]; then
         sudo apt-get update
         sudo apt-get upgrade
-        sudo apt-get install $deps_common
-        sudo apt-get install $deps_linux_common
+        sudo apt-get install $deps_common $deps_linux_common $deps_linux_ubuntu
+        cmake_arg="-DPLATFORM_TARGET=linux"
+        sudo ln -s /usr/bin/nodejs /usr/local/bin/node
 
-        # on RaspberryPi
-        if [ $arq == "armv7l" ]; then
-            sudo apt-get install $deps_linux_rpi
-            curl -sL https://deb.nodesource.com/setup_6.x | sudo -E bash -
-            sudo apt-get install nodejs -y
-            export CXX=/usr/bin/g++-4.9
-            cmake_arg="-DPLATFORM_TARGET=rpi"
-        else
-            sudo apt-get install $deps_linux_ubuntu
-            cmake_arg="-DPLATFORM_TARGET=linux"
-            sudo ln -s /usr/bin/nodejs /usr/local/bin/node
-        fi
+    elif [ $OS == "Raspbian GNU/Linux" ]; then
+        sudo apt-get update
+        sudo apt-get upgrade
+        sudo apt-get install $deps_common $deps_linux_common $deps_linux_rpi
+        curl -sL https://deb.nodesource.com/setup_6.x | sudo -E bash -
+        sudo apt-get install nodejs -y
+        export CXX=/usr/bin/g++-4.9
+        cmake_arg="-DPLATFORM_TARGET=rpi"
     fi
-elif [ $os == "Darwin" ]; then
+
+elif [ $OS == "Darwin" ]; then
     
     # ON MacOX 
     if [ ! -e /usr/local/bin/brew ]; then
