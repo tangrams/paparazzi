@@ -16,7 +16,7 @@ deps_linux_amazon="libX*-devel mesa-libGL-devel curl-devel glx-utils git libmpc-
 cmake_arg=""
 
 if [ $OS == "Linux" ]; then
-
+    echo "Install dependeces for Linux - $DIST"
     if [ "$DIST" == "Amazon Linux AMI" ]; then
         # Amazon Linux
         sudo yum groupinstall "Development Tools"
@@ -91,4 +91,5 @@ fi
 
 git submodule update --init --recursive
 cmake . -Bbuild $cmake_arg
-cmake --build build
+cd build
+make -j 4
