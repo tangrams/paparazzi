@@ -16,7 +16,6 @@ deps_linux_amazon="libX*-devel mesa-libGL-devel curl-devel glx-utils git libmpc-
 cmake_arg=""
 
 if [ $OS == "Linux" ]; then
-
     if [ $DIST == "Amazon Linux AMI" ]; then
         # Amazon Linux
         sudo yum groupinstall "Development Tools"
@@ -60,14 +59,14 @@ if [ $OS == "Linux" ]; then
             #nvm install node
         fi
 
-    elif [ $OS == "Ubuntu" ]; then
+    elif [ $DIST == "Ubuntu" ]; then
         sudo apt-get update
         sudo apt-get upgrade
         sudo apt-get install $deps_common $deps_linux_common $deps_linux_ubuntu
         cmake_arg="-DPLATFORM_TARGET=linux"
         sudo ln -s /usr/bin/nodejs /usr/local/bin/node
 
-    elif [ $OS == "Raspbian GNU/Linux" ]; then
+    elif [ $DIST == "Raspbian GNU/Linux" ]; then
         sudo apt-get update
         sudo apt-get upgrade
         sudo apt-get install $deps_common $deps_linux_common $deps_linux_rpi
