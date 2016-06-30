@@ -56,6 +56,7 @@ if [ $OS == "Linux" ]; then
         fi
         export CXX=/usr/local/bin/g++
         export CC=/usr/local/bin/gcc
+        export DISPLAY=:0
         
         # Install Node
         if [ ! -e ~/.nvm/ ]; then

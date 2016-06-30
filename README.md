@@ -74,3 +74,4 @@ You can use the paparazzi binary (`build/bin/./paparazzi`) with the following ar
 - http://renderingpipeline.com/2012/05/windowless-opengl/
 - http://renderingpipeline.com/2012/05/remote-opengl/
 - https://aws.amazon.com/marketplace/pp/B00FYCDDTE
+- https://devblogs.nvidia.com/parallelforall/egl-eye-opengl-visualization-without-x-server/
