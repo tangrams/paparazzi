@@ -19,8 +19,7 @@ The Node.js `server.js` set a HTTP server that listen for calls and use the quer
 To run the server simply do:
 
 ```bash
-cd paparazzi
-nam start
+npm start
 ```
 
 Then on a browser do something like
