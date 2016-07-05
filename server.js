@@ -9,7 +9,7 @@ var BIN = 'build/bin/paparazzi';
 // BIN = './paparazzi';
 
 var HTTP_PORT = 8080;
-HTTP_PORT = 80;
+//HTTP_PORT = 80;
 
 function parseQuery (qstr) {
     var query = {};
