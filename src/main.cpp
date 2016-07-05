@@ -119,10 +119,9 @@ void setup(int argc, char **argv) {
 
     // Start OpenGL context
     initGL(width, height);
-    fbo.resize(width, height);
-    fbo.bind();
-
+    
     Tangram::setupGL();
+    fbo.resize(width, height);
     Tangram::resize(width, height);
 
     if (lon != 0.0f && lat != 0.0f) {
@@ -143,6 +142,7 @@ void update(double delta) {// Update
     bool bFinish = Tangram::update(delta);
 
     // Render
+    fbo.bind();
     Tangram::render();
 
     if (bFinish) {
@@ -150,8 +150,9 @@ void update(double delta) {// Update
         unsigned char* pixels = new unsigned char[width*height*4];
         glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
         savePixels(outputFile.c_str(), pixels, width, height);
-        fbo.unbind();
         bUpdate = false;
     }
-    renderGL();
+    fbo.unbind();
+    
+    //renderGL();
 }
