@@ -149,3 +149,5 @@ else()
     target_link_libraries(${EXECUTABLE_NAME} ${CORE_LIBRARY})
     target_link_libraries(${EXECUTABLE_NAME} ${CORE_LIBRARY} -lcurl glfw -ldl ${GLFW_LIBRARIES} ${OPENGL_LIBRARIES})
 endif()
+
+add_resources(${EXECUTABLE_NAME} "${PROJECT_SOURCE_DIR}/scenes")
