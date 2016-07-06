@@ -6,10 +6,19 @@ var http = require('http'),   // http Server
     exec = require('child_process').execSync;
 
 var BIN = 'build/bin/paparazzi';
-// BIN = './paparazzi';
-
 var HTTP_PORT = 8080;
-//HTTP_PORT = 80;
+
+fs.readFile('/etc/os-release', 'utf8', function (err,data) {
+    if (err) {
+        return console.log(err);
+    }
+    if (data.startsWith('NAME="Amazon Linux AMI"')) {
+        HTTP_PORT = 80;
+        BIN = 'export DISPLAY=:0 && ' + BIN;
+        console.log('Running on Amazon Linux GPU HeadLess Server at port', HTTP_PORT);
+    }
+
+});
 
 function parseQuery (qstr) {
     var query = {};
