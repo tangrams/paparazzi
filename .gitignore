@@ -3,4 +3,6 @@ out.png
 out.jpg
 infile.yaml
 build
-
+npm-debug.log
+fonts
+scene.yaml

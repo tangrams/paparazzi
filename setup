@@ -14,10 +14,13 @@ deps_linux_rpi="curl "
 deps_linux_ubuntu="xorg-dev libgl1-mesa-dev npm nodejs "
 deps_linux_amazon="libX*-devel mesa-libGL-devel curl-devel glx-utils git libmpc-devel mpfr-devel gmp-devel"
 cmake_arg=""
+n_cores="4"
 
 if [ $OS == "Linux" ]; then
     echo "Install dependeces for Linux - $DIST"
     if [ "$DIST" == "Amazon Linux AMI" ]; then
+        n_cores="8"
+
         # Amazon Linux
         sudo yum groupinstall "Development Tools"
         sudo yum install $deps_linux_amazon -y
@@ -104,4 +107,8 @@ fi
 git submodule update --init --recursive
 cmake . -Bbuild $cmake_arg
 cd build
-make -j 4
+make -j $n_cores
+
+cd ..
+ln -s build/bin/fonts .
+ln -s build/bin/scene.yaml .
