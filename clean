@@ -1,0 +1,7 @@
+#!/bin/bash
+
+if [ -e cache ]; then
+    rm -rf cache
+fi
+
+rm -f paparazzi.log
