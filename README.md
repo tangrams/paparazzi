@@ -35,4 +35,4 @@ Here is a list of arguments to pass to the URL
 | `zoom=[zoom]`     | Zoom Level |
 | `tilt=[tilt deg]` | Tilt degree of the camera |
 | `rot=[rot deg]`   | Rotation degree of the map |
-| `key=[API_KEY]`   | Mapzen API_KEY |
+| `api_key=[API_KEY]` | Mapzen API_KEY |

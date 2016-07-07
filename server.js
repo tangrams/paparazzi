@@ -52,6 +52,24 @@ function parseQuery (qstr) {
     return query;
 }
 
+function responseImg(filePath, res) {
+    fs.exists(filePath, function (exists) {
+        if (!exists) {
+            // 404 missing files
+            logger.error({msg:'Tangram never made that image', qrt: query, key: key});
+            res.writeHead(404, {'Content-Type': 'text/plain' });
+            res.end('404 Not Found');
+            return;
+        }
+
+        // set the content type
+        res.writeHead(200, {'Content-Type': 'image/png' });
+
+        // stream the file
+        fs.createReadStream(filePath).pipe(res);
+    });
+}
+
 fs.readFile('/etc/os-release', 'utf8', function (err,data) {
     if (err) {
         logger.error('SERVER ERROR: ' + err);
@@ -68,6 +86,10 @@ fs.readFile('/etc/os-release', 'utf8', function (err,data) {
 
         if (request.query) {
             var query = parseQuery(request.query);
+            var key = 'NONE';
+            if (query['api_key']) {
+                key = query['api_key'];
+            }
             var command = BIN;
            
             if (query['lat'] && typeof parseFloat(query['lat']) === 'number') {
@@ -97,29 +119,33 @@ fs.readFile('/etc/os-release', 'utf8', function (err,data) {
 
             var unique_name = md5(command);
             var image_path = CACHE_FOLDER + unique_name + '.png';
-            
-            if (fs.existsSync(image_path)) {
-                // If file is cached retrive it directly
-                logger.info( {src:'CACHE_FOLDER', img:image_path, qry:query });
-                var img = fs.readFileSync(image_path);
-                res.writeHead(200, {'Content-Type': 'image/png' });
-                res.end(img, 'binary');
-            } else {
-                command += ' -o ' + image_path;
-                // If file doesn't exist create it!
-                exec(command, function(error, stdout, stderr) {
-                    logger.info({ src:'TANGRAM-ES', img:image_path, qry:query});
-                    if (error) {
-                        logger.error(error);
-                    }
-                    logger.debug(stdout);
-                    logger.error(stderr);
-    
-                    var img = fs.readFileSync(image_path);
-                    res.writeHead(200, {'Content-Type': 'image/png' });
-                    res.end(img, 'binary');
-                });
-            }            
+            var src = 'NONE';
+
+            fs.exists(image_path, function (exists) {
+                if (exists) {
+                    // If exist send back the cached one
+                    src = 'CACHE_FOLDER';
+                    responseImg(image_path, res);
+                } else {
+                    // If file doesn't exist create it!
+                    src = 'TANGRAM-ES';
+                    command += ' -o ' + image_path;
+                    
+                    exec(command, function(error, stdout, stderr) {
+                        if (error) {
+                            logger.error({src:src, msg:error, qrt: query, key: key});
+                        }
+                        if (stdout) {
+                            logger.debug({src:src, msg:stdout, qrt:query, key: key});
+                        }
+                        if (stderr) {
+                            logger.error({src:src, msg:stderr, qry:query, key: key});
+                        }
+                        responseImg(image_path, res);
+                    });
+                }
+                logger.info({src:src, img:image_path, qry:query, key: key }); 
+            });     
         }
     }).listen(HTTP_PORT);
     logger.info('SERVER running on ' + server.address().address + ':' +  HTTP_PORT);
