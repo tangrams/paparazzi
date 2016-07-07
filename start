@@ -1,0 +1,19 @@
+#!/bin/bash
+
+PRE=""
+DIST="UNKNOWN"
+if [ -f /etc/os-release ]; then
+    . /etc/os-release
+    DIST=$NAME
+fi
+
+if [ "$DIST" == "Amazon Linux AMI" ]; then
+    PRE="sudo "
+fi
+
+$PRE npm start
+
+# while true; do
+#   sleep 1000
+#   $PRE npm start
+# done

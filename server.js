@@ -1,12 +1,18 @@
+// NATIVE
 var http = require('http'),   // http Server
     https = require('https'), // https Server
       fs = require('fs'),     // FileSystem.
     path = require('path'),   // used for traversing your OS.
      url = require('url'),    // Url
-    exec = require('child_process').execSync;
+    exec = require('child_process').exec;
+
+// MODULES
+var md5 = require('md5');
+var winston = require('winston');
 
 var BIN = 'build/bin/paparazzi';
 var HTTP_PORT = 8080;
+var CACHE_FOLDER = 'cache/';
 
 function parseQuery (qstr) {
     var query = {};
@@ -18,36 +24,24 @@ function parseQuery (qstr) {
     return query;
 }
 
-function download(url, dest, cb) {
-    var file = fs.createWriteStream(dest);
-    var request = https.get(url, function(response) {
-        response.pipe(file);
-        file.on('finish', function() {
-            file.close(cb);  // close() is async, call cb after close completes.
-        });
-    }).on('error', function(err) { // Handle errors
-        fs.unlink(dest); // Delete the file async. (But we don't check the result)
-        if (cb) cb(err.message);
-    });
-};
-
 fs.readFile('/etc/os-release', 'utf8', function (err,data) {
     if (err) {
         return console.log(err);
     }
+
     if (data.startsWith('NAME="Amazon Linux AMI"')) {
         HTTP_PORT = 80;
         BIN = 'export DISPLAY=:0 && ' + BIN;
-        console.log('Running on Amazon Linux GPU HeadLess Server at port', HTTP_PORT);
+        console.log('Amazon Linux GPU HeadLess (need for now "sudo")');
     }
+
     var server = http.createServer( function (req, res) {
-        var request = url.parse(req.url);
-            
-        console.log('Request', request);
+        var request = url.parse(req.url);  
+        //console.log('Request:\n', request);
 
         if (request.query) {
             var query = parseQuery(request.query);
-            console.log('Query', query);
+            //console.log('Query:\n', query);
 
             var command = BIN;
            
@@ -75,13 +69,32 @@ fs.readFile('/etc/os-release', 'utf8', function (err,data) {
             if (query['scene']) {
                 command += ' -s ' + query['scene'];
             }
-            command += ' -o out.png';
-            console.log(command);
-            exec(command);
-            console.log('Done');
-            var img = fs.readFileSync('out.png');
-            res.writeHead(200, {'Content-Type': 'image/png' });
-            res.end(img, 'binary');
+
+            var unique_name = md5(command);
+            var image_path = CACHE_FOLDER + unique_name + '.png';
+            
+            if (fs.existsSync(image_path)) {
+                // If file is cached retrive it directly
+                console.log('Responding to cached image', image_path);
+                var img = fs.readFileSync(image_path);
+                res.writeHead(200, {'Content-Type': 'image/png' });
+                res.end(img, 'binary');
+            } else {
+                command += ' -o ' + image_path;
+                // If file doesn't exist create it!
+                exec(command, function(error, stdout, stderr) {
+                    //console.log('Error:\n', error);
+                    //console.log('ST out:\n', stdout);
+                    //console.log('ST err:\n', stderr);
+                    
+                    console.log('Command:\n', command);
+                    var img = fs.readFileSync(image_path);
+                    res.writeHead(200, {'Content-Type': 'image/png' });
+                    res.end(img, 'binary');
+                });
+            }            
         }
     }).listen(HTTP_PORT);
+    console.log('Server running on', server.address().address,  HTTP_PORT)
 });
+

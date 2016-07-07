@@ -112,3 +112,8 @@ make -j $n_cores
 cd ..
 ln -s build/bin/fonts .
 ln -s build/bin/scene.yaml .
+if [ ! -e cache ]; then
+    mkdir cache
+fi
+
+npm install
