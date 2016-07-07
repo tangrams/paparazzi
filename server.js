@@ -55,10 +55,7 @@ function parseQuery (qstr) {
 function responseImg(filePath, res) {
     fs.exists(filePath, function (exists) {
         if (!exists) {
-            // 404 missing files
-            logger.error({msg:'Tangram never made that image', qrt: query, key: key});
-            res.writeHead(404, {'Content-Type': 'text/plain' });
-            res.end('404 Not Found');
+            responseErr(res, {msg:'Tangram never made the image '+filePath});
             return;
         }
 
@@ -68,6 +65,12 @@ function responseImg(filePath, res) {
         // stream the file
         fs.createReadStream(filePath).pipe(res);
     });
+}
+
+function responseErr(res, msg) {
+    logger.error(msg);
+    res.writeHead(404, {'Content-Type': 'text/plain' });
+    res.end('404 Not Found');
 }
 
 fs.readFile('/etc/os-release', 'utf8', function (err,data) {
@@ -118,7 +121,7 @@ fs.readFile('/etc/os-release', 'utf8', function (err,data) {
                 if (scene.protocol.startsWith('http') && scene.href && path.extname(scene.href) == '.yaml') {
                     command += ' -s ' + query['scene'];    
                 } else {
-                    logger.error({src:'NODE', msg:query['scene']+' does not look like a URL path to YAML file', qrt: query, key: key});
+                    responseErr(res, {src:'NODE', msg:query['scene']+' does not look like a URL path to YAML file', qrt: query, key: key});
                     return;
                 }
             }
@@ -138,8 +141,9 @@ fs.readFile('/etc/os-release', 'utf8', function (err,data) {
                     command += ' -o ' + image_path;
                     
                     exec(command, function(error, stdout, stderr) {
-                        if (error) {
-                            logger.error({src:src, msg:error, qrt: query, key: key});
+                        if (error != undefined) {
+                            responseErr(res, {src:src, msg:error, qrt:query, key:key});
+                            return;
                         }
                         if (stdout) {
                             logger.debug({src:src, msg:stdout, qrt:query, key: key});
@@ -152,6 +156,8 @@ fs.readFile('/etc/os-release', 'utf8', function (err,data) {
                 }
                 logger.info({src:src, img:image_path, qry:query, key: key }); 
             });     
+        } else {
+            responseErr(res);
         }
     }).listen(HTTP_PORT);
     logger.info('SERVER running on ' + server.address().address + ':' +  HTTP_PORT);
