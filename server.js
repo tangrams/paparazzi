@@ -114,7 +114,13 @@ fs.readFile('/etc/os-release', 'utf8', function (err,data) {
                 command += ' -h ' + query['height'];
             }
             if (query['scene']) {
-                command += ' -s ' + query['scene'];
+                var scene = url.parse(query['scene']);
+                if (scene.protocol.startsWith('http') && scene.href && path.extname(scene.href) == '.yaml') {
+                    command += ' -s ' + query['scene'];    
+                } else {
+                    logger.error({src:'NODE', msg:query['scene']+' does not look like a URL path to YAML file', qrt: query, key: key});
+                    return;
+                }
             }
 
             var unique_name = md5(command);
