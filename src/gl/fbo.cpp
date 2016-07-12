@@ -14,7 +14,13 @@ Fbo::Fbo(unsigned int _width, unsigned int _height):Fbo() {
 }
 
 Fbo::~Fbo() {
-    glDeleteFramebuffers(1, &m_id);
+    unbind();
+    if (m_allocated) {
+        glDeleteTextures(1, &m_texture);
+        glDeleteTextures(1, &m_depth_texture);
+        glDeleteFramebuffers(1, &m_id);
+        m_allocated = false;
+    }
 }
 
 void Fbo::resize(const unsigned int _width, const unsigned int _height) {
@@ -40,8 +46,8 @@ void Fbo::resize(const unsigned int _width, const unsigned int _height) {
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glBindTexture(GL_TEXTURE_2D, 0);
 
     // Depth Texture
@@ -52,8 +58,8 @@ void Fbo::resize(const unsigned int _width, const unsigned int _height) {
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glBindTexture(GL_TEXTURE_2D, 0);
 
     // Associate the textures with the FBO

@@ -8,7 +8,7 @@ public:
     Fbo(unsigned int _width, unsigned int _height);
     virtual ~Fbo();
 
-    GLuint getGlHandle() { return m_id; }
+    const GLuint getGlHandle() { return m_id; }
     const GLuint getTextureId() const { return m_texture; };
     const GLuint getDepthTextureId() const { return m_depth_texture; };
 
