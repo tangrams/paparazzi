@@ -3,7 +3,7 @@
 #include <vector>
 
 #include "gl.h"
-#include "vertexLayout.h"
+#include "vLayout.h"
 
 #define MAX_INDEX_VALUE 65535
 
@@ -15,13 +15,13 @@ class Vbo {
 public:
 
     Vbo();
-    Vbo(VertexLayout* _vertexlayout, GLenum _drawMode = GL_TRIANGLES);
+    Vbo(VLayout* _xlayout, GLenum _drawMode = GL_TRIANGLES);
     virtual ~Vbo();
 
     /*
      * Set Vertex Layout for the Vbo object
      */
-    void setVertexLayout(VertexLayout* _vertexLayout);
+    void setVertexLayout(VLayout* _xLayout);
 
     /*
      * Set Draw mode for the Vbo object
@@ -54,7 +54,7 @@ public:
 
     int numIndices() const { return m_indices.size(); };
     int numVertices() const { return m_nVertices; };
-    VertexLayout* getVertexLayout() { return m_vertexLayout; };
+    VLayout* getVertexLayout() { return m_vLayout; };
 
     /*
      * Copies all added vertices and indices into OpenGL buffer objects; After geometry is uploaded,
@@ -70,7 +70,7 @@ public:
 
 private:
     
-    VertexLayout* m_vertexLayout;
+    VLayout* m_vLayout;
 
     std::vector<GLbyte> m_vertexData;
     GLuint  m_glVertexBuffer;

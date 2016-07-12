@@ -1,5 +1,10 @@
 #include "shader.h"
 
+#include "platform.h"
+#include "tangram.h"
+
+#include "platform_headless.h"
+
 #include <regex>
 #include "utils.h"
 

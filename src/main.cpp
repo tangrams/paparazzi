@@ -21,14 +21,20 @@
 #include "glm/trigonometric.hpp"
 
 #include "image_out.h"
-#include "fbo.h"
+#include "gl/fbo.h"
+#include "gl/shader.h"
+#include "gl/vbo.h"
+#include "types/shapes.h"
 
 static int width = 0;
 static int height = 0;
 static bool bUpdate = true;
 static std::string outputFile = "out.png";
 
-Fbo fbo;
+Fbo renderFbo;
+Fbo smallFbo;
+Vbo* smallVbo;
+Shader smallShader;
 
 //==============================================================================
 void setup(int argc, char **argv);
@@ -112,8 +118,12 @@ void setup(int argc, char **argv) {
         }
     }
 
+    width *= 2;
+    height *= 2;
+
     // Start Tangram
     Tangram::initialize("scene.yaml");
+    Tangram::setPixelScale(2.0f);
     //Tangram::loadScene(scene.c_str());
     Tangram::loadSceneAsync(scene.c_str());
 
@@ -121,8 +131,33 @@ void setup(int argc, char **argv) {
     initGL(width, height);
     
     Tangram::setupGL();
-    fbo.resize(width, height);
+    renderFbo.resize(width, height);
     Tangram::resize(width, height);
+
+    smallFbo.resize(width/2, height/2);
+    smallVbo = rect(0.0,0.0,1.,1.).getVbo();
+    std::string smallVert = "#ifdef GL_ES\n\
+precision mediump float;\n\
+#endif\n\
+\n\
+attribute vec4 a_position;\n\
+\n\
+void main(void) {\n\
+    gl_Position = a_position;\n\
+}";
+
+    std::string smallFrag = "#ifdef GL_ES\n\
+precision mediump float;\n\
+#endif\n\
+\n\
+uniform sampler2D u_buffer;\n\
+uniform vec2 u_resolution;\n\
+\n\
+void main() {\n\
+    vec2 st = gl_FragCoord.xy/u_resolution.xy;\n\
+    gl_FragColor = texture2D(u_buffer, st);\n\
+}";
+    smallShader.load(smallFrag, smallVert);
 
     if (lon != 0.0f && lat != 0.0f) {
         Tangram::setPosition(lon,lat);
@@ -142,17 +177,27 @@ void update(double delta) {// Update
     bool bFinish = Tangram::update(delta);
 
     // Render
-    fbo.bind();
+    renderFbo.bind();
     Tangram::render();
+    renderFbo.unbind();
 
     if (bFinish) {
+        int w = width/2;
+        int h = height/2;
+
+        smallFbo.bind();
+        smallShader.use();
+        smallShader.setUniform("u_resolution",w ,h);
+        smallShader.setUniform("u_buffer", &renderFbo, 0);
+        smallVbo->draw(&smallShader);
+
         LOG("SAVING PNG %s", outputFile.c_str());
-        unsigned char* pixels = new unsigned char[width*height*4];
-        glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
-        savePixels(outputFile.c_str(), pixels, width, height);
+        unsigned char* pixels = new unsigned char[w*h*4];
+        glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+        savePixels(outputFile.c_str(), pixels, w, h);
         bUpdate = false;
+        smallFbo.unbind();
     }
-    fbo.unbind();
     
     //renderGL();
 }

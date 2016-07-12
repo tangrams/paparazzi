@@ -15,20 +15,19 @@ enum AttrType {
     OTHER_ATTRIBUTE
 };
 
-class VertexLayout {
+class VLayout {
 public:
-
     struct VertexAttrib {
         std::string name;
         GLint size;
         GLenum type;
         AttrType attrType;
         GLboolean normalized;
-        GLvoid* offset; // Can be left as zero; value is overwritten in constructor of VertexLayout
+        GLvoid* offset; // Can be left as zero; value is overwritten in constructor of VLayout
     };
 
-    VertexLayout(std::vector<VertexAttrib> _attribs);
-    virtual ~VertexLayout();
+    VLayout(std::vector<VertexAttrib> _attribs);
+    virtual ~VLayout();
 
     void        enable(const Shader* _program);
 

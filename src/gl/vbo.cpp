@@ -1,11 +1,11 @@
 #include "vbo.h"
 #include <iostream>
 
-Vbo::Vbo(VertexLayout* _vertexLayout, GLenum _drawMode) : m_vertexLayout(_vertexLayout), m_glVertexBuffer(0), m_nVertices(0), m_glIndexBuffer(0), m_nIndices(0), m_isUploaded(false) {
+Vbo::Vbo(VLayout* _vertexLayout, GLenum _drawMode) : m_vLayout(_vertexLayout), m_glVertexBuffer(0), m_nVertices(0), m_glIndexBuffer(0), m_nIndices(0), m_isUploaded(false) {
     setDrawMode(_drawMode);
 }
 
-Vbo::Vbo() : m_vertexLayout(NULL), m_glVertexBuffer(0), m_nVertices(0), m_glIndexBuffer(0), m_nIndices(0), m_isUploaded(false) {
+Vbo::Vbo() : m_vLayout(NULL), m_glVertexBuffer(0), m_nVertices(0), m_glIndexBuffer(0), m_nIndices(0), m_isUploaded(false) {
 }
 
 Vbo::~Vbo() {
@@ -15,16 +15,16 @@ Vbo::~Vbo() {
     m_vertexData.clear();
     m_indices.clear();
 
-    if (m_vertexLayout != NULL){
-        delete m_vertexLayout;
+    if (m_vLayout != NULL){
+        delete m_vLayout;
     }
 }
 
-void Vbo::setVertexLayout(VertexLayout* _vertexLayout) {
-    if (m_vertexLayout != NULL){
-        delete m_vertexLayout;
+void Vbo::setVertexLayout(VLayout* _vertexLayout) {
+    if (m_vLayout != NULL){
+        delete m_vLayout;
     }
-    m_vertexLayout = _vertexLayout;
+    m_vLayout = _vertexLayout;
 }
 
 void Vbo::setDrawMode(GLenum _drawMode) {
@@ -61,7 +61,7 @@ void Vbo::addVertices(GLbyte* _vertices, int _nVertices) {
         std::cout << "WARNING: Tried to add more vertices than available in index space" << std::endl;
     }
 
-    int vertexBytes = m_vertexLayout->getStride() * _nVertices;
+    int vertexBytes = m_vLayout->getStride() * _nVertices;
     m_vertexData.insert(m_vertexData.end(), _vertices, _vertices + vertexBytes);
     m_nVertices += _nVertices;
 }
@@ -134,7 +134,7 @@ void Vbo::draw(const Shader* _shader) {
     _shader->use();
 
     // Enable vertex attribs via vertex layout object
-    m_vertexLayout->enable(_shader);
+    m_vLayout->enable(_shader);
 
     // Draw as elements or arrays
     if (m_nIndices > 0) {

@@ -1,9 +1,9 @@
-#include "vertexLayout.h"
+#include "vLayout.h"
 #include "utils.h"
 
-std::map<GLint, GLuint> VertexLayout::s_enabledAttribs = std::map<GLint, GLuint>();
+std::map<GLint, GLuint> VLayout::s_enabledAttribs = std::map<GLint, GLuint>();
 
-VertexLayout::VertexLayout(std::vector<VertexAttrib> _attribs) : m_attribs(_attribs), m_stride(0), m_positionAttribIndex(-1), m_colorAttribIndex(-1), m_normalAttribIndex(-1), m_texCoordAttribIndex(-1) {
+VLayout::VLayout(std::vector<VertexAttrib> _attribs) : m_attribs(_attribs), m_stride(0), m_positionAttribIndex(-1), m_colorAttribIndex(-1), m_normalAttribIndex(-1), m_texCoordAttribIndex(-1) {
 
     m_stride = 0;
     for (unsigned int i = 0; i < m_attribs.size(); i++) {
@@ -43,11 +43,11 @@ VertexLayout::VertexLayout(std::vector<VertexAttrib> _attribs) : m_attribs(_attr
     }
 }
 
-VertexLayout::~VertexLayout() {
+VLayout::~VLayout() {
     m_attribs.clear();
 }
 
-void VertexLayout::enable(const Shader* _program) {
+void VLayout::enable(const Shader* _program) {
     GLuint glProgram = _program->getProgram();
 
     // Enable all attributes for this layout
@@ -72,7 +72,7 @@ void VertexLayout::enable(const Shader* _program) {
     }
 }
 
-std::string VertexLayout::getDefaultVertShader() {
+std::string VLayout::getDefaultVertShader() {
     std::string rta = 
 "#ifdef GL_ES\n"
 "precision mediump float;\n"
@@ -115,7 +115,7 @@ std::string VertexLayout::getDefaultVertShader() {
     return rta;
 }
 
-std::string VertexLayout::getDefaultFragShader() {
+std::string VLayout::getDefaultFragShader() {
     std::string rta = 
 "#ifdef GL_ES\n"
 "precision mediump float;\n"
