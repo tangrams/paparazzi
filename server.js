@@ -1,4 +1,4 @@
-// NATIVE
+// NATIVE node modules
 var http = require('http'),   // http Server
     https = require('https'), // https Server
       fs = require('fs'),     // FileSystem.
@@ -6,16 +6,16 @@ var http = require('http'),   // http Server
      url = require('url'),    // Url
     exec = require('child_process').exec;
 
-// MODULES
+// EXTRA node modules
 var md5 = require('md5');
-var winston = require('winston');
+var winston = require('winston'); // I had listen that is a good log system... let's see
 
-// Config
-var BIN = 'build/bin/paparazzi';
-var HTTP_PORT = 8080;
-var CACHE_FOLDER = 'cache/';
+// Config GLOBAL variables
+var BIN = 'build/bin/paparazzi'; // Where is the paparazi binnary
+var HTTP_PORT = 8080;            // What port it should listen
+var CACHE_FOLDER = 'cache/';     // Where are the catche response files (.png .log)
 
-// Logger
+// LOG adding a time stamp to every entry to a file and the console.log simultaniusly
 var logger = new (winston.Logger)({
     transports: [
         new (winston.transports.Console)({
@@ -42,6 +42,7 @@ var logger = new (winston.Logger)({
     ]
 });
 
+// Return an obj with the querry string
 function parseQuery (qstr) {
     var query = {};
     var a = qstr.split('&');
@@ -52,19 +53,29 @@ function parseQuery (qstr) {
     return query;
 }
 
-function responseImg(unique_name, res) {
-    var filePath = CACHE_FOLDER + unique_name + '.png';
+// Check again if it exist or not and send back what ever file (PNG or LOG) that the user ask
+function responseFile(unique_name, ext, res) {
+    var filePath = CACHE_FOLDER + unique_name + ext;
     fs.exists(filePath, function (exists) {
         if (!exists) {
-            responseErr(res, {msg:'Tangram never made the image '+filePath});
+            responseErr(res, {msg:'Tangram-Paparazi binnary never generate ' + filePath});
             return;
         }
 
+        var header = {};
+        if (ext === 'png') {
+            header = {
+                'Content-Disposition': 'attachment;filename=' + unique_name + ext,
+                'Content-Type': 'image/png'
+            }
+        } else if (ext === 'log') {
+            header = {
+                'Content-Type': 'text/plain'
+            }
+        }
+
         // set the content type
-        res.writeHead(200, {
-            'Content-Disposition': 'attachment;filename=' + filePath,
-            'Content-Type': 'image/png'
-        });
+        res.writeHead(200, header);
 
         // stream the file
         fs.createReadStream(filePath).pipe(res);
@@ -92,13 +103,18 @@ fs.readFile('/etc/os-release', 'utf8', function (err,data) {
         var request = url.parse(req.url);
 
         if (request.query) {
+            // Parse the query string
             var query = parseQuery(request.query);
+            
+            // TODO:
+            //  - For future API_KEY checking or tracking
             var key = 'NONE';
             if (query['api_key']) {
                 key = query['api_key'];
             }
+            
+            // Listen for arguments to pass to Tangram-ES and construct a command string for it
             var command = BIN;
-           
             if (query['lat'] && typeof parseFloat(query['lat']) === 'number') {
                 command += ' -lat ' + query['lat'];
             }
@@ -130,40 +146,53 @@ fs.readFile('/etc/os-release', 'utf8', function (err,data) {
                 }
             }
 
-            var unique_name = md5(command);
-            var image_path = CACHE_FOLDER + unique_name + '.png';
-            var src = 'NONE';
+            //  Is it asking for an image or the log file (STDOUT+STDERR)??
+            var ext = '.png';
+            if (query['ext']) {
+                if (query['ext'] === 'log' || query['ext'] === 'png'){
+                    ext = '.' + query['ext'];
+                }
+            } 
 
-            fs.exists(image_path, function (exists) {
+            // Based on the command that construct make a md5 unique name
+            var unique_name = md5(command);
+
+            // Infere the image and log file names for it
+            var file_image = CACHE_FOLDER + unique_name + '.png';
+            var file_log = CACHE_FOLDER + unique_name + '.log';
+            
+            var src = 'NONE'; // is going to reply from the catche or through a new tangram image?
+            fs.exists(CACHE_FOLDER + unique_name + ext, function (exists) {
                 if (exists) {
                     // If exist send back the cached one
                     src = 'CACHE_FOLDER';
-                    responseImg(unique_name, res);
+                    responseFile(unique_name, ext, res);
                 } else {
                     // If file doesn't exist create it!
                     src = 'TANGRAM-ES';
-                    command += ' -o ' + image_path;
+                    command += ' -o ' + file_image + ' >' + file_log + ' 2>&1';
                     
                     exec(command, function(error, stdout, stderr) {
                         if (error != undefined) {
                             responseErr(res, {src:src, msg:error, qrt:query, key:key});
                             return;
                         }
-                        if (stdout) {
-                            logger.debug({src:src, msg:stdout, qrt:query, key: key});
-                        }
-                        if (stderr) {
-                            logger.error({src:src, msg:stderr, qry:query, key: key});
-                        }
-                        responseImg(unique_name, res);
+                        // It should need to enter to this two since they are redirected through the shell pipes
+                        if (stdout) { logger.debug({src:src, msg:stdout, qrt:query, key: key}); }
+                        if (stderr) { logger.error({src:src, msg:stderr, qry:query, key: key}); }
+
+                        // Make a respond according to the extention
+                        responseFile(unique_name, ext, res);
                     });
                 }
-                logger.info({src:src, img:image_path, qry:query, key: key }); 
+                // Log the CALL 
+                logger.info({src:src, img:file_image, qry:query, key: key }); 
             });     
         } else {
+            // The user is asking for something that makes no sense... respond with a 404
             responseErr(res);
         }
     }).listen(HTTP_PORT);
-    logger.info('SERVER running on ' + server.address().address + ':' +  HTTP_PORT);
+    logger.info('SERVER running on port' +  HTTP_PORT);
 });
 
