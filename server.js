@@ -52,7 +52,8 @@ function parseQuery (qstr) {
     return query;
 }
 
-function responseImg(filePath, res) {
+function responseImg(unique_name, res) {
+    var filePath = CACHE_FOLDER + unique_name + '.png';
     fs.exists(filePath, function (exists) {
         if (!exists) {
             responseErr(res, {msg:'Tangram never made the image '+filePath});
@@ -60,7 +61,10 @@ function responseImg(filePath, res) {
         }
 
         // set the content type
-        res.writeHead(200, {'Content-Type': 'image/png' });
+        res.writeHead(200, {
+            'Content-Disposition': 'attachment;filename=' + filePath,
+            'Content-Type': 'image/png'
+        });
 
         // stream the file
         fs.createReadStream(filePath).pipe(res);
@@ -134,7 +138,7 @@ fs.readFile('/etc/os-release', 'utf8', function (err,data) {
                 if (exists) {
                     // If exist send back the cached one
                     src = 'CACHE_FOLDER';
-                    responseImg(image_path, res);
+                    responseImg(unique_name, res);
                 } else {
                     // If file doesn't exist create it!
                     src = 'TANGRAM-ES';
@@ -151,7 +155,7 @@ fs.readFile('/etc/os-release', 'utf8', function (err,data) {
                         if (stderr) {
                             logger.error({src:src, msg:stderr, qry:query, key: key});
                         }
-                        responseImg(image_path, res);
+                        responseImg(unique_name, res);
                     });
                 }
                 logger.info({src:src, img:image_path, qry:query, key: key }); 
