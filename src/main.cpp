@@ -9,37 +9,51 @@
 #include <string.h>
 #include <termios.h>
 
-#include <curl/curl.h>
-
-#include "context.h"
-#include "tangram.h"
-#include "platform.h"
-#include "platform_headless.h"
-
 #include <sstream>
 #include <iostream>
-#include "glm/trigonometric.hpp"
 
+#include <curl/curl.h>  // Curl
+#include "glm/trigonometric.hpp" // GLM for the radians/degree calc
+
+#include "tangram.h"    // Tangram
+#include "platform.h"   // Tangram platform specifics
+
+#include "context.h"    // This set the headless context
+#include "platform_headless.h" // headless platforms (Linux and RPi)
+
+// Some of my own tools to scale down the rendering image and download it to a file
 #include "image_out.h"
-#include "gl/fbo.h"
-#include "gl/shader.h"
-#include "gl/vbo.h"
-#include "types/shapes.h"
+#include "gl/fbo.h"     // simple FBO implementation
+#include "gl/shader.h"  // simple ShaderProgram implementation
+#include "gl/vbo.h"     // simple VBO implementation
+#include "types/shapes.h" // Small library to compose basic shapes (use for rect)
 
-static int width = 0;
-static int height = 0;
-static bool bUpdate = true;
-static std::string outputFile = "out.png";
+// Default parametters
+static std::string outputFile = "out.png";  // default filename of the generated image
+static std::string scene = "scene.yaml";    // default scene file
+static double lat = 0.0f;   // Default lat position
+static double lon = 0.0f;   // Default lng position
+static float zoom = 0.0f;   // Default zoom of the scene
+static float rot = 0.0f;    // Default rotation of the scene (deg)
+static float tilt = 0.0f;   // Default tilt angle (deg)
+static int width = 800;     // Default Width of the image (will be multipl by 2 for the antialiasing)
+static int height = 480;    // Default height of the image (will be multipl by 2 for the antialiasing)
 
-Fbo renderFbo;
-Fbo smallFbo;
-Vbo* smallVbo;
-Shader smallShader;
+// Global variables
+static float maxTime = 20.0; // Max amount of seconds it can take to load a scene
+static bool bUpdate = true; // This keeps the render loop running, once the scene is loaded will turn FALSE
 
-//==============================================================================
-void setup(int argc, char **argv);
-void update(double delta);
+// Antialiase tools
+Fbo renderFbo;      // FrameBufferObject where the tangram scene will be renderd 
+Fbo smallFbo;       // FrameBufferObject of the half of the size to fake an antialiased image
+Vbo* smallVbo;      // VertexBufferObject to down sample the renderFbo to (like a billboard)
+Shader smallShader; // Shader program to use to down sample the renderFbo with
 
+// Setup and Update sub rutines to make it more readable
+void setup(int argc, char **argv);  // Setup the scene
+void update(double delta);          // Update the scene: where the scene is construct over time
+
+//============================================================================== MAIN FUNCTION
 int main(int argc, char **argv) {
 
     // Initialize cURL
@@ -48,34 +62,38 @@ int main(int argc, char **argv) {
     // Set background color and clear buffers
     setup(argc, argv);
 
-    double lastTime = getTime();
+    // Keep track of time
+    double startTime = getTime();
+    double lastTime = startTime;
+    double currentTime = startTime;
 
-    while (bUpdate) {
-        double currentTime = getTime();
-        double delta = currentTime - lastTime;
-        lastTime = currentTime;
-
+    // MAIN LOOP (will be force to end after maxTime)
+    while ((currentTime - startTime) < maxTime && bUpdate) {
+        // Update the time
+        currentTime = getTime();
+        
+        // Update Network Queue
         processNetworkQueue();
+        // Update Scene
+        update(currentTime - lastTime);
 
-        update(delta);
+        // Update time
+        lastTime = currentTime;
     }
 
+    // Clear running threaths and close OpenGL ES
     finishUrlRequests();
     curl_global_cleanup();
     closeGL();
+
+    // Go home
     return 0;
 }
 
+//============================================================================== SETUP
 void setup(int argc, char **argv) {
-    width = 800;
-    height = 480;
-    float rot = 0.0f;
-    float zoom = 0.0f;
-    float tilt = 0.0f;
-    double lat = 0.0f;
-    double lon = 0.0f;
-    std::string scene = "scene.yaml";
 
+    // Parse arguments into default variables
     for (int i = 1; i < argc ; i++) {
         if (std::string(argv[i]) == "-s" ||
             std::string(argv[i]) == "--scene") {
@@ -118,86 +136,89 @@ void setup(int argc, char **argv) {
         }
     }
 
+    // What ever the user said let's multiply the scene size x2 
+    // to then scale it down x.5 for a cheap antialiase
     width *= 2;
     height *= 2;
 
     // Start Tangram
-    Tangram::initialize("scene.yaml");
-    Tangram::setPixelScale(2.0f);
-    //Tangram::loadScene(scene.c_str());
-    Tangram::loadSceneAsync(scene.c_str());
+    Tangram::initialize(scene.c_str());     // Initialite Tangram scene engine
+    Tangram::setPixelScale(2.0f);           // Because we are scaling everything x2, tangram needs to belive this is a retina display
+    Tangram::loadSceneAsync(scene.c_str()); // Start loading the scene file
 
-    // Start OpenGL context
+    // Start OpenGL ES context
     initGL(width, height);
     
+    // Start OpenGL resource of Tangram
     Tangram::setupGL();
-    renderFbo.resize(width, height);
     Tangram::resize(width, height);
 
+    // Allocate the main FrameBufferObject were tangram will be draw
+    renderFbo.resize(width, height);
+
+    // Allocate the smaller FrameBufferObject were the main FBO will be draw
     smallFbo.resize(width/2, height/2);
+    // Create a rectangular Billboard to draw the main FBO
     smallVbo = rect(0.0,0.0,1.,1.).getVbo();
+    // Create a simple vert/frag glsl shader to draw the main FBO with
     std::string smallVert = "#ifdef GL_ES\n\
 precision mediump float;\n\
 #endif\n\
-\n\
 attribute vec4 a_position;\n\
-\n\
 void main(void) {\n\
     gl_Position = a_position;\n\
 }";
-
     std::string smallFrag = "#ifdef GL_ES\n\
 precision mediump float;\n\
 #endif\n\
-\n\
 uniform sampler2D u_buffer;\n\
 uniform vec2 u_resolution;\n\
-\n\
 void main() {\n\
-    vec2 st = gl_FragCoord.xy/u_resolution.xy;\n\
-    gl_FragColor = texture2D(u_buffer, st);\n\
+    gl_FragColor = texture2D(u_buffer, gl_FragCoord.xy/u_resolution.xy);\n\
 }";
     smallShader.load(smallFrag, smallVert);
 
-    if (lon != 0.0f && lat != 0.0f) {
-        Tangram::setPosition(lon,lat);
-    }
-    if (zoom != 0.0f) {
-        Tangram::setZoom(zoom);
-    }
-    if (tilt != 0.0f) {
-        Tangram::setTilt(glm::radians(tilt));
-    }
-    if (rot != 0.0f) {
-        Tangram::setRotation(glm::radians(rot));
-    }
+    // If one of the default parameters is different than 0.0 change it
+    if (lon != 0.0f && lat != 0.0f) Tangram::setPosition(lon,lat);
+    if (zoom != 0.0f) Tangram::setZoom(zoom);
+    if (tilt != 0.0f) Tangram::setTilt(glm::radians(tilt));
+    if (rot != 0.0f) Tangram::setRotation(glm::radians(rot));
 }
 
-void update(double delta) {// Update    
-    bool bFinish = Tangram::update(delta);
+//============================================================================== UPDATE
+void update(double delta) {
+    // Tangram:update return TRUE when the scene finish loading
+    bool bFinish = Tangram::update(delta); 
 
-    // Render
-    renderFbo.bind();
-    Tangram::render();
-    renderFbo.unbind();
+    // Render the Tangram scene inside an FrameBufferObject
+    renderFbo.bind();   // Bind main FBO
+    Tangram::render();  // Render Tangram Scene
+    renderFbo.unbind(); // Unbind main FBO
 
     if (bFinish) {
+        // If it finish 
+
+        // at the half of the size of the rendered scene
         int w = width/2;
         int h = height/2;
 
+        // Draw the main FBO inside the small one
         smallFbo.bind();
         smallShader.use();
         smallShader.setUniform("u_resolution",w ,h);
         smallShader.setUniform("u_buffer", &renderFbo, 0);
         smallVbo->draw(&smallShader);
 
+        // Once the main FBO is draw take a picture
         LOG("SAVING PNG %s", outputFile.c_str());
-        unsigned char* pixels = new unsigned char[w*h*4];
-        glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
-        savePixels(outputFile.c_str(), pixels, w, h);
-        bUpdate = false;
+        unsigned char* pixels = new unsigned char[w*h*4];   // allocate memory for the pixels
+        glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, pixels); // Read throug the current buffer pixels
+        savePixels(outputFile.c_str(), pixels, w, h);   // save them to a file
+       
+        // Close the smaller FBO because we are civilize ppl
         smallFbo.unbind();
+
+        // Kill the main update loop
+        bUpdate = false;
     }
-    
-    //renderGL();
 }
