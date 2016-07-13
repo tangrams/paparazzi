@@ -56,6 +56,7 @@ function parseQuery (qstr) {
 // Check again if it exist or not and send back what ever file (PNG or LOG) that the user ask
 function responseFile(unique_name, ext, res) {
     var filePath = CACHE_FOLDER + unique_name + ext;
+
     fs.exists(filePath, function (exists) {
         if (!exists) {
             responseErr(res, {msg:'Tangram-Paparazi binnary never generate ' + filePath});
@@ -100,6 +101,7 @@ fs.readFile('/etc/os-release', 'utf8', function (err,data) {
     }
 
     var server = http.createServer( function (req, res) {
+        res.setHeader("access-control-allow-origin", "*");
         var request = url.parse(req.url);
 
         if (request.query) {
