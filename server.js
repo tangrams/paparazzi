@@ -4,6 +4,7 @@ var http = require('http'),   // http Server
       fs = require('fs'),     // FileSystem.
     path = require('path'),   // used for traversing your OS.
      url = require('url'),    // Url
+  crypto = require('crypto'), // SSL 
     exec = require('child_process').exec;
 
 // EXTRA node modules
@@ -14,6 +15,8 @@ var winston = require('winston'); // I had listen that is a good log system... l
 var BIN = 'build/bin/paparazzi'; // Where is the paparazi binnary
 var HTTP_PORT = 8080;            // What port it should listen
 var CACHE_FOLDER = 'cache/';     // Where are the catche response files (.png .log)
+var SERVER_KEY = 'key.pem';
+var SERVER_CRS = 'cert.pem';
 
 // LOG adding a time stamp to every entry to a file and the console.log simultaniusly
 var logger = new (winston.Logger)({
@@ -100,7 +103,7 @@ fs.readFile('/etc/os-release', 'utf8', function (err,data) {
         console.log('Amazon Linux GPU HeadLess (need for now "sudo")');
     }
 
-    var server = http.createServer( function (req, res) {
+    var app = function (req, res) {
         res.setHeader("access-control-allow-origin", "*");
         var request = url.parse(req.url);
 
@@ -194,7 +197,26 @@ fs.readFile('/etc/os-release', 'utf8', function (err,data) {
             // The user is asking for something that makes no sense... respond with a 404
             responseErr(res);
         }
-    }).listen(HTTP_PORT);
-    logger.info('SERVER running on port' +  HTTP_PORT);
+    }
+    http.createServer(app).listen(HTTP_PORT);
+    logger.info('SERVER running on port ' +  HTTP_PORT);
+
+    // Check if there are SSL credentials
+    if (fs.existsSync(SERVER_KEY) && fs.existsSync(SERVER_CRS)) {
+        var https = require('https');
+        console.log('LOADING SSL self sign certificates');
+
+        var options = {
+          key: fs.readFileSync(SERVER_KEY),
+          cert: fs.readFileSync(SERVER_CRS)
+        };
+        if (HTTP_PORT == 80) {
+            HTTP_PORT = 443;
+        } else {
+            HTTP_PORT = 4433;
+        }
+        https.createServer(options,app).listen(HTTP_PORT);
+        logger.info('SERVER running on port ' + HTTP_PORT);
+    }
 });
 

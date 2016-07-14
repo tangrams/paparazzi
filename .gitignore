@@ -9,3 +9,4 @@ scene.yaml
 node_modules
 cache
 paparazzi.log
+*.pem
