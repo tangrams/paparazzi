@@ -186,22 +186,10 @@ void main() {\n\
     smallShader.load(smallFrag, smallVert);
 
     // If one of the default parameters is different than 0.0 change it
-    if (lon != 0.0f && lat != 0.0f) {
-        logMsg('set position %f lng, %f lat\n', lon, lat);
-        Tangram::setPosition(lon,lat);
-    }
-    if (zoom != 0.0f) {
-        logMsg('set zoom %f\n', zoom);
-        Tangram::setZoom(zoom);
-    }
-    if (tilt != 0.0f) {
-        logMsg('set tilt %f\n', tilt);
-        Tangram::setTilt(glm::radians(tilt));
-    }
-    if (rot != 0.0f) {
-        logMsg('set rotation %f\n', tilt);
-        Tangram::setRotation(glm::radians(rot));
-    }
+    if (lon != 0.0f && lat != 0.0f) Tangram::setPosition(lon,lat);
+    if (zoom != 0.0f) Tangram::setZoom(zoom);
+    if (tilt != 0.0f) Tangram::setTilt(glm::radians(tilt));
+    if (rot != 0.0f) Tangram::setRotation(glm::radians(rot));
 }
 
 //============================================================================== UPDATE
