@@ -71,7 +71,7 @@ int main(int argc, char **argv) {
     while ((currentTime - startTime) < maxTime && bUpdate) {
         // Update the time
         currentTime = getTime();
-        
+
         // Update Network Queue
         processNetworkQueue();
         // Update Scene
@@ -81,10 +81,17 @@ int main(int argc, char **argv) {
         lastTime = currentTime;
     }
 
+    if ((currentTime - startTime) >= maxTime) {
+        logMsg("Time out!\n");
+    }
+
     // Clear running threaths and close OpenGL ES
+    logMsg("Closing...\n");
     finishUrlRequests();
     curl_global_cleanup();
     closeGL();
+    logMsg("END\n");
+
 
     // Go home
     return 0;
@@ -179,10 +186,22 @@ void main() {\n\
     smallShader.load(smallFrag, smallVert);
 
     // If one of the default parameters is different than 0.0 change it
-    if (lon != 0.0f && lat != 0.0f) Tangram::setPosition(lon,lat);
-    if (zoom != 0.0f) Tangram::setZoom(zoom);
-    if (tilt != 0.0f) Tangram::setTilt(glm::radians(tilt));
-    if (rot != 0.0f) Tangram::setRotation(glm::radians(rot));
+    if (lon != 0.0f && lat != 0.0f) {
+        logMsg('set position %f lng, %f lat\n', lon, lat);
+        Tangram::setPosition(lon,lat);
+    }
+    if (zoom != 0.0f) {
+        logMsg('set zoom %f\n', zoom);
+        Tangram::setZoom(zoom);
+    }
+    if (tilt != 0.0f) {
+        logMsg('set tilt %f\n', tilt);
+        Tangram::setTilt(glm::radians(tilt));
+    }
+    if (rot != 0.0f) {
+        logMsg('set rotation %f\n', tilt);
+        Tangram::setRotation(glm::radians(rot));
+    }
 }
 
 //============================================================================== UPDATE
@@ -210,7 +229,7 @@ void update(double delta) {
         smallVbo->draw(&smallShader);
 
         // Once the main FBO is draw take a picture
-        LOG("SAVING PNG %s", outputFile.c_str());
+        LOG("SAVING PNG %s\n", outputFile.c_str());
         unsigned char* pixels = new unsigned char[w*h*4];   // allocate memory for the pixels
         glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, pixels); // Read throug the current buffer pixels
         savePixels(outputFile.c_str(), pixels, w, h);   // save them to a file

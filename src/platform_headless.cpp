@@ -1,8 +1,8 @@
-#ifdef PLATFORM_RPI
+//#ifdef PLATFORM_RPI
 #include "platform.h"
 #include "gl.h"
 #include "context.h"
-#endif
+//#endif
 
 #include <stdio.h>
 #include <stdarg.h>
@@ -34,9 +34,10 @@ static UrlWorker s_Workers[NUM_WORKERS];
 static std::list<std::unique_ptr<UrlTask>> s_urlTaskQueue;
 
 void logMsg(const char* fmt, ...) {
+    std::string str = std::to_string(getTime()) + " - " + fmt;
     va_list args;
-    va_start(args, fmt);
-    vfprintf(stderr, fmt, args);
+    va_start(args, str.c_str());
+    vfprintf(stderr, str.c_str(), args);
     va_end(args);
 }
 
