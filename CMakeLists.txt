@@ -110,7 +110,7 @@ elseif(${PLATFORM_TARGET} MATCHES "linux")
         set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}  -lc++ -lc++abi")
     endif()
 
-elseif(${PLATFORM_TARGET} MATCHES "darwin")
+elseif(${PLATFORM_TARGET} MATCHES "osx")
 
     #
     #   DARWIN
@@ -134,14 +134,14 @@ elseif(${PLATFORM_TARGET} MATCHES "darwin")
     set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
     # compiler options
-    # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -fpermissive -g -std=c++1y")
-    #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-omit-frame-pointer")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++ -std=c++1y")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wreturn-type -Wsign-compare-Wno-gnu-zero-variadic-macro-arguments ")
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lc++ -lc++abi")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wreturn-type -Wsign-compare")
     set(CXX_FLAGS_DEBUG "-g -O0")
 
-    target_link_libraries(${EXECUTABLE_NAME} ${CORE_LIBRARY} -lcurl glfw ${GLFW_LIBRARIES} ${OPENGL_LIBRARIES})
+    add_executable(${EXECUTABLE_NAME} MACOSX_BUNDLE ${SOURCES} ${RESOURCES} ${OSX_RESOURCES})
+
+    # target_link_libraries(${EXECUTABLE_NAME} -lcurl)
+    target_link_libraries(${EXECUTABLE_NAME} ${CORE_LIBRARY} glfw ${OPENGL_LIBRARIES})
 
 endif()
 
