@@ -76,7 +76,7 @@ if(${PLATFORM_TARGET} MATCHES "rpi")
     target_link_libraries(${EXECUTABLE_NAME} -lcurl)
     target_link_libraries(${EXECUTABLE_NAME} ${CORE_LIBRARY})
 
-else()
+elseif(${PLATFORM_TARGET} MATCHES "linux")
 
     #
     #   LINUX
@@ -110,44 +110,39 @@ else()
         set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}  -lc++ -lc++abi")
     endif()
 
-    # compile definitions (adds -DPLATFORM_LINUX)
-    add_definitions(-DPLATFORM_LINUX)
-    set(PLATFORM_LINUX ON)
-    set(CORE_COMPILE_DEFS PLATFORM_LINUX)
+elseif(${PLATFORM_TARGET} MATCHES "darwin")
 
-    if (CMAKE_COMPILER_IS_GNUCC)
-        execute_process(COMMAND ${CMAKE_CXX_COMPILER} -dumpversion OUTPUT_VARIABLE GCC_VERSION)
-        string(REGEX MATCHALL "[0-9]+" GCC_VERSION_COMPONENTS ${GCC_VERSION})
-        list(GET GCC_VERSION_COMPONENTS 0 GCC_MAJOR)
-        list(GET GCC_VERSION_COMPONENTS 1 GCC_MINOR)
-        message(STATUS "Using gcc ${GCC_VERSION}")
-        if (GCC_VERSION VERSION_GREATER 5.1)
-            message(STATUS "USE CXX11_ABI")
-            add_definitions("-D_GLIBCXX_USE_CXX11_ABI=1")
-        endif()
-    endif()
+    #
+    #   DARWIN
+    #
+    #############################################################################
+    message(STATUS "Building config for Darwin OSX")
 
-    # add sources and include headers
-    find_sources_and_include_directories(
-        ${PROJECT_SOURCE_DIR}/tangram-es/linux/src/urlWorker.h
-        ${PROJECT_SOURCE_DIR}/tangram-es/linux/src/urlWorker.cpp)
-
-    # load core library
-    add_subdirectory(${PROJECT_SOURCE_DIR}/tangram-es/external)
-    add_subdirectory(${PROJECT_SOURCE_DIR}/tangram-es/core)
-    include_directories(${CORE_INCLUDE_DIRS})
-    include_directories(${CORE_LIBRARIES_INCLUDE_DIRS})
-
-    # add executable
-    add_executable(${EXECUTABLE_NAME} ${SOURCES})
-
-    # copy resources
-    add_resources(${EXECUTABLE_NAME} "${PROJECT_SOURCE_DIR}/tangram-es/scenes")
     find_package(OpenGL REQUIRED)
 
-    # link libraries
-    target_link_libraries(${EXECUTABLE_NAME} ${CORE_LIBRARY})
-    target_link_libraries(${EXECUTABLE_NAME} ${CORE_LIBRARY} -lcurl glfw -ldl ${GLFW_LIBRARIES} ${OPENGL_LIBRARIES})
+    # set for test in other cmake files
+    set(PLATFORM_OSX ON)
+    cmake_minimum_required(VERSION 2.8)
+    project(tangram)
+
+    # helper functions
+    include(${PROJECT_SOURCE_DIR}/tangram-es/toolchains/utils.cmake)
+
+    # cmake output configuration
+    set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+    set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+
+    # compiler options
+    # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -fpermissive -g -std=c++1y")
+    #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-omit-frame-pointer")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++ -std=c++1y")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wreturn-type -Wsign-compare-Wno-gnu-zero-variadic-macro-arguments ")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lc++ -lc++abi")
+    set(CXX_FLAGS_DEBUG "-g -O0")
+
+    target_link_libraries(${EXECUTABLE_NAME} ${CORE_LIBRARY} -lcurl glfw ${GLFW_LIBRARIES} ${OPENGL_LIBRARIES})
+
 endif()
 
 add_resources(${EXECUTABLE_NAME} "${PROJECT_SOURCE_DIR}/scenes")

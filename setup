@@ -102,6 +102,8 @@ elif [ $OS == "Darwin" ]; then
     brew update
     brew upgrade
     brew install $deps_common
+    cmake_arg="-DPLATFORM_TARGET=darwin"
+    
 fi
 
 git submodule update --init --recursive

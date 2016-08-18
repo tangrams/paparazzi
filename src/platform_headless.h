@@ -7,6 +7,11 @@
 #include <GLFW/glfw3.h>
 #endif
 
+#ifdef PLATFORM_OSX
+#define GLFW_INCLUDE_GLEXT
+#include <GLFW/glfw3.h>
+#endif
+
 #ifdef PLATFORM_RPI
 #include "bcm_host.h"
 
