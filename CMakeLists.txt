@@ -92,12 +92,12 @@ elseif(${PLATFORM_TARGET} MATCHES "linux")
     project(tangram)
 
     # helper functions
-    include(${PROJECT_SOURCE_DIR}/tangram-es/toolchains/utils.cmake)
+    # include(${PROJECT_SOURCE_DIR}/tangram-es/toolchains/utils.cmake)
 
     # cmake output configuration
-    set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
-    set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
-    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+    # set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+    # set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+    # set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
     # compiler options
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -fpermissive -g -std=c++1y")
@@ -126,17 +126,22 @@ elseif(${PLATFORM_TARGET} MATCHES "osx")
     project(tangram)
 
     # helper functions
-    include(${PROJECT_SOURCE_DIR}/tangram-es/toolchains/utils.cmake)
+    # include(${PROJECT_SOURCE_DIR}/tangram-es/toolchains/utils.cmake)
 
     # cmake output configuration
-    set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
-    set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
-    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+    # set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+    # set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+    # set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
     # compiler options
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++ -std=c++1y")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wreturn-type -Wsign-compare")
     set(CXX_FLAGS_DEBUG "-g -O0")
+
+    add_subdirectory(${PROJECT_SOURCE_DIR}/tangram-es/external)
+    add_subdirectory(${PROJECT_SOURCE_DIR}/tangram-es/core)
+    include_directories(${CORE_INCLUDE_DIRS})
+    include_directories(${CORE_LIBRARIES_INCLUDE_DIRS})
 
     add_executable(${EXECUTABLE_NAME} MACOSX_BUNDLE ${SOURCES} ${RESOURCES} ${OSX_RESOURCES})
 
