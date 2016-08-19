@@ -91,7 +91,7 @@ std::string VLayout::getDefaultVertShader() {
 
     for ( uint i = 0; i < m_attribs.size(); i++ ){
         int size = m_attribs[i].size;
-        if (m_positionAttribIndex == i){
+        if (m_positionAttribIndex == int(i)){
             size = 4;
         }
         rta += "attribute vec" + getString(size) + " a_" + m_attribs[i].name + ";\n";
@@ -106,7 +106,7 @@ std::string VLayout::getDefaultVertShader() {
         rta += "    v_" + m_attribs[i].name + " = a_" + m_attribs[i].name + ";\n";
     }
 
-    if (m_positionAttribIndex != -1 && m_positionAttribIndex < m_attribs.size()){
+    if (m_positionAttribIndex != -1 && m_positionAttribIndex < int(m_attribs.size())){
         rta += "    gl_Position = u_modelViewProjectionMatrix * v_" + m_attribs[m_positionAttribIndex].name + ";\n";
     }
     
@@ -134,7 +134,7 @@ std::string VLayout::getDefaultFragShader() {
 
     for ( uint i = 0; i < m_attribs.size(); i++ ){
         int size = m_attribs[i].size;
-        if (m_positionAttribIndex == i){
+        if (m_positionAttribIndex == int(i)){
             size = 4;
         }
         rta += "varying vec" + getString(size) + " v_" + m_attribs[i].name + ";\n";

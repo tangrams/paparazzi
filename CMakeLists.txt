@@ -98,11 +98,22 @@ elseif(${PLATFORM_TARGET} MATCHES "linux")
         set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}  -lc++ -lc++abi")
     endif()
 
+    find_sources_and_include_directories(
+        ${PROJECT_SOURCE_DIR}/tangram-es/linux/src/urlWorker.h
+        ${PROJECT_SOURCE_DIR}/tangram-es/linux/src/urlWorker.cpp)
+
     # add sources and include headers
     add_subdirectory(${PROJECT_SOURCE_DIR}/tangram-es/external)
     add_subdirectory(${PROJECT_SOURCE_DIR}/tangram-es/core)
     include_directories(${CORE_INCLUDE_DIRS})
     include_directories(${CORE_LIBRARIES_INCLUDE_DIRS})
+
+    add_executable(${EXECUTABLE_NAME} ${SOURCES})
+
+    target_link_libraries(${EXECUTABLE_NAME} ${CORE_LIBRARY})
+    target_link_libraries(${EXECUTABLE_NAME} -lcurl)
+    target_link_libraries(${EXECUTABLE_NAME} glfw)
+    target_link_libraries(${EXECUTABLE_NAME} ${OPENGL_LIBRARIES})
 
 elseif(${PLATFORM_TARGET} MATCHES "osx")
     message(STATUS "Building config for Darwin OSX")
