@@ -88,8 +88,6 @@ elseif(${PLATFORM_TARGET} MATCHES "linux")
 
     # set for test in other cmake files
     set(PLATFORM_LINUX ON)
-    cmake_minimum_required(VERSION 2.8)
-    project(tangram)
 
     # helper functions
     # include(${PROJECT_SOURCE_DIR}/tangram-es/toolchains/utils.cmake)
@@ -110,6 +108,11 @@ elseif(${PLATFORM_TARGET} MATCHES "linux")
         set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}  -lc++ -lc++abi")
     endif()
 
+    add_subdirectory(${PROJECT_SOURCE_DIR}/tangram-es/external)
+    add_subdirectory(${PROJECT_SOURCE_DIR}/tangram-es/core)
+    include_directories(${CORE_INCLUDE_DIRS})
+    include_directories(${CORE_LIBRARIES_INCLUDE_DIRS})
+
 elseif(${PLATFORM_TARGET} MATCHES "osx")
 
     #
@@ -122,8 +125,6 @@ elseif(${PLATFORM_TARGET} MATCHES "osx")
 
     # set for test in other cmake files
     set(PLATFORM_OSX ON)
-    cmake_minimum_required(VERSION 2.8)
-    project(tangram)
 
     # helper functions
     # include(${PROJECT_SOURCE_DIR}/tangram-es/toolchains/utils.cmake)
@@ -143,9 +144,12 @@ elseif(${PLATFORM_TARGET} MATCHES "osx")
     include_directories(${CORE_INCLUDE_DIRS})
     include_directories(${CORE_LIBRARIES_INCLUDE_DIRS})
 
-    add_executable(${EXECUTABLE_NAME} MACOSX_BUNDLE ${SOURCES} ${RESOURCES} ${OSX_RESOURCES})
+    add_executable(${EXECUTABLE_NAME} ${SOURCES})
+    # add_executable(${EXECUTABLE_NAME} MACOSX_BUNDLE ${SOURCES} ${RESOURCES} ${OSX_RESOURCES})
 
-    target_link_libraries(${EXECUTABLE_NAME} ${CORE_LIBRARY} glfw ${OPENGL_LIBRARIES})
+    target_link_libraries(${EXECUTABLE_NAME} ${CORE_LIBRARY})
+    target_link_libraries(${EXECUTABLE_NAME} glfw)
+    target_link_libraries(${EXECUTABLE_NAME} ${OPENGL_LIBRARIES})
 
 endif()
 
