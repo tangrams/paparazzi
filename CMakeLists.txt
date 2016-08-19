@@ -23,11 +23,6 @@ find_sources_and_include_directories(
     ${PROJECT_SOURCE_DIR}/src/*.cpp)
 
 if(${PLATFORM_TARGET} MATCHES "rpi")
-
-    #
-    #   RASPBERRY PI
-    #
-    #############################################################################
     message(STATUS "Building config for RaspberryPI")
 
     # compiler options
@@ -77,11 +72,6 @@ if(${PLATFORM_TARGET} MATCHES "rpi")
     target_link_libraries(${EXECUTABLE_NAME} ${CORE_LIBRARY})
 
 elseif(${PLATFORM_TARGET} MATCHES "linux")
-
-    #
-    #   LINUX
-    #
-    #############################################################################
     message(STATUS "Building config for Linux")
 
     find_package(OpenGL REQUIRED)
@@ -108,36 +98,29 @@ elseif(${PLATFORM_TARGET} MATCHES "linux")
         set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}  -lc++ -lc++abi")
     endif()
 
+    # add sources and include headers
     add_subdirectory(${PROJECT_SOURCE_DIR}/tangram-es/external)
     add_subdirectory(${PROJECT_SOURCE_DIR}/tangram-es/core)
     include_directories(${CORE_INCLUDE_DIRS})
     include_directories(${CORE_LIBRARIES_INCLUDE_DIRS})
 
 elseif(${PLATFORM_TARGET} MATCHES "osx")
-
-    #
-    #   DARWIN
-    #
-    #############################################################################
     message(STATUS "Building config for Darwin OSX")
 
     find_package(OpenGL REQUIRED)
 
     # set for test in other cmake files
     set(PLATFORM_OSX ON)
-
-    # helper functions
-    # include(${PROJECT_SOURCE_DIR}/tangram-es/toolchains/utils.cmake)
-
-    # cmake output configuration
-    # set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
-    # set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
-    # set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+    add_definitions(-DPLATFORM_OSX)
 
     # compiler options
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++ -std=c++1y")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wreturn-type -Wsign-compare")
     set(CXX_FLAGS_DEBUG "-g -O0")
+
+    find_sources_and_include_directories(
+        ${PROJECT_SOURCE_DIR}/tangram-es/linux/src/urlWorker.h
+        ${PROJECT_SOURCE_DIR}/tangram-es/linux/src/urlWorker.cpp)
 
     add_subdirectory(${PROJECT_SOURCE_DIR}/tangram-es/external)
     add_subdirectory(${PROJECT_SOURCE_DIR}/tangram-es/core)
@@ -145,9 +128,9 @@ elseif(${PLATFORM_TARGET} MATCHES "osx")
     include_directories(${CORE_LIBRARIES_INCLUDE_DIRS})
 
     add_executable(${EXECUTABLE_NAME} ${SOURCES})
-    # add_executable(${EXECUTABLE_NAME} MACOSX_BUNDLE ${SOURCES} ${RESOURCES} ${OSX_RESOURCES})
 
     target_link_libraries(${EXECUTABLE_NAME} ${CORE_LIBRARY})
+    target_link_libraries(${EXECUTABLE_NAME} -lcurl)
     target_link_libraries(${EXECUTABLE_NAME} glfw)
     target_link_libraries(${EXECUTABLE_NAME} ${OPENGL_LIBRARIES})
 

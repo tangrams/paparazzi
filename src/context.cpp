@@ -144,7 +144,7 @@ void initGL(int width, int height) {
     //  ---------------------------------------- using GLFW
     //
     if (!glfwInit()) {
-        return -1;
+        return;
     }
 
     glfwWindowHint(GLFW_SAMPLES, 2);

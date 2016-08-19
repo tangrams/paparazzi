@@ -1,5 +1,7 @@
 #include "fbo.h"
 
+#include "gl.h"
+
 #include "platform.h"
 #include "tangram.h"
 
