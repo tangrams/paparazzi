@@ -9,6 +9,7 @@ fi
 
 if [ "$DIST" == "Amazon Linux AMI" ]; then
     PRE="sudo "
+    export DISPLAY=:0
 fi
 
 if [ ! -e cache ]; then
@@ -22,8 +23,6 @@ fi
 if [ ! -e scene.yaml ]; then
     ln -s build/bin/scene.yaml .
 fi
-
-npm install
 
 $PRE npm start
 

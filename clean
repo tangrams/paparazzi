@@ -1,7 +1,8 @@
 #!/bin/bash
 
 if [ -e cache ]; then
-    rm -rf cache
+    rm -f cache/*.png
+    rm -f cache/*.log
 fi
 
 rm -f paparazzi.log

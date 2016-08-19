@@ -140,7 +140,6 @@ elseif(${PLATFORM_TARGET} MATCHES "osx")
 
     add_executable(${EXECUTABLE_NAME} MACOSX_BUNDLE ${SOURCES} ${RESOURCES} ${OSX_RESOURCES})
 
-    # target_link_libraries(${EXECUTABLE_NAME} -lcurl)
     target_link_libraries(${EXECUTABLE_NAME} ${CORE_LIBRARY} glfw ${OPENGL_LIBRARIES})
 
 endif()

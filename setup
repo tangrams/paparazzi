@@ -1,7 +1,6 @@
 #!/bin/bash
 
 OS=$(uname)
-ARQ=$(uname -m)
 DIST="UNKNOWN"
 if [ -f /etc/os-release ]; then
     . /etc/os-release
@@ -13,13 +12,11 @@ deps_linux_common="libcurl4-openssl-dev "
 deps_linux_rpi="curl "
 deps_linux_ubuntu="xorg-dev libgl1-mesa-dev npm nodejs "
 deps_linux_amazon="libX*-devel mesa-libGL-devel curl-devel glx-utils git libmpc-devel mpfr-devel gmp-devel"
-cmake_arg=""
-n_cores="4"
+deps_darwin="glfw3 pkg-config zeromq"
 
 if [ $OS == "Linux" ]; then
     echo "Install dependeces for Linux - $DIST"
     if [ "$DIST" == "Amazon Linux AMI" ]; then
-        n_cores="8"
 
         # Amazon Linux
         sudo yum groupinstall "Development Tools"
@@ -79,7 +76,6 @@ if [ $OS == "Linux" ]; then
         sudo apt-get update
         sudo apt-get upgrade
         sudo apt-get install $deps_common $deps_linux_common $deps_linux_ubuntu
-        cmake_arg="-DPLATFORM_TARGET=linux"
         sudo ln -s /usr/bin/nodejs /usr/local/bin/node
 
     elif [ "$DIST" == "Raspbian GNU/Linux" ]; then
@@ -89,7 +85,6 @@ if [ $OS == "Linux" ]; then
         curl -sL https://deb.nodesource.com/setup_6.x | sudo -E bash -
         sudo apt-get install nodejs -y
         export CXX=/usr/bin/g++-4.9
-        cmake_arg="-DPLATFORM_TARGET=rpi"
     fi
 
 elif [ $OS == "Darwin" ]; then
@@ -101,16 +96,10 @@ elif [ $OS == "Darwin" ]; then
 
     brew update
     brew upgrade
-    brew install $deps_common
-    cmake_arg="-DPLATFORM_TARGET=osx"
+    brew install $deps_common $deps_darwin
 
 fi
 
-git submodule update --init --recursive
-cmake . -Bbuild $cmake_arg
-cd build
-make -j $n_cores
-
-cd ..
+./compile
 
 npm install
