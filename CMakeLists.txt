@@ -25,15 +25,12 @@ find_sources_and_include_directories(
 if(${PLATFORM_TARGET} MATCHES "rpi")
     message(STATUS "Building config for RaspberryPI")
 
+    add_definitions(-DPLATFORM_RPI)
+
     # compiler options
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -fpermissive -g")
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_CXX_FLAGS} -L/opt/vc/lib/ -lGLESv2 -lEGL -lbcm_host -lvchiq_arm -lvcos -lrt -lpthread")
     set(CXX_FLAGS_DEBUG "-g -O0")
-    
-    add_definitions(-DPLATFORM_RPI)
-
-    # check for c++11 compiler
-    execute_process(COMMAND ${CMAKE_CXX_COMPILER} -dumpversion OUTPUT_VARIABLE GCC_VERSION)
 
     if("${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU")
         if(NOT (GCC_VERSION VERSION_GREATER 4.8 OR GCC_VERSION VERSION_EQUAL 4.8))
@@ -113,17 +110,16 @@ include_directories(${CORE_LIBRARIES_INCLUDE_DIRS})
 add_executable(${EXECUTABLE_NAME} ${SOURCES})
 
 # link libraries
-if(${PLATFORM_TARGET} MATCHES "rpi")
-    target_link_libraries(${EXECUTABLE_NAME} -lcurl)
-    target_link_libraries(${EXECUTABLE_NAME} ${CORE_LIBRARY})
+target_link_libraries(${EXECUTABLE_NAME} ${CORE_LIBRARY})
+target_link_libraries(${EXECUTABLE_NAME} -lcurl)
 
-elseif(${PLATFORM_TARGET} MATCHES "linux")
-    target_link_libraries(${EXECUTABLE_NAME} ${CORE_LIBRARY})
-    target_link_libraries(${EXECUTABLE_NAME} ${CORE_LIBRARY} -lcurl glfw -ldl ${GLFW_LIBRARIES} ${OPENGL_LIBRARIES})
+if(${PLATFORM_TARGET} MATCHES "linux")
+    target_link_libraries(${EXECUTABLE_NAME} glfw)
+    target_link_libraries(${EXECUTABLE_NAME} -ldl)
+    target_link_libraries(${EXECUTABLE_NAME} ${GLFW_LIBRARIES})
+    target_link_libraries(${EXECUTABLE_NAME} ${OPENGL_LIBRARIES})
 
 elseif(${PLATFORM_TARGET} MATCHES "osx")
-    target_link_libraries(${EXECUTABLE_NAME} ${CORE_LIBRARY})
-    target_link_libraries(${EXECUTABLE_NAME} -lcurl)
     target_link_libraries(${EXECUTABLE_NAME} glfw)
     target_link_libraries(${EXECUTABLE_NAME} ${OPENGL_LIBRARIES})
 

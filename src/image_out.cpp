@@ -23,7 +23,7 @@ bool savePixels(char const* _path, unsigned char* _pixels, int _width, int _heig
         }
     }
     stbi_write_png(_path, _width, _height, 4, result, _width * 4);
-    delete result;
+    delete [] result;
     
     return true;
 }
