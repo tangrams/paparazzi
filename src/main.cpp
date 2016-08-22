@@ -49,7 +49,6 @@ bool updateTangram();
 void processCommand (std::string &_command);
 void resize(int _width, int _height);
 void screenshot(std::string _outputFile);
-bool waitForScene = false;
 
 int main (int argc, char **argv) {
 
@@ -91,7 +90,7 @@ void main() {\n\
     std::thread control(&controlThread);
 
     // MAIN LOOP
-    while (bRun.load()) {        
+    while (bRun.load()) {
         std::string lastStr;
         {
             std::lock_guard<std::mutex> lock(queueMutex);
@@ -127,23 +126,22 @@ void main() {\n\
 
 //============================================================================== MAIN FUNCTION
 bool updateTangram() {
-    // Keep track of time
-    static double lastTime = getTime();
-    double currentTime = getTime();
 
-    float delta = currentTime - lastTime;
-    lastTime = currentTime;
+    // TODO: 
+    //    - take this out and test
+    //    - pass a big delta 1000.0
+
+    // Keep track of time
+    // static double lastTime = getTime();
+    // double currentTime = getTime();
+
+    // float delta = currentTime - lastTime;
+    // lastTime = currentTime;
 
     // Update Network Queue
     processNetworkQueue();
 
-    if (Tangram::update(delta)) {
-        waitForScene = false;
-        return true;
-    }
-    else {
-        return false;
-    }
+    return Tangram::update(10.);
 }
 
 void processCommand (std::string &_command) {
@@ -152,12 +150,10 @@ void processCommand (std::string &_command) {
         bRun.store(false);
     } else if (elements[0] == "load") {
         resetTimer();
-        waitForScene = true;
 
         Tangram::loadSceneAsync(elements[1].c_str());
     } else if (elements[0] == "zoom") {
         resetTimer();
-        waitForScene = true;
 
         LOG("Set zoom: %f", toFloat(elements[1]));
         Tangram::setZoom(toFloat(elements[1]));
@@ -165,7 +161,6 @@ void processCommand (std::string &_command) {
 
     } else if (elements[0] == "tilt") {
         resetTimer();
-        waitForScene = true;
 
         LOG("Set tilt: %f", toFloat(elements[1]));
         Tangram::setTilt(toFloat(elements[1]));
@@ -173,7 +168,6 @@ void processCommand (std::string &_command) {
 
     } else if (elements[0] == "rotation") {
         resetTimer();
-        waitForScene = true;
 
         LOG("Set rotation: %f", toFloat(elements[1]));
         Tangram::setRotation(toFloat(elements[1]));
@@ -181,7 +175,6 @@ void processCommand (std::string &_command) {
 
     } else if (elements[0] == "position") {
         resetTimer();
-        waitForScene = true;
 
         LOG("Set position: %f (lon), %f (lat)", toFloat(elements[1]), toFloat(elements[2]));
         Tangram::setPosition(toDouble(elements[1]), toDouble(elements[2]));
@@ -189,7 +182,6 @@ void processCommand (std::string &_command) {
 
     } else if (elements[0] == "resize") {
         resetTimer();
-        waitForScene = true;
 
         LOG("Set resize: %ix%i", toInt(elements[1]), toInt(elements[2]));
         resize(toInt(elements[1]), toInt(elements[2]));
@@ -214,10 +206,16 @@ void resize(int _width, int _height) {
 }
 
 void screenshot(std::string _outputFile) {
+    double lastTime = getTime();
+    double currentTime = lastTime;
 
-    while (waitForScene) {
-        updateTangram();
-        std::cout << 0;
+    float delta = currentTime - lastTime;
+    // lastTime = currentTime;
+
+    while (delta < 10 && !updateTangram()) {
+        delta = currentTime - lastTime;
+        std::cout << delta << std::endl;
+        currentTime = getTime();
     }
 
     // Render the Tangram scene inside an FrameBufferObject
