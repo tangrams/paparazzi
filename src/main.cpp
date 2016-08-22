@@ -161,33 +161,45 @@ void processCommand (std::string &_command) {
 
         LOG("Set zoom: %f", toFloat(elements[1]));
         Tangram::setZoom(toFloat(elements[1]));
+        LOG("Finish zoom");
+
     } else if (elements[0] == "tilt") {
         resetTimer();
         waitForScene = true;
 
         LOG("Set tilt: %f", toFloat(elements[1]));
         Tangram::setTilt(toFloat(elements[1]));
+        LOG("Finish tilt");
+
     } else if (elements[0] == "rotation") {
         resetTimer();
         waitForScene = true;
 
         LOG("Set rotation: %f", toFloat(elements[1]));
         Tangram::setRotation(toFloat(elements[1]));
+        LOG("Finish rotation");
+
     } else if (elements[0] == "position") {
         resetTimer();
         waitForScene = true;
 
         LOG("Set position: %f (lon), %f (lat)", toFloat(elements[1]), toFloat(elements[2]));
         Tangram::setPosition(toDouble(elements[1]), toDouble(elements[2]));
+        LOG("Finish position");
+
     } else if (elements[0] == "resize") {
         resetTimer();
         waitForScene = true;
 
         LOG("Set resize: %ix%i", toInt(elements[1]), toInt(elements[2]));
         resize(toInt(elements[1]), toInt(elements[2]));
+        LOG("Finish resize");
+
     } else if (elements[0] == "print") {
         resetTimer();
         screenshot(elements[1]);
+        LOG("Finish screenshot");
+
     }
 }
 
@@ -204,9 +216,7 @@ void resize(int _width, int _height) {
 void screenshot(std::string _outputFile) {
 
     while (waitForScene) {
-        if (updateTangram()) {
-            waitForScene = false;
-        }
+        updateTangram();
         std::cout << 0;
     }
 
@@ -227,7 +237,7 @@ void screenshot(std::string _outputFile) {
     smallVbo->draw(&smallShader);
 
     // Once the main FBO is draw take a picture
-    LOG("SAVING PNG %s\n", _outputFile.c_str());
+    LOG("SAVING PNG %s", _outputFile.c_str());
     unsigned char* pixels = new unsigned char[w*h*4];   // allocate memory for the pixels
     glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, pixels); // Read throug the current buffer pixels
     savePixels(_outputFile.c_str(), pixels, w, h);   // save them to a file
