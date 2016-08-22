@@ -56,17 +56,9 @@ elseif(${PLATFORM_TARGET} MATCHES "linux")
 
     # set for test in other cmake files
     set(PLATFORM_LINUX ON)
-    cmake_minimum_required(VERSION 2.8)
-    project(tangram)
-
-    # helper functions
-    include(${PROJECT_SOURCE_DIR}/tangram-es/toolchains/utils.cmake)
-
-    # cmake output configuration
-    set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
-    set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
-    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
-
+    add_definitions(-DPLATFORM_LINUX)
+    set(CORE_COMPILE_DEFS PLATFORM_LINUX)
+    
     # compiler options
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -fpermissive -g -std=c++1y")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-omit-frame-pointer")
@@ -77,11 +69,6 @@ elseif(${PLATFORM_TARGET} MATCHES "linux")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
         set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}  -lc++ -lc++abi")
     endif()
-
-    # compile definitions (adds -DPLATFORM_LINUX)
-    add_definitions(-DPLATFORM_LINUX)
-    set(PLATFORM_LINUX ON)
-    set(CORE_COMPILE_DEFS PLATFORM_LINUX)
 
     if (CMAKE_COMPILER_IS_GNUCC)
         execute_process(COMMAND ${CMAKE_CXX_COMPILER} -dumpversion OUTPUT_VARIABLE GCC_VERSION)
