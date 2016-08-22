@@ -45,31 +45,9 @@ if(${PLATFORM_TARGET} MATCHES "rpi")
         message(FATAL_ERROR "Please install a C++14 compatible compiler")
     endif()
 
-    # add sources and include headers
-    find_sources_and_include_directories(
-        ${PROJECT_SOURCE_DIR}/tangram-es/linux/src/urlWorker.h
-        ${PROJECT_SOURCE_DIR}/tangram-es/linux/src/urlWorker.cpp)
-
-    # include headers for rpi-installed libraries
     include_directories(/opt/vc/include/)
     include_directories(/opt/vc/include/interface/vcos/pthreads)
     include_directories(/opt/vc/include/interface/vmcs_host/linux)
-
-    # load core library
-    add_subdirectory(${PROJECT_SOURCE_DIR}/tangram-es/external)
-    add_subdirectory(${PROJECT_SOURCE_DIR}/tangram-es/core)
-    include_directories(${CORE_INCLUDE_DIRS})
-    include_directories(${CORE_LIBRARIES_INCLUDE_DIRS})
-
-    # add executable
-    add_executable(${EXECUTABLE_NAME} ${SOURCES})
-
-    # copy resources
-    add_resources(${EXECUTABLE_NAME} "${PROJECT_SOURCE_DIR}/tangram-es/scenes")
-
-    # link libraries
-    target_link_libraries(${EXECUTABLE_NAME} -lcurl)
-    target_link_libraries(${EXECUTABLE_NAME} ${CORE_LIBRARY})
 
 elseif(${PLATFORM_TARGET} MATCHES "linux")
     message(STATUS "Building config for Linux")
@@ -117,22 +95,6 @@ elseif(${PLATFORM_TARGET} MATCHES "linux")
         endif()
     endif()
 
-    find_sources_and_include_directories(
-        ${PROJECT_SOURCE_DIR}/tangram-es/linux/src/urlWorker.h
-        ${PROJECT_SOURCE_DIR}/tangram-es/linux/src/urlWorker.cpp)
-
-    # add sources and include headers
-    add_subdirectory(${PROJECT_SOURCE_DIR}/tangram-es/external)
-    add_subdirectory(${PROJECT_SOURCE_DIR}/tangram-es/core)
-    include_directories(${CORE_INCLUDE_DIRS})
-    include_directories(${CORE_LIBRARIES_INCLUDE_DIRS})
-
-    add_executable(${EXECUTABLE_NAME} ${SOURCES})
-
-    # link libraries
-    target_link_libraries(${EXECUTABLE_NAME} ${CORE_LIBRARY})
-    target_link_libraries(${EXECUTABLE_NAME} ${CORE_LIBRARY} -lcurl glfw -ldl ${GLFW_LIBRARIES} ${OPENGL_LIBRARIES})
-
 elseif(${PLATFORM_TARGET} MATCHES "osx")
     message(STATUS "Building config for Darwin OSX")
 
@@ -147,22 +109,38 @@ elseif(${PLATFORM_TARGET} MATCHES "osx")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wreturn-type -Wsign-compare")
     set(CXX_FLAGS_DEBUG "-g -O0")
 
-    find_sources_and_include_directories(
-        ${PROJECT_SOURCE_DIR}/tangram-es/linux/src/urlWorker.h
-        ${PROJECT_SOURCE_DIR}/tangram-es/linux/src/urlWorker.cpp)
+endif()
 
-    add_subdirectory(${PROJECT_SOURCE_DIR}/tangram-es/external)
-    add_subdirectory(${PROJECT_SOURCE_DIR}/tangram-es/core)
-    include_directories(${CORE_INCLUDE_DIRS})
-    include_directories(${CORE_LIBRARIES_INCLUDE_DIRS})
+# add sources and include headers
+find_sources_and_include_directories(
+    ${PROJECT_SOURCE_DIR}/tangram-es/linux/src/urlWorker.h
+    ${PROJECT_SOURCE_DIR}/tangram-es/linux/src/urlWorker.cpp)
 
-    add_executable(${EXECUTABLE_NAME} ${SOURCES})
+# add sources and include headers
+add_subdirectory(${PROJECT_SOURCE_DIR}/tangram-es/external)
+add_subdirectory(${PROJECT_SOURCE_DIR}/tangram-es/core)
+include_directories(${CORE_INCLUDE_DIRS})
+include_directories(${CORE_LIBRARIES_INCLUDE_DIRS})
 
+# add executable
+add_executable(${EXECUTABLE_NAME} ${SOURCES})
+
+# link libraries
+if(${PLATFORM_TARGET} MATCHES "rpi")
+    target_link_libraries(${EXECUTABLE_NAME} -lcurl)
+    target_link_libraries(${EXECUTABLE_NAME} ${CORE_LIBRARY})
+
+elseif(${PLATFORM_TARGET} MATCHES "linux")
+    target_link_libraries(${EXECUTABLE_NAME} ${CORE_LIBRARY})
+    target_link_libraries(${EXECUTABLE_NAME} ${CORE_LIBRARY} -lcurl glfw -ldl ${GLFW_LIBRARIES} ${OPENGL_LIBRARIES})
+
+elseif(${PLATFORM_TARGET} MATCHES "osx")
     target_link_libraries(${EXECUTABLE_NAME} ${CORE_LIBRARY})
     target_link_libraries(${EXECUTABLE_NAME} -lcurl)
     target_link_libraries(${EXECUTABLE_NAME} glfw)
     target_link_libraries(${EXECUTABLE_NAME} ${OPENGL_LIBRARIES})
 
 endif()
+
 
 add_resources(${EXECUTABLE_NAME} "${PROJECT_SOURCE_DIR}/scenes")
