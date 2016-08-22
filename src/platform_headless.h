@@ -23,3 +23,5 @@
 
 void processNetworkQueue();
 void finishUrlRequests();
+
+void resetTimer();

@@ -33,8 +33,14 @@ static std::string s_resourceRoot;
 static UrlWorker s_Workers[NUM_WORKERS];
 static std::list<std::unique_ptr<UrlTask>> s_urlTaskQueue;
 
+static double startTime = 0.0;
+
+void resetTimer() {
+    startTime = getTime();
+}
+
 void logMsg(const char* fmt, ...) {
-    std::string str = std::to_string(getTime()) + " - " + fmt;
+    std::string str = std::to_string(getTime()-startTime) + " - " + fmt;
     va_list args;
     va_start(args, str.c_str());
     vfprintf(stderr, str.c_str(), args);

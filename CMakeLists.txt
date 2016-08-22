@@ -118,8 +118,6 @@ target_link_libraries(${EXECUTABLE_NAME} zmq)
 
 if(${PLATFORM_TARGET} MATCHES "linux")
     target_link_libraries(${EXECUTABLE_NAME} glfw)
-    target_link_libraries(${EXECUTABLE_NAME} -ldl)
-    target_link_libraries(${EXECUTABLE_NAME} ${GLFW_LIBRARIES})
     target_link_libraries(${EXECUTABLE_NAME} ${OPENGL_LIBRARIES})
 
 elseif(${PLATFORM_TARGET} MATCHES "osx")
