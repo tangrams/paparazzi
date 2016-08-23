@@ -23,6 +23,8 @@
 
 #include "utils.h"
 
+#include <zmq.h>            // ZeroMQ
+
 // Default parametters
 Tangram::Map* map = nullptr;
 static int width = 800;     // Default Width of the image (will be multipl by 2 for the antialiasing)
@@ -40,13 +42,29 @@ Fbo smallFbo;       // FrameBufferObject of the half of the size to fake an anti
 Vbo* smallVbo;      // VertexBufferObject to down sample the renderFbo to (like a billboard)
 Shader smallShader; // Shader program to use to down sample the renderFbo with
 
-//============================================================================== MAIN FUNCTION
-void controlThread() {
+//============================================================================== CONTROL THREADS
+void consoleThread() {
     std::string line;
     while (bRun.load() && std::getline(std::cin, line)) {
         std::lock_guard<std::mutex> lock(queueMutex);
         queue.push_back(line);
     }
+}
+
+void zmqThread() {
+
+    void *context = zmq_ctx_new ();
+    void *requester = zmq_socket (context, ZMQ_REQ);
+    zmq_connect (requester, "tcp://localhost:5555");
+
+    std::string line;
+    char buffer [140];
+    while (bRun.load() && zmq_recv(requester, buffer, 10, 0)) {
+        zmq_send (requester, "<", 5, 0);
+    }
+
+    zmq_close (requester);
+    zmq_ctx_destroy (context);
 }
 
 //============================================================================== MAIN FUNCTION
@@ -58,7 +76,9 @@ void screenshot(std::string _outputFile);
 int main (int argc, char **argv) {
 
     // CONTROL LOOP
-    std::thread control(&controlThread);
+    std::thread console(&consoleThread);
+    std::thread zmq(&zmqThread);
+
     LOG("Tangram ES - Paparazzi");
 
     // Initialize cURL
@@ -122,9 +142,14 @@ void main() {\n\
     }
 
     // Force cinWatcher to finish (because is waiting for input)
-    pthread_t handler = control.native_handle();
-    pthread_cancel(handler);
-    control.join();
+    pthread_t consoleHandler = console.native_handle();
+    pthread_cancel(consoleHandler);
+    console.join();
+
+    // Force cinWatcher to finish (because is waiting for input)
+    pthread_t zmqHandler = zmq.native_handle();
+    pthread_cancel(zmqHandler);
+    zmq.join();
 
     logMsg("END\n");
 
@@ -133,7 +158,7 @@ void main() {\n\
 }
 
 //============================================================================== MAIN FUNCTION
-bool updateTangram() {
+bool updateTangram () {
     // Update Network Queue
     processNetworkQueue();
 
@@ -207,7 +232,7 @@ void processCommand (std::string &_command) {
     }
 }
 
-void resize(int _width, int _height) {
+void resize (int _width, int _height) {
     // Setup the size of the image
     if (map) {
         map->setPixelScale(2.0f);
@@ -219,7 +244,7 @@ void resize(int _width, int _height) {
     }
 }
 
-void screenshot(std::string _outputFile) {
+void screenshot (std::string _outputFile) {
     if (map) {
         double lastTime = getTime();
         double currentTime = lastTime;
@@ -263,4 +288,4 @@ void screenshot(std::string _outputFile) {
         LOG("< FINISH");
     }
 }
-// 
+ 

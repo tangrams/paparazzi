@@ -116,6 +116,7 @@ add_executable(${EXECUTABLE_NAME} ${SOURCES})
 # link libraries
 target_link_libraries(${EXECUTABLE_NAME} ${CORE_LIBRARY})
 target_link_libraries(${EXECUTABLE_NAME} -lcurl)
+target_link_libraries(${EXECUTABLE_NAME} zmq)
 
 if(${PLATFORM_TARGET} MATCHES "linux")
     target_link_libraries(${EXECUTABLE_NAME} glfw)
@@ -126,6 +127,5 @@ elseif(${PLATFORM_TARGET} MATCHES "osx")
     target_link_libraries(${EXECUTABLE_NAME} ${OPENGL_LIBRARIES})
 
 endif()
-
 
 add_resources(${EXECUTABLE_NAME} "${PROJECT_SOURCE_DIR}/scenes")
