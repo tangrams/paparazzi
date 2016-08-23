@@ -1,6 +1,8 @@
 #include <thread>
 #include <pthread.h>
-#include <chrono>
+#include <mutex>
+#include <atomic>
+
 #include <iostream>
 
 #include <curl/curl.h>      // Curl
