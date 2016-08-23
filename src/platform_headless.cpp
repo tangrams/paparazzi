@@ -36,6 +36,7 @@ static std::list<std::unique_ptr<UrlTask>> s_urlTaskQueue;
 static double startTime = 0.0;
 
 void resetTimer() {
+    LOG("> START");
     startTime = getTime();
 }
 

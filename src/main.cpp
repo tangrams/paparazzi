@@ -59,7 +59,7 @@ int main (int argc, char **argv) {
 
     // CONTROL LOOP
     std::thread control(&controlThread);
-    LOG("Tangram ES - Paparazzi\n");
+    LOG("Tangram ES - Paparazzi");
 
     // Initialize cURL
     curl_global_init(CURL_GLOBAL_DEFAULT);
@@ -116,19 +116,17 @@ void main() {\n\
     curl_global_cleanup();
     closeGL();
     
-    logMsg(" Console ");
+    if (map) {
+        delete map;
+        map = nullptr;
+    }
+
     // Force cinWatcher to finish (because is waiting for input)
     pthread_t handler = control.native_handle();
     pthread_cancel(handler);
     control.join();
 
-    if (map) {
-        delete map;
-        map = nullptr;
-        logMsg(" Map ");
-    }
-    
-    logMsg("\nEND\n");
+    logMsg("END\n");
 
     // Go home
     return 0;
@@ -146,7 +144,7 @@ bool updateTangram() {
     }
      
     if ( bFinish && !bUpdateStatus) {
-        LOG(">\n");
+        LOG("< FINISH");
     }
     bUpdateStatus = bFinish;
     
@@ -170,24 +168,25 @@ void processCommand (std::string &_command) {
         }
         else if (map && elements[1] == "zoom") {
             resetTimer();
-            LOG("Set zoom: %f\n", toFloat(elements[2]));
+            LOG("Set zoom: %f", toFloat(elements[2]));
             map->setZoom(toFloat(elements[2]));
         }
         else if (map &&  elements[1] == "tilt") {
             resetTimer();
-            LOG("Set tilt: %f\n", toFloat(elements[2]));
+            LOG("Set tilt: %f", toFloat(elements[2]));
             map->setTilt(toFloat(elements[2]));
         }
         else if (map &&  elements[1] == "rotation") {
             resetTimer();
-            LOG("Set rotation: %f\n", toFloat(elements[2]));
+            LOG("Set rotation: %f", toFloat(elements[2]));
             map->setRotation(toFloat(elements[2]));
         }
         else if (map &&  elements.size() > 3 && elements[1] == "position") {
             resetTimer();
-            LOG("Set position: %f (lon), %f (lat)\n", toFloat(elements[2]), toFloat(elements[3]));
+            LOG("Set position: %f (lon), %f (lat)", toFloat(elements[2]), toFloat(elements[3]));
             map->setPosition(toDouble(elements[2]), toDouble(elements[3]));
             if (elements.size() == 5) {
+                LOG("Set zoom: %f", toFloat(elements[4]));
                 map->setZoom(toFloat(elements[4]));
             }
 
@@ -261,7 +260,7 @@ void screenshot(std::string _outputFile) {
         // Close the smaller FBO because we are civilize ppl
         smallFbo.unbind();
         
-        LOG("Image saved at %s", _outputFile.c_str());
+        LOG("< FINISH");
     }
 }
 // 
