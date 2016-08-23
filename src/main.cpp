@@ -29,6 +29,8 @@ std::atomic<bool> bRun(true);   //
 std::vector<std::string> queue; // Commands Queue
 std::mutex queueMutex;
 
+bool bUpdateStatus = true;
+
 // Antialiase tools
 Fbo renderFbo;      // FrameBufferObject where the tangram scene will be renderd 
 Fbo smallFbo;       // FrameBufferObject of the half of the size to fake an antialiased image
@@ -38,7 +40,7 @@ Shader smallShader; // Shader program to use to down sample the renderFbo with
 //============================================================================== MAIN FUNCTION
 void controlThread() {
     std::string line;
-    while (std::getline(std::cin, line)) {
+    while (bRun.load() && std::getline(std::cin, line)) {
         std::lock_guard<std::mutex> lock(queueMutex);
         queue.push_back(line);
     }
@@ -51,6 +53,9 @@ void resize(int _width, int _height);
 void screenshot(std::string _outputFile);
 
 int main (int argc, char **argv) {
+
+    // CONTROL LOOP
+    std::thread control(&controlThread);
 
     // Initialize cURL
     curl_global_init(CURL_GLOBAL_DEFAULT);
@@ -86,9 +91,6 @@ void main() {\n\
 }";
     smallShader.load(smallFrag, smallVert);
 
-    // CONTROL LOOP
-    std::thread control(&controlThread);
-
     // MAIN LOOP
     while (bRun.load()) {
         std::string lastStr;
@@ -101,7 +103,11 @@ void main() {\n\
         }
 
         if (lastStr.size() > 0) {
-            processCommand(lastStr);
+            if (lastStr == "quit") {
+                bRun.store(false);
+            } else {
+                processCommand(lastStr);
+            }
         } 
         else {
             updateTangram();
@@ -117,6 +123,7 @@ void main() {\n\
     // Force cinWatcher to finish (because is waiting for input)
     pthread_t handler = control.native_handle();
     pthread_cancel(handler);
+    control.join();
 
     logMsg("END\n");
 
@@ -126,71 +133,71 @@ void main() {\n\
 
 //============================================================================== MAIN FUNCTION
 bool updateTangram() {
-
-    // TODO: 
-    //    - take this out and test
-    //    - pass a big delta 1000.0
-
-    // Keep track of time
-    // static double lastTime = getTime();
-    // double currentTime = getTime();
-
-    // float delta = currentTime - lastTime;
-    // lastTime = currentTime;
-
     // Update Network Queue
     processNetworkQueue();
 
-    return Tangram::update(10.);
+    bool bFinish = Tangram::update(10.);
+     
+    if ( bFinish && !bUpdateStatus) {
+        LOG("Command excecute");
+    }
+    bUpdateStatus = bFinish;
+    
+    return bFinish;
 }
 
 void processCommand (std::string &_command) {
-    std::vector<std::string> elements = split(_command, ',');
-    if (elements[0] == "quit") {
-        bRun.store(false);
-    } else if (elements[0] == "load") {
-        resetTimer();
+    std::vector<std::string> elements = split(_command, ' ');
+    if (elements[0] == "set") {
+        if (elements[1] == "scene") {
+            resetTimer();
+            Tangram::loadSceneAsync(elements[2].c_str());
+        }
+        else if (elements[1] == "zoom") {
+            resetTimer();
 
-        Tangram::loadSceneAsync(elements[1].c_str());
-    } else if (elements[0] == "zoom") {
-        resetTimer();
+            LOG("Set zoom: %f", toFloat(elements[2]));
+            Tangram::setZoom(toFloat(elements[2]));
 
-        LOG("Set zoom: %f", toFloat(elements[1]));
-        Tangram::setZoom(toFloat(elements[1]));
-        LOG("Finish zoom");
+        }
+        else if (elements[1] == "tilt") {
+            resetTimer();
 
-    } else if (elements[0] == "tilt") {
-        resetTimer();
+            LOG("Set tilt: %f", toFloat(elements[2]));
+            Tangram::setTilt(toFloat(elements[2]));
 
-        LOG("Set tilt: %f", toFloat(elements[1]));
-        Tangram::setTilt(toFloat(elements[1]));
-        LOG("Finish tilt");
+        }
+        else if (elements[1] == "rotation") {
+            resetTimer();
 
-    } else if (elements[0] == "rotation") {
-        resetTimer();
+            LOG("Set rotation: %f", toFloat(elements[2]));
+            Tangram::setRotation(toFloat(elements[2]));
 
-        LOG("Set rotation: %f", toFloat(elements[1]));
-        Tangram::setRotation(toFloat(elements[1]));
-        LOG("Finish rotation");
+        }
+        else if (elements[1] == "position") {
+            resetTimer();
 
-    } else if (elements[0] == "position") {
-        resetTimer();
+            LOG("Set position: %f (lon), %f (lat)", toFloat(elements[2]), toFloat(elements[3]));
+            Tangram::setPosition(toDouble(elements[2]), toDouble(elements[3]));
 
-        LOG("Set position: %f (lon), %f (lat)", toFloat(elements[1]), toFloat(elements[2]));
-        Tangram::setPosition(toDouble(elements[1]), toDouble(elements[2]));
-        LOG("Finish position");
+        }
+        else if (elements[1] == "size") {
+            resetTimer();
 
-    } else if (elements[0] == "resize") {
-        resetTimer();
+            LOG("Resize: %ix%i", toInt(elements[2]), toInt(elements[3]));
+            resize(toInt(elements[2]), toInt(elements[3]));
 
-        LOG("Set resize: %ix%i", toInt(elements[1]), toInt(elements[2]));
-        resize(toInt(elements[1]), toInt(elements[2]));
-        LOG("Finish resize");
+        }
+    }
+    else if (elements[0] == "get") {
+        if (elements[1] == "status") {
+            LOG("Status: %s", bUpdateStatus ? "finish" : "updating");
 
-    } else if (elements[0] == "print") {
+        }
+    }
+    else if (elements[0] == "print") {
         resetTimer();
         screenshot(elements[1]);
-        LOG("Finish screenshot");
 
     }
 }
@@ -208,16 +215,17 @@ void resize(int _width, int _height) {
 void screenshot(std::string _outputFile) {
     double lastTime = getTime();
     double currentTime = lastTime;
-
-    float delta = currentTime - lastTime;
-    // lastTime = currentTime;
-
-    while (delta < 10 && !updateTangram()) {
+    float delta = 0.0;
+    if (!bUpdateStatus) {
+        LOG("We need to wait until scene finish loading");
+    }
+    while (delta < 5.0 && !bUpdateStatus && !updateTangram()) {
+        currentTime = getTime();
         delta = currentTime - lastTime;
         std::cout << delta << std::endl;
-        currentTime = getTime();
     }
 
+    LOG("Rendering...");
     // Render the Tangram scene inside an FrameBufferObject
     renderFbo.bind();   // Bind main FBO
     Tangram::render();  // Render Tangram Scene
@@ -235,11 +243,15 @@ void screenshot(std::string _outputFile) {
     smallVbo->draw(&smallShader);
 
     // Once the main FBO is draw take a picture
-    LOG("SAVING PNG %s", _outputFile.c_str());
+    LOG("Extracting pixels...");
     unsigned char* pixels = new unsigned char[w*h*4];   // allocate memory for the pixels
     glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, pixels); // Read throug the current buffer pixels
+    LOG("Saving pixels at %s", _outputFile.c_str());
     savePixels(_outputFile.c_str(), pixels, w, h);   // save them to a file
    
     // Close the smaller FBO because we are civilize ppl
     smallFbo.unbind();
+
+    LOG("Image saved at %s", _outputFile.c_str());
 }
+// 

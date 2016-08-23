@@ -42,7 +42,7 @@ void resetTimer() {
 void logMsg(const char* fmt, ...) {
     std::string str = std::to_string(getTime()-startTime) + " - " + fmt;
     va_list args;
-    va_start(args, str.c_str());
+    va_start(args, fmt);
     vfprintf(stderr, str.c_str(), args);
     va_end(args);
 }
@@ -50,11 +50,11 @@ void logMsg(const char* fmt, ...) {
 void processNetworkQueue() {
     // attach workers to NetWorkerData
     auto taskItr = s_urlTaskQueue.begin();
-    for(auto& worker : s_Workers) {
-        if(taskItr == s_urlTaskQueue.end()) {
+    for (auto& worker:s_Workers) {
+        if (taskItr == s_urlTaskQueue.end()) {
             break;
         }
-        if(worker.isAvailable()) {
+        if (worker.isAvailable()) {
             worker.perform(std::move(*taskItr));
             taskItr = s_urlTaskQueue.erase(taskItr);
         }
@@ -120,9 +120,8 @@ std::string systemFontFallbackPath(int _importance, int _weightHint) {
 }
 
 bool startUrlRequest(const std::string& _url, UrlCallback _callback) {
-
     std::unique_ptr<UrlTask> task(new UrlTask(_url, _callback));
-    for(auto& worker : s_Workers) {
+    for (auto& worker:s_Workers) {
         if(worker.isAvailable()) {
             worker.perform(std::move(task));
             return true;
@@ -148,7 +147,7 @@ void cancelUrlRequest(const std::string& _url) {
 }
 
 void finishUrlRequests() {
-    for(auto& worker : s_Workers) {
+    for (auto& worker:s_Workers) {
         worker.join();
     }
 }
