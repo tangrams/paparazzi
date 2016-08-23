@@ -24,6 +24,7 @@
 #include "utils.h"
 
 // Default parametters
+Tangram::Map* map = nullptr;
 static int width = 800;     // Default Width of the image (will be multipl by 2 for the antialiasing)
 static int height = 480;    // Default height of the image (will be multipl by 2 for the antialiasing)
 
@@ -58,20 +59,13 @@ int main (int argc, char **argv) {
 
     // CONTROL LOOP
     std::thread control(&controlThread);
+    LOG("Tangram ES - Paparazzi\n");
 
     // Initialize cURL
     curl_global_init(CURL_GLOBAL_DEFAULT);
-
-    // Start Tangram
-    Tangram::initialize("scene.yaml");     // Initialite Tangram scene engine
-    Tangram::setPixelScale(2.0f);           // Because we are scaling everything x2, tangram needs to belive this is a retina display
     
     // Start OpenGL ES context
     initGL(width, height);
-    resize(width, height);
-    
-    // Start OpenGL resource of Tangram
-    Tangram::setupGL();
 
     // Create a rectangular Billboard to draw the main FBO
     smallVbo = rect(0.0,0.0,1.,1.).getVbo();
@@ -117,17 +111,24 @@ void main() {\n\
     }
 
     // Clear running threaths and close OpenGL ES
-    logMsg("Closing...\n");
+    logMsg("Closing...");
     finishUrlRequests();
     curl_global_cleanup();
     closeGL();
     
+    logMsg(" Console ");
     // Force cinWatcher to finish (because is waiting for input)
     pthread_t handler = control.native_handle();
     pthread_cancel(handler);
     control.join();
 
-    logMsg("END\n");
+    if (map) {
+        delete map;
+        map = nullptr;
+        logMsg(" Map ");
+    }
+    
+    logMsg("\nEND\n");
 
     // Go home
     return 0;
@@ -138,10 +139,14 @@ bool updateTangram() {
     // Update Network Queue
     processNetworkQueue();
 
-    bool bFinish = Tangram::update(10.);
+    bool bFinish = false;
+    
+    if (map) {
+        bFinish = map->update(10.);
+    }
      
     if ( bFinish && !bUpdateStatus) {
-        LOG("Command excecute");
+        LOG(">\n");
     }
     bUpdateStatus = bFinish;
     
@@ -150,110 +155,113 @@ bool updateTangram() {
 
 void processCommand (std::string &_command) {
     std::vector<std::string> elements = split(_command, ' ');
-    if (elements[0] == "set") {
+    if (elements[0] == "set" && elements.size() > 2) {
         if (elements[1] == "scene") {
             resetTimer();
-            Tangram::loadSceneAsync(elements[2].c_str());
+            if (!map) {
+                map = new Tangram::Map();
+                map->loadSceneAsync(elements[2].c_str());
+                resize(width, height);
+                // Start OpenGL resource of Tangram
+                map->setupGL();
+            } else {
+                map->loadSceneAsync(elements[2].c_str());
+            }
         }
-        else if (elements[1] == "zoom") {
+        else if (map && elements[1] == "zoom") {
             resetTimer();
-
-            LOG("Set zoom: %f", toFloat(elements[2]));
-            Tangram::setZoom(toFloat(elements[2]));
+            LOG("Set zoom: %f\n", toFloat(elements[2]));
+            map->setZoom(toFloat(elements[2]));
+        }
+        else if (map &&  elements[1] == "tilt") {
+            resetTimer();
+            LOG("Set tilt: %f\n", toFloat(elements[2]));
+            map->setTilt(toFloat(elements[2]));
+        }
+        else if (map &&  elements[1] == "rotation") {
+            resetTimer();
+            LOG("Set rotation: %f\n", toFloat(elements[2]));
+            map->setRotation(toFloat(elements[2]));
+        }
+        else if (map &&  elements.size() > 3 && elements[1] == "position") {
+            resetTimer();
+            LOG("Set position: %f (lon), %f (lat)\n", toFloat(elements[2]), toFloat(elements[3]));
+            map->setPosition(toDouble(elements[2]), toDouble(elements[3]));
+            if (elements.size() == 5) {
+                map->setZoom(toFloat(elements[4]));
+            }
 
         }
-        else if (elements[1] == "tilt") {
+        else if (map && elements.size() > 2 && elements[1] == "size") {
             resetTimer();
-
-            LOG("Set tilt: %f", toFloat(elements[2]));
-            Tangram::setTilt(toFloat(elements[2]));
-
-        }
-        else if (elements[1] == "rotation") {
-            resetTimer();
-
-            LOG("Set rotation: %f", toFloat(elements[2]));
-            Tangram::setRotation(toFloat(elements[2]));
-
-        }
-        else if (elements[1] == "position") {
-            resetTimer();
-
-            LOG("Set position: %f (lon), %f (lat)", toFloat(elements[2]), toFloat(elements[3]));
-            Tangram::setPosition(toDouble(elements[2]), toDouble(elements[3]));
-
-        }
-        else if (elements[1] == "size") {
-            resetTimer();
-
-            LOG("Resize: %ix%i", toInt(elements[2]), toInt(elements[3]));
             resize(toInt(elements[2]), toInt(elements[3]));
-
         }
     }
-    else if (elements[0] == "get") {
+    else if (map && elements[0] == "get") {
         if (elements[1] == "status") {
             LOG("Status: %s", bUpdateStatus ? "finish" : "updating");
-
         }
     }
-    else if (elements[0] == "print") {
+    else if (map && elements[0] == "print") {
         resetTimer();
         screenshot(elements[1]);
-
     }
 }
 
 void resize(int _width, int _height) {
-    width = _width*2;
-    height = _height*2;
-
     // Setup the size of the image
-    Tangram::resize(width, height);
-    renderFbo.resize(width, height);    // Allocate the main FrameBufferObject were tangram will be draw
-    smallFbo.resize(width/2, height/2); // Allocate the smaller FrameBufferObject were the main FBO will be draw
+    if (map) {
+        map->setPixelScale(2.0f);
+        width = _width*2;
+        height = _height*2;
+        map->resize(width, height);
+        renderFbo.resize(width, height);    // Allocate the main FrameBufferObject were tangram will be draw
+        smallFbo.resize(width/2, height/2); // Allocate the smaller FrameBufferObject were the main FBO will be draw
+    }
 }
 
 void screenshot(std::string _outputFile) {
-    double lastTime = getTime();
-    double currentTime = lastTime;
-    float delta = 0.0;
-    if (!bUpdateStatus) {
-        LOG("We need to wait until scene finish loading");
+    if (map) {
+        double lastTime = getTime();
+        double currentTime = lastTime;
+        float delta = 0.0;
+        if (!bUpdateStatus) {
+            LOG("We need to wait until scene finish loading");
+        }
+        while (delta < 5.0 && !bUpdateStatus && !updateTangram()) {
+            currentTime = getTime();
+            delta = currentTime - lastTime;
+            std::cout << delta << std::endl;
+        }
+        
+        LOG("Rendering...");
+        // Render the Tangram scene inside an FrameBufferObject
+        renderFbo.bind();   // Bind main FBO
+        map->render();  // Render Tangram Scene
+        renderFbo.unbind(); // Unbind main FBO
+        
+        // at the half of the size of the rendered scene
+        int w = width/2;
+        int h = height/2;
+        
+        // Draw the main FBO inside the small one
+        smallFbo.bind();
+        smallShader.use();
+        smallShader.setUniform("u_resolution",w ,h);
+        smallShader.setUniform("u_buffer", &renderFbo, 0);
+        smallVbo->draw(&smallShader);
+        
+        // Once the main FBO is draw take a picture
+        LOG("Extracting pixels...");
+        unsigned char* pixels = new unsigned char[w*h*4];   // allocate memory for the pixels
+        glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, pixels); // Read throug the current buffer pixels
+        LOG("Saving pixels at %s", _outputFile.c_str());
+        savePixels(_outputFile.c_str(), pixels, w, h);   // save them to a file
+        
+        // Close the smaller FBO because we are civilize ppl
+        smallFbo.unbind();
+        
+        LOG("Image saved at %s", _outputFile.c_str());
     }
-    while (delta < 5.0 && !bUpdateStatus && !updateTangram()) {
-        currentTime = getTime();
-        delta = currentTime - lastTime;
-        std::cout << delta << std::endl;
-    }
-
-    LOG("Rendering...");
-    // Render the Tangram scene inside an FrameBufferObject
-    renderFbo.bind();   // Bind main FBO
-    Tangram::render();  // Render Tangram Scene
-    renderFbo.unbind(); // Unbind main FBO
-
-    // at the half of the size of the rendered scene
-    int w = width/2;
-    int h = height/2;
-
-    // Draw the main FBO inside the small one
-    smallFbo.bind();
-    smallShader.use();
-    smallShader.setUniform("u_resolution",w ,h);
-    smallShader.setUniform("u_buffer", &renderFbo, 0);
-    smallVbo->draw(&smallShader);
-
-    // Once the main FBO is draw take a picture
-    LOG("Extracting pixels...");
-    unsigned char* pixels = new unsigned char[w*h*4];   // allocate memory for the pixels
-    glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, pixels); // Read throug the current buffer pixels
-    LOG("Saving pixels at %s", _outputFile.c_str());
-    savePixels(_outputFile.c_str(), pixels, w, h);   // save them to a file
-   
-    // Close the smaller FBO because we are civilize ppl
-    smallFbo.unbind();
-
-    LOG("Image saved at %s", _outputFile.c_str());
 }
 // 
