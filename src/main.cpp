@@ -23,8 +23,6 @@
 
 #include "utils.h"
 
-#include <zmq.h>            // ZeroMQ
-
 // Default parametters
 Tangram::Map* map = nullptr;
 static int width = 800;     // Default Width of the image (will be multipl by 2 for the antialiasing)
@@ -52,19 +50,11 @@ void consoleThread() {
 }
 
 void zmqThread() {
-
-    void *context = zmq_ctx_new ();
-    void *requester = zmq_socket (context, ZMQ_REQ);
-    zmq_connect (requester, "tcp://localhost:5555");
-
     std::string line;
-    char buffer [140];
-    while (bRun.load() && zmq_recv(requester, buffer, 10, 0)) {
-        zmq_send (requester, "<", 5, 0);
+    while (bRun.load() && zmqRecv(line)) {
+        std::lock_guard<std::mutex> lock(queueMutex);
+        queue.push_back(line);
     }
-
-    zmq_close (requester);
-    zmq_ctx_destroy (context);
 }
 
 //============================================================================== MAIN FUNCTION
@@ -77,6 +67,8 @@ int main (int argc, char **argv) {
 
     // CONTROL LOOP
     std::thread console(&consoleThread);
+
+    zmqConnect(5555);
     std::thread zmq(&zmqThread);
 
     LOG("Tangram ES - Paparazzi");
@@ -147,6 +139,7 @@ void main() {\n\
     console.join();
 
     // Force cinWatcher to finish (because is waiting for input)
+    zmqClose();
     pthread_t zmqHandler = zmq.native_handle();
     pthread_cancel(zmqHandler);
     zmq.join();
@@ -255,7 +248,7 @@ void screenshot (std::string _outputFile) {
         while (delta < 5.0 && !bUpdateStatus && !updateTangram()) {
             currentTime = getTime();
             delta = currentTime - lastTime;
-            std::cout << delta << std::endl;
+            // std::cout << delta << std::endl;
         }
         
         LOG("Rendering...");
