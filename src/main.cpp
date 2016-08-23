@@ -29,7 +29,7 @@ std::atomic<bool> bRun(true);   //
 std::vector<std::string> queue; // Commands Queue
 std::mutex queueMutex;
 
-bool bUpdateStatus = true;
+bool bUpdateStatus = false;
 
 // Antialiase tools
 Fbo renderFbo;      // FrameBufferObject where the tangram scene will be renderd 
