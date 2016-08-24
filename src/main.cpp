@@ -22,6 +22,7 @@
 #include "types/shapes.h"   // Small library to compose basic shapes (use for rect)
 
 #include "utils.h"
+#include "zeromq.h"
 
 // Default parametters
 Tangram::Map* map = nullptr;
@@ -30,11 +31,9 @@ int height = 480;    // Default height of the image (will be multipl by 2 for th
 std::string style = "scene.yaml";
 #define ZEROMQ_PORT 5555
 
-std::atomic<bool> bRun(true);   //
+std::atomic<bool> bRun(true);
 std::vector<std::string> queue; // Commands Queue
 std::mutex queueMutex;
-
-bool bUpdateStatus = false;
 
 // Antialiase tools
 Fbo renderFbo;      // FrameBufferObject where the tangram scene will be renderd 
@@ -52,18 +51,20 @@ void consoleThread() {
 }
 
 void zmqThread() {
-    std::string line = "";
-    while (bRun.load() && zmqRecv(line)) {
+    while (bRun.load()) {
+        std::string line = "";
+        zmqRecv(line);
         if (line.size() > 3) {
             std::cout << "ZMQ> " << line << std::endl; 
             std::lock_guard<std::mutex> lock(queueMutex);
             queue.push_back(line);
         }
     }
+    LOG("Server close");
 }
 
 //============================================================================== MAIN FUNCTION
-bool updateTangram();
+void updateTangram();
 void processCommand (std::string &_command);
 void resize (int _width, int _height);
 void screenshot (std::string &_outputFile);
@@ -110,6 +111,8 @@ void main() {\n\
     map->loadSceneAsync(style.c_str());
     map->setupGL();
     resize(width, height);
+    updateTangram();
+
     while (bRun.load()) {
         std::string lastStr;
         {
@@ -123,19 +126,18 @@ void main() {\n\
         if (lastStr.size() > 0) {
             if (lastStr == "quit") {
                 bRun.store(false);
-            } 
-            else if (lastStr == "status") {
-                LOG("Status: %s", bUpdateStatus ? "finish" : "updating");
             }
             else {
                 std::vector<std::string> commands = split(lastStr, ';');
                 for (auto&& command : commands) {
                     processCommand(command);
                     updateTangram();
+                    LOG("FINISH"+command);
                 }
+                LOG("< OK");
+                zmqSend("OK "+command);
             }
         } 
-        updateTangram();
     }
 
     // Clear running threaths and close OpenGL ES
@@ -167,18 +169,13 @@ void main() {\n\
 }
 
 //============================================================================== MAIN FUNCTION
-bool updateTangram () {
-    // Update Network Queue
-    processNetworkQueue();
-
+void updateTangram () {
     bool bFinish = false;
-    bFinish = map->update(10.);
-    if (bFinish && !bUpdateStatus) {
-        LOG("< FINISH");
+    while (!bFinish) {
+        // Update Network Queue
+        processNetworkQueue();
+        bFinish = map->update(10.);
     }
-    bUpdateStatus = bFinish;
-
-    return bFinish;
 }
 
 void processCommand (std::string &_command) {
@@ -262,18 +259,6 @@ void resize (int _width, int _height) {
 
 void screenshot (std::string &_outputFile) {
     if (map) {
-        double lastTime = getTime();
-        double currentTime = lastTime;
-        float delta = 0.0;
-        if (!bUpdateStatus) {
-            LOG("We need to wait until scene finish loading");
-        }
-        while (delta < 5.0 && !bUpdateStatus && !updateTangram()) {
-            currentTime = getTime();
-            delta = currentTime - lastTime;
-            // std::cout << delta << std::endl;
-        }
-        
         LOG("Rendering...");
         // Render the Tangram scene inside an FrameBufferObject
         renderFbo.bind();   // Bind main FBO
@@ -301,7 +286,8 @@ void screenshot (std::string &_outputFile) {
         // Close the smaller FBO because we are civilize ppl
         smallFbo.unbind();
         
-        LOG("< FINISH");
+        zmqSend(std::string("OUT "+_outputFile));
+        LOG("< OUT "+_outputFile);
     }
 }
  

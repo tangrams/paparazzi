@@ -19,10 +19,6 @@
 #include <sys/resource.h>
 #include <sys/syscall.h>
 
-// ZeroMQ
-#include <zmq.h>
-#include "utils.h"
-
 #define NUM_WORKERS 3
 
 #ifdef PLATFORM_LINUX
@@ -39,9 +35,6 @@ static std::list<std::unique_ptr<UrlTask>> s_urlTaskQueue;
 
 static double startTime = 0.0;
 
-void *context;
-void *requester;
-
 void logMsg(const char* fmt, ...) {
     std::string str = std::to_string(getTime()-startTime) + " - " + fmt;
     va_list args;
@@ -51,30 +44,8 @@ void logMsg(const char* fmt, ...) {
 }
 
 void resetTimer() {
-    LOG(">");
+    LOG("START");
     startTime = getTime();
-}
-
-void zmqConnect (int _port) {
-    context = zmq_ctx_new();
-    requester = zmq_socket(context, ZMQ_REQ);
-    zmq_connect (requester, std::string("tcp://localhost:"+toString(_port)).c_str());
-}
-
-bool zmqRecv (std::string &_buffer) {
-    char buffer[140];
-    bool rta = zmq_recv(requester, buffer, 140, 0);
-    _buffer = std::string(buffer);
-    return rta;
-}
-
-bool zmqSend (std::string &_buffer) {
-    return zmq_send(requester, _buffer.c_str(), _buffer.size(), 0);
-}
-
-void zmqClose() {
-    zmq_close(requester);
-    zmq_ctx_destroy(context);
 }
 
 void processNetworkQueue() {

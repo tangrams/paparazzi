@@ -21,11 +21,6 @@
 #include <GLFW/glfw3.h>
 #endif
 
-void zmqConnect(int _port);
-bool zmqRecv(std::string &_buffer);
-bool zmqSend(std::string &_buffer);
-void zmqClose();
-
 void processNetworkQueue();
 void finishUrlRequests();
 
