@@ -8,14 +8,20 @@ if [ -f /etc/os-release ]; then
 fi
 
 deps_common="cmake "
-deps_linux_common="libcurl4-openssl-dev "
+deps_linux_devian="libcurl4-openssl-dev uuid-dev libtool pkg-config build-essential autoconf automake"
 deps_linux_rpi="curl "
 deps_linux_ubuntu="xorg-dev libgl1-mesa-dev npm nodejs "
 deps_linux_amazon="libX*-devel mesa-libGL-devel curl-devel glx-utils git libmpc-devel mpfr-devel gmp-devel"
 deps_darwin="glfw3 pkg-config zeromq"
 
+cmake_arg=""
+n_cores="1"
+
+# INSTALL DEPENDECIES
 if [ $OS == "Linux" ]; then
     echo "Install dependeces for Linux - $DIST"
+    n_cores=$(grep -c ^processor /proc/cpuinfo)
+
     if [ "$DIST" == "Amazon Linux AMI" ]; then
 
         # Amazon Linux
@@ -41,7 +47,7 @@ if [ $OS == "Linux" ]; then
             cd gcc-4.9.2
             ./contrib/download_prerequisites
             ./configure --disable-multilib --enable-languages=c,c++
-            make -j 8
+            make -j $n_cores
             make install
             cd ..
             rm -rf gcc-4.9.2*
@@ -57,6 +63,7 @@ if [ $OS == "Linux" ]; then
         export CXX=/usr/local/bin/g++
         export CC=/usr/local/bin/gcc
         export DISPLAY=:0
+        cmake_arg="-DPLATFORM_TARGET=linux"
         
         # Install Node
         if [ ! -e ~/.nvm/ ]; then
@@ -73,23 +80,38 @@ if [ $OS == "Linux" ]; then
         fi
 
     elif [ "$DIST" == "Ubuntu" ]; then
+
+         # UBUNTU
         sudo apt-get update
         sudo apt-get upgrade
-        sudo apt-get install $deps_common $deps_linux_common $deps_linux_ubuntu
+        sudo apt-get install $deps_common $deps_linux_devian $deps_linux_ubuntu
         sudo ln -s /usr/bin/nodejs /usr/local/bin/node
+        cmake_arg="-DPLATFORM_TARGET=linux"
 
     elif [ "$DIST" == "Raspbian GNU/Linux" ]; then
+
+        # Raspian
         sudo apt-get update
         sudo apt-get upgrade
-        sudo apt-get install $deps_common $deps_linux_common $deps_linux_rpi
+        sudo apt-get install $deps_common $deps_linux_devian $deps_linux_rpi
         curl -sL https://deb.nodesource.com/setup_6.x | sudo -E bash -
         sudo apt-get install nodejs -y
         export CXX=/usr/bin/g++-4.9
+        cmake_arg="-DPLATFORM_TARGET=rpi"
+    fi
+
+    # Install ZeroMQ 
+    if [ ! -e /usr/local/lib/libzmq.so ]; then
+        git clone https://github.com/zeromq/libzmq
+        cd libzmq
+        ./autogen.sh && ./configure && make -j $n_cores
+        make check && sudo make install && sudo ldconfig
+        cd ..
     fi
 
 elif [ $OS == "Darwin" ]; then
     
-    # ON MacOX 
+    # DARWIN
     if [ ! -e /usr/local/bin/brew ]; then
         ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
     fi
@@ -98,8 +120,28 @@ elif [ $OS == "Darwin" ]; then
     brew upgrade
     brew install $deps_common $deps_darwin
 
+    n_cores="4"
+    cmake_arg="-DPLATFORM_TARGET=osx"
+
 fi
 
-./compile
+# GET SUBMODULES
+git submodule update --init --recursive
 
-npm install
+# GET NODE MODULES
+if [ ! -e ~/.node_modules ]; then
+    npm install
+fi
+
+# Compile
+if [ $1 == "xcode" ]; then
+    mkdir build
+    cd build
+    cmake .. -GXcode -DPLATFORM_TARGET=osx
+else
+    cmake . -Bbuild $cmake_arg
+    cd build
+    make -j $n_cores
+fi
+
+cd ..
