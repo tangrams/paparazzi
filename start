@@ -1,10 +1,12 @@
 #!/bin/bash
 
 PRE=""
-DIST="UNKNOWN"
+DIST="DARWIN"
+PORT=8080
 if [ -f /etc/os-release ]; then
     . /etc/os-release
     DIST=$NAME
+    PORT=80
 fi
 
 if [ "$DIST" == "Amazon Linux AMI" ]; then
@@ -16,11 +18,7 @@ if [ ! -e cache ]; then
     mkdir cache
 fi
 
-if [ ! -e fonts ]; then
-    ln -s tangram-es/scenes/fonts .
-fi
-
-$PRE npm start
+$PRE npm start $PORT
 
 # while true; do
 #   sleep 1000

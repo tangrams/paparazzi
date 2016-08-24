@@ -22,6 +22,6 @@
   "license": "MIT",
   "dependencies": {
     "md5": "^2.1.0",
-    "winston": "^2.2.0"
+    "zmq": "^2.15.3"
   }
 }

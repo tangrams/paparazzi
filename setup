@@ -110,6 +110,8 @@ if [ $OS == "Linux" ]; then
     fi
 
 elif [ $OS == "Darwin" ]; then
+    n_cores="4"
+    cmake_arg="-DPLATFORM_TARGET=osx"
     
     # DARWIN
     if [ ! -e /usr/local/bin/brew ]; then
@@ -119,10 +121,6 @@ elif [ $OS == "Darwin" ]; then
     brew update
     brew upgrade
     brew install $deps_common $deps_darwin
-
-    n_cores="4"
-    cmake_arg="-DPLATFORM_TARGET=osx"
-
 fi
 
 # GET SUBMODULES
@@ -131,6 +129,11 @@ git submodule update --init --recursive
 # GET NODE MODULES
 if [ ! -e ~/.node_modules ]; then
     npm install
+fi
+
+# Other needed files/folders
+if [ ! -e fonts ]; then
+    ln -s tangram-es/scenes/fonts .
 fi
 
 # Compile
