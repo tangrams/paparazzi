@@ -25,12 +25,19 @@
 #include "zeromq.h"
 
 // Default parametters
-Tangram::Map* map = nullptr;
+#define ZEROMQ_PORT 5555
+#define MAX_WAITING_TIME 10.0
+
+std::string style = "scene.yaml";
+double lat = 0.0f;   // Default lat position
+double lon = 0.0f;   // Default lng position
+float zoom = 0.0f;   // Default zoom of the scene
+float rot = 0.0f;    // Default rotation of the scene (deg)
+float tilt = 0.0f;   // Default tilt angle (deg)
 int width = 800;     // Default Width of the image (will be multipl by 2 for the antialiasing)
 int height = 480;    // Default height of the image (will be multipl by 2 for the antialiasing)
-std::string style = "scene.yaml";
-#define ZEROMQ_PORT 5555
 
+// Internal communication between THREADS
 std::atomic<bool> bRun(true);
 std::vector<std::string> queue; // Commands Queue
 std::mutex queueMutex;
@@ -40,6 +47,9 @@ Fbo renderFbo;      // FrameBufferObject where the tangram scene will be renderd
 Fbo smallFbo;       // FrameBufferObject of the half of the size to fake an antialiased image
 Vbo* smallVbo;      // VertexBufferObject to down sample the renderFbo to (like a billboard)
 Shader smallShader; // Shader program to use to down sample the renderFbo with
+
+// Tangram
+Tangram::Map* map = nullptr;
 
 //============================================================================== CONTROL THREADS
 void consoleThread() {
@@ -129,13 +139,13 @@ void main() {\n\
             }
             else {
                 std::vector<std::string> commands = split(lastStr, ';');
-                for (auto&& command : commands) {
+                for (std::string command : commands) {
                     processCommand(command);
                     updateTangram();
-                    LOG("FINISH"+command);
+                    LOG("FINISH %s", command.c_str());
                 }
+                zmqSend("OK ");
                 LOG("< OK");
-                zmqSend("OK "+command);
             }
         } 
     }
@@ -171,10 +181,15 @@ void main() {\n\
 //============================================================================== MAIN FUNCTION
 void updateTangram () {
     bool bFinish = false;
-    while (!bFinish) {
+    double lastTime = getTime();
+    double currentTime = lastTime;
+    
+    float delta = 0.0;
+    while (delta < MAX_WAITING_TIME && !bFinish) {
         // Update Network Queue
         processNetworkQueue();
         bFinish = map->update(10.);
+        delta = currentTime - lastTime;
     }
 }
 
@@ -185,55 +200,67 @@ void processCommand (std::string &_command) {
         if (elements[0] == "scene") {
             if (elements.size() == 1) {
                 std::cout << style << std::endl;
-            } else {
+            }
+            else {
                 style = elements[1];
                 map->loadSceneAsync(style.c_str());
             }
         }
         else if (elements[0] == "zoom") {
             if (elements.size() == 1) {
-                std::cout << map->getZoom() << std::endl;
-            } else {
-                LOG("Set zoom: %f", toFloat(elements[1]));
-                map->setZoom(toFloat(elements[1]));
+                std::cout << zoom << std::endl;
+            }
+            else if (zoom != toFloat(elements[1])) {
+                zoom = toFloat(elements[1]);
+                LOG("Set zoom: %f", zoom);
+                map->setZoom(zoom);
             }
         }
         else if (elements[0] == "tilt") {
             if (elements.size() == 1) {
-                std::cout << map->getZoom() << std::endl;
-            } else {
-                LOG("Set tilt: %f", toFloat(elements[1]));
-                map->setTilt(toFloat(elements[1]));
+                std::cout << tilt << std::endl;
+            }
+            else if (tilt != toFloat(elements[1])) {
+                tilt = toFloat(elements[1]);
+                LOG("Set tilt: %f", tilt);
+                map->setTilt(tilt);
             }
         }
         else if (elements[0] == "rotate") {
             if (elements.size()) {
-                std::cout << map->getZoom() << std::endl;
-            } else {
-                LOG("Set rotation: %f", toFloat(elements[1]));
-                map->setRotation(toFloat(elements[1]));
+                std::cout << rot << std::endl;
+            }
+            else if (rot != toFloat(elements[1])) {
+                rot = toFloat(elements[1]);
+                LOG("Set rotation: %f", rot);
+                map->setRotation(rot);
             }
         }
         else if (elements.size() > 2 && elements[0] == "position") {
             if (elements.size() == 1) {
-                double lat = 0;
-                double lon = 0;
-                map->getPosition(lon, lat);
                 std::cout << lon << 'x' << lat << std::endl;
-            } else {
-                LOG("Set position: %f (lon), %f (lat)", toFloat(elements[1]), toFloat(elements[2]));
-                map->setPosition(toDouble(elements[1]), toDouble(elements[2]));
-                if (elements.size() == 4) {
-                    LOG("Set zoom: %f", toFloat(elements[3]));
-                    map->setZoom(toFloat(elements[3]));
-                }   
             }
+            else if (lon != toDouble(elements[1]) || lat != toDouble(elements[2])) {
+                lon = toDouble(elements[1]);
+                lat = toDouble(elements[2]);
+                LOG("Set position: %f (lon), %f (lat)", lon, lat);
+                map->setPosition(lon, lat); 
+            }
+            
+            if (elements.size() == 4) {
+                zoom = toFloat(elements[3]);
+                LOG("Set zoom: %f", zoom);
+                map->setZoom(zoom);
+            }  
         }
         else if (elements[0] == "size") {
             if (elements.size() == 1) {
                 std::cout << width << "x" << height << std::endl;
-            } else {
-                resize(toInt(elements[1]), toInt(elements[2]));
+            }
+            else if (width != toInt(elements[1]) || height != toInt(elements[2])) {
+                width = toInt(elements[1]);
+                height = toInt(elements[2]);
+                resize(width, height);
             }
         }
         else if (elements[0] == "print") {
@@ -287,7 +314,7 @@ void screenshot (std::string &_outputFile) {
         smallFbo.unbind();
         
         zmqSend(std::string("OUT "+_outputFile));
-        LOG("< OUT "+_outputFile);
+        LOG("< OUT %s", _outputFile.c_str());
     }
 }
  

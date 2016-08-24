@@ -44,8 +44,9 @@ void logMsg(const char* fmt, ...) {
 }
 
 void resetTimer() {
-    LOG("START");
+    LOG(" ");
     startTime = getTime();
+    LOG("START");
 }
 
 void processNetworkQueue() {
