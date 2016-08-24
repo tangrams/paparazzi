@@ -195,7 +195,6 @@ void updateTangram () {
 
 void processCommand (std::string &_command) {
     if (map) {
-        resetTimer();
         std::vector<std::string> elements = split(_command, ' ');
         if (elements[0] == "scene") {
             if (elements.size() == 1) {
@@ -203,6 +202,7 @@ void processCommand (std::string &_command) {
             }
             else {
                 style = elements[1];
+                resetTimer();
                 map->loadSceneAsync(style.c_str());
             }
         }
@@ -212,6 +212,7 @@ void processCommand (std::string &_command) {
             }
             else if (zoom != toFloat(elements[1])) {
                 zoom = toFloat(elements[1]);
+                resetTimer();
                 LOG("Set zoom: %f", zoom);
                 map->setZoom(zoom);
             }
@@ -222,6 +223,7 @@ void processCommand (std::string &_command) {
             }
             else if (tilt != toFloat(elements[1])) {
                 tilt = toFloat(elements[1]);
+                resetTimer();
                 LOG("Set tilt: %f", tilt);
                 map->setTilt(tilt);
             }
@@ -232,6 +234,7 @@ void processCommand (std::string &_command) {
             }
             else if (rot != toFloat(elements[1])) {
                 rot = toFloat(elements[1]);
+                resetTimer();
                 LOG("Set rotation: %f", rot);
                 map->setRotation(rot);
             }
@@ -243,12 +246,14 @@ void processCommand (std::string &_command) {
             else if (lon != toDouble(elements[1]) || lat != toDouble(elements[2])) {
                 lon = toDouble(elements[1]);
                 lat = toDouble(elements[2]);
+                resetTimer();
                 LOG("Set position: %f (lon), %f (lat)", lon, lat);
                 map->setPosition(lon, lat); 
             }
-            
+
             if (elements.size() == 4) {
                 zoom = toFloat(elements[3]);
+                resetTimer();
                 LOG("Set zoom: %f", zoom);
                 map->setZoom(zoom);
             }  
@@ -275,6 +280,7 @@ void processCommand (std::string &_command) {
 void resize (int _width, int _height) {
     // Setup the size of the image
     if (map) {
+        resetTimer();
         map->setPixelScale(2.0f);
         width = _width*2;
         height = _height*2;
