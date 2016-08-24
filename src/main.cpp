@@ -25,8 +25,10 @@
 
 // Default parametters
 Tangram::Map* map = nullptr;
-static int width = 800;     // Default Width of the image (will be multipl by 2 for the antialiasing)
-static int height = 480;    // Default height of the image (will be multipl by 2 for the antialiasing)
+int width = 800;     // Default Width of the image (will be multipl by 2 for the antialiasing)
+int height = 480;    // Default height of the image (will be multipl by 2 for the antialiasing)
+std::string style = "scene.yaml";
+#define ZEROMQ_PORT 5555
 
 std::atomic<bool> bRun(true);   //
 std::vector<std::string> queue; // Commands Queue
@@ -50,35 +52,38 @@ void consoleThread() {
 }
 
 void zmqThread() {
-    std::string line;
+    std::string line = "";
     while (bRun.load() && zmqRecv(line)) {
-        std::lock_guard<std::mutex> lock(queueMutex);
-        queue.push_back(line);
+        if (line.size() > 3) {
+            std::cout << "ZMQ> " << line << std::endl; 
+            std::lock_guard<std::mutex> lock(queueMutex);
+            queue.push_back(line);
+        }
     }
 }
 
 //============================================================================== MAIN FUNCTION
 bool updateTangram();
 void processCommand (std::string &_command);
-void resize(int _width, int _height);
-void screenshot(std::string _outputFile);
+void resize (int _width, int _height);
+void screenshot (std::string &_outputFile);
 
 int main (int argc, char **argv) {
 
     // CONTROL LOOP
     std::thread console(&consoleThread);
 
-    zmqConnect(5555);
+    zmqConnect(ZEROMQ_PORT);
     std::thread zmq(&zmqThread);
 
-    LOG("Tangram ES - Paparazzi");
+    LOG("PAPARAZZI CLIENT at port %i ", ZEROMQ_PORT);
 
     // Initialize cURL
     curl_global_init(CURL_GLOBAL_DEFAULT);
     
     // Start OpenGL ES context
+    LOG("Creating OpenGL ES context");
     initGL(width, height);
-
     // Create a rectangular Billboard to draw the main FBO
     smallVbo = rect(0.0,0.0,1.,1.).getVbo();
     // Create a simple vert/frag glsl shader to draw the main FBO with
@@ -99,7 +104,12 @@ void main() {\n\
 }";
     smallShader.load(smallFrag, smallVert);
 
-    // MAIN LOOP
+    // TANGRAM LOOP
+    LOG("Creating a new TANGRAM instances");
+    map = new Tangram::Map();
+    map->loadSceneAsync(style.c_str());
+    map->setupGL();
+    resize(width, height);
     while (bRun.load()) {
         std::string lastStr;
         {
@@ -113,13 +123,19 @@ void main() {\n\
         if (lastStr.size() > 0) {
             if (lastStr == "quit") {
                 bRun.store(false);
-            } else {
-                processCommand(lastStr);
+            } 
+            else if (lastStr == "status") {
+                LOG("Status: %s", bUpdateStatus ? "finish" : "updating");
+            }
+            else {
+                std::vector<std::string> commands = split(lastStr, ';');
+                for (auto&& command : commands) {
+                    processCommand(command);
+                    updateTangram();
+                }
             }
         } 
-        else {
-            updateTangram();
-        }
+        updateTangram();
     }
 
     // Clear running threaths and close OpenGL ES
@@ -156,72 +172,79 @@ bool updateTangram () {
     processNetworkQueue();
 
     bool bFinish = false;
-    
-    if (map) {
-        bFinish = map->update(10.);
-    }
-     
-    if ( bFinish && !bUpdateStatus) {
+    bFinish = map->update(10.);
+    if (bFinish && !bUpdateStatus) {
         LOG("< FINISH");
     }
     bUpdateStatus = bFinish;
-    
+
     return bFinish;
 }
 
 void processCommand (std::string &_command) {
-    std::vector<std::string> elements = split(_command, ' ');
-    if (elements[0] == "set" && elements.size() > 2) {
-        if (elements[1] == "scene") {
-            resetTimer();
-            if (!map) {
-                map = new Tangram::Map();
-                map->loadSceneAsync(elements[2].c_str());
-                resize(width, height);
-                // Start OpenGL resource of Tangram
-                map->setupGL();
-            } else {
-                map->loadSceneAsync(elements[2].c_str());
-            }
-        }
-        else if (map && elements[1] == "zoom") {
-            resetTimer();
-            LOG("Set zoom: %f", toFloat(elements[2]));
-            map->setZoom(toFloat(elements[2]));
-        }
-        else if (map &&  elements[1] == "tilt") {
-            resetTimer();
-            LOG("Set tilt: %f", toFloat(elements[2]));
-            map->setTilt(toFloat(elements[2]));
-        }
-        else if (map &&  elements[1] == "rotation") {
-            resetTimer();
-            LOG("Set rotation: %f", toFloat(elements[2]));
-            map->setRotation(toFloat(elements[2]));
-        }
-        else if (map &&  elements.size() > 3 && elements[1] == "position") {
-            resetTimer();
-            LOG("Set position: %f (lon), %f (lat)", toFloat(elements[2]), toFloat(elements[3]));
-            map->setPosition(toDouble(elements[2]), toDouble(elements[3]));
-            if (elements.size() == 5) {
-                LOG("Set zoom: %f", toFloat(elements[4]));
-                map->setZoom(toFloat(elements[4]));
-            }
-
-        }
-        else if (map && elements.size() > 2 && elements[1] == "size") {
-            resetTimer();
-            resize(toInt(elements[2]), toInt(elements[3]));
-        }
-    }
-    else if (map && elements[0] == "get") {
-        if (elements[1] == "status") {
-            LOG("Status: %s", bUpdateStatus ? "finish" : "updating");
-        }
-    }
-    else if (map && elements[0] == "print") {
+    if (map) {
         resetTimer();
-        screenshot(elements[1]);
+        std::vector<std::string> elements = split(_command, ' ');
+        if (elements[0] == "scene") {
+            if (elements.size() == 1) {
+                std::cout << style << std::endl;
+            } else {
+                style = elements[1];
+                map->loadSceneAsync(style.c_str());
+            }
+        }
+        else if (elements[0] == "zoom") {
+            if (elements.size() == 1) {
+                std::cout << map->getZoom() << std::endl;
+            } else {
+                LOG("Set zoom: %f", toFloat(elements[1]));
+                map->setZoom(toFloat(elements[1]));
+            }
+        }
+        else if (elements[0] == "tilt") {
+            if (elements.size() == 1) {
+                std::cout << map->getZoom() << std::endl;
+            } else {
+                LOG("Set tilt: %f", toFloat(elements[1]));
+                map->setTilt(toFloat(elements[1]));
+            }
+        }
+        else if (elements[0] == "rotate") {
+            if (elements.size()) {
+                std::cout << map->getZoom() << std::endl;
+            } else {
+                LOG("Set rotation: %f", toFloat(elements[1]));
+                map->setRotation(toFloat(elements[1]));
+            }
+        }
+        else if (elements.size() > 2 && elements[0] == "position") {
+            if (elements.size() == 1) {
+                double lat = 0;
+                double lon = 0;
+                map->getPosition(lon, lat);
+                std::cout << lon << 'x' << lat << std::endl;
+            } else {
+                LOG("Set position: %f (lon), %f (lat)", toFloat(elements[1]), toFloat(elements[2]));
+                map->setPosition(toDouble(elements[1]), toDouble(elements[2]));
+                if (elements.size() == 4) {
+                    LOG("Set zoom: %f", toFloat(elements[3]));
+                    map->setZoom(toFloat(elements[3]));
+                }   
+            }
+        }
+        else if (elements[0] == "size") {
+            if (elements.size() == 1) {
+                std::cout << width << "x" << height << std::endl;
+            } else {
+                resize(toInt(elements[1]), toInt(elements[2]));
+            }
+        }
+        else if (elements[0] == "print") {
+            screenshot(elements[1]);
+        }
+    }
+    else {
+        LOG("No TANGRAM instance");
     }
 }
 
@@ -237,7 +260,7 @@ void resize (int _width, int _height) {
     }
 }
 
-void screenshot (std::string _outputFile) {
+void screenshot (std::string &_outputFile) {
     if (map) {
         double lastTime = getTime();
         double currentTime = lastTime;

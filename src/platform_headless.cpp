@@ -51,7 +51,7 @@ void logMsg(const char* fmt, ...) {
 }
 
 void resetTimer() {
-    LOG("> START");
+    LOG(">");
     startTime = getTime();
 }
 
@@ -63,13 +63,13 @@ void zmqConnect (int _port) {
 
 bool zmqRecv (std::string &_buffer) {
     char buffer[140];
-    bool rta = zmq_recv(requester, buffer, 10, 0);
+    bool rta = zmq_recv(requester, buffer, 140, 0);
     _buffer = std::string(buffer);
     return rta;
 }
 
 bool zmqSend (std::string &_buffer) {
-    return zmq_send(requester, _buffer.c_str(), 5, 0);
+    return zmq_send(requester, _buffer.c_str(), _buffer.size(), 0);
 }
 
 void zmqClose() {

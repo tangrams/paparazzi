@@ -65,9 +65,8 @@ function responseFile(unique_name, ext, res) {
 
 function responseErr(res, msg) {
     console.log(msg);
-
     res.writeHead(404, {'Content-Type': 'text/plain' });
-    res.end('404 Not Found');
+    res.end(msg);
 }
 
 var app = function (req, res) {
@@ -88,30 +87,30 @@ var app = function (req, res) {
         // Listen for arguments to pass to Tangram-ES and construct a command string for it
         var command = BIN;
         if (query['lat'] && typeof parseFloat(query['lat']) === 'number') {
-            command += ' -lat ' + query['lat'];
+            command += 'set lat ' + query['lat'] + ';';
         }
         if (query['lon'] && typeof parseFloat(query['lon']) === 'number') {
-            command += ' -lon ' + query['lon'];
+            command += 'set lon ' + query['lon'] + ';';
         }
         if (query['zoom'] && typeof parseFloat(query['zoom']) === 'number') {
-            command += ' -z ' + query['zoom'];
+            command += 'set zoom ' + query['zoom'] + ';';
         }
         if (query['tilt'] && typeof parseFloat(query['tilt']) === 'number') {
-            command += ' -t ' + query['tilt'];
+            command += 'set tilt ' + query['tilt'] + ';';
         }
         if (query['rot'] && typeof parseFloat(query['rot']) === 'number') {
-            command += ' -r ' + query['rot'];
+            command += 'set rotate ' + query['rot'] + ';';
         }
         if (query['width'] && typeof parseFloat(query['width']) === 'number') {
-            command += ' -w ' + query['width'];
+            command += 'set width ' + query['width'] + ';';
         }
         if (query['height'] && typeof parseFloat(query['height']) === 'number') {
-            command += ' -h ' + query['height'];
+            command += 'set height ' + query['height'] + ';';
         }
         if (query['scene']) {
             var scene = url.parse(query['scene']);
             if (scene.protocol.startsWith('http') && scene.href && path.extname(scene.href) == '.yaml') {
-                command += ' -s ' + query['scene'];    
+                command += 'set scene' + query['scene'] + ';';    
             } else {
                 responseErr(res, {src:'NODE', msg:query['scene']+' does not look like a URL path to YAML file', qrt: query, key: key});
                 return;

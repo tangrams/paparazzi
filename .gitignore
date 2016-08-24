@@ -1,11 +1,7 @@
 .DS_Store
-out.png
-out.jpg
-infile.yaml
 build
 fonts
 npm-debug.log
-scene.yaml
 node_modules
 cache
 paparazzi.log
