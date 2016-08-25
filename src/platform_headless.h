@@ -24,4 +24,4 @@
 void processNetworkQueue();
 void finishUrlRequests();
 
-void resetTimer();
+void resetTimer(std::string _msg = std::string(""));

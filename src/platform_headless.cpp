@@ -43,10 +43,10 @@ void logMsg(const char* fmt, ...) {
     va_end(args);
 }
 
-void resetTimer() {
+void resetTimer(std::string _msg) {
     LOG(" ");
     startTime = getTime();
-    LOG("START");
+    LOG("START %s",_msg.c_str());
 }
 
 void processNetworkQueue() {
