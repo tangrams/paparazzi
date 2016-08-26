@@ -7,8 +7,8 @@ if [ -f /etc/os-release ]; then
     DIST=$NAME
 fi
 
-deps_common="cmake "
-deps_linux_devian="libcurl4-openssl-dev uuid-dev libtool pkg-config build-essential autoconf automake"
+deps_common="cmake " 
+deps_linux_devian="libcurl4-openssl-dev uuid-dev libtool pkg-config build-essential autoconf automake lcov libzmq3-dev"
 deps_linux_rpi="curl "
 deps_linux_ubuntu="xorg-dev libgl1-mesa-dev npm nodejs "
 deps_linux_amazon="libX*-devel mesa-libGL-devel curl-devel glx-utils git libmpc-devel mpfr-devel gmp-devel"
@@ -121,6 +121,19 @@ elif [ $OS == "Darwin" ]; then
     brew update
     brew upgrade
     brew install $deps_common $deps_darwin
+fi
+
+# Install  the super awesome PRIME_SERVER by Kevin Kreiser ( https://mapzen.com/blog/zmq-http-server )
+if [ ! -e /usr/local/bin/prime_httpd ]; then
+    git clone https://github.com/kevinkreiser/prime_server.git
+    cd prime_server
+    git submodule update --init --recursive
+    ./autogen.sh
+    ./configure
+    make test -j $n_cores
+    sudo make install
+    cd ..
+    rm -rf prime_server
 fi
 
 # GET SUBMODULES
