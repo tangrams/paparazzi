@@ -31,7 +31,7 @@ Paparazzi::Paparazzi() : m_style("scene.yaml"), m_lat(0.0), m_lon(0.0), m_zoom(0
 
     // Start OpenGL ES context
     LOG("Creating OpenGL ES context");
-    initGL(width, height);
+    initGL(m_width, m_height);
 
     // Create a simple vert/frag glsl shader to draw the main FBO with
     std::string smallVert = "#ifdef GL_ES\n\
@@ -57,7 +57,7 @@ void main() {\n\
 
     LOG("Creating a new TANGRAM instances");
     m_map = new Tangram::Map();
-    m_map->loadSceneAsync(style.c_str());
+    m_map->loadSceneAsync(m_style.c_str());
     m_map->setupGL();
 
     setSize(m_width, m_height);
@@ -95,58 +95,95 @@ Paparazzi::~Paparazzi() {
     LOG("END\n");
 }
 
-void Paparazzi::setSize (int _width, int _height) {
-    // Setup the size of the image
-    if (m_map) {
-        m_map->setPixelScale(AA_SCALE);
+void Paparazzi::setSize (const int &_width, const int &_height) {
+    if (_width != m_width || _height != m_height) {
+        resetTimer("set size");
+
         m_width = _width*AA_SCALE;
         m_height = _height*AA_SCALE;
-        m_map->resize(width, height);
-    }
 
-    if (!m_renderFbo) {
-        m_renderFbo = new Fbo();
-    }
-    m_renderFbo.resize(width, height);    // Allocate the main FrameBufferObject were tangram will be draw
+        // Setup the size of the image
+        if (m_map) {
+            m_map->setPixelScale(AA_SCALE);
+            m_map->resize(m_width, m_height);
+            update();
+        }
 
-    if (!m_smallFbo) {
-        m_smallFbo = new Fbo();
+        if (!m_renderFbo) {
+            m_renderFbo = new Fbo();
+        }
+        m_renderFbo->resize(m_width, m_height);    // Allocate the main FrameBufferObject were tangram will be draw
+
+        if (!m_smallFbo) {
+            m_smallFbo = new Fbo();
+        }
+        m_smallFbo->resize(_width, _height); // Allocate the smaller FrameBufferObject were the main FBO will be draw
     }
-    m_smallFbo.resize(width/AA_SCALE, height/AA_SCALE); // Allocate the smaller FrameBufferObject were the main FBO will be draw    
 }
 
-// prime_server stuff
-worker_t::result_t Paparazzi::work (const std::list<zmq::message_t>& job, void* request_info){
-    //false means this is going back to the client, there is no next stage of the pipeline
-    worker_t::result_t result{false};
+void Paparazzi::setZoom (const float &_zoom) {
+    if (_zoom != m_zoom) {
+        resetTimer("set zoom");
 
-    //this type differs per protocol hence the void* fun
-    auto& info = *static_cast<http_request_t::info_t*>(request_info);
-    http_response_t response;
-    try {
-        //TODO: actually use/validate the request parameters
-        auto request = http_request_t::from_string(
-            static_cast<const char*>(job.front().data()), job.front().size());
+        m_zoom = _zoom;
 
-            //TODO:get your image bytes here
-        std::string image = render();
-        response = http_response_t(200, "OK", image);
+        if (m_map) {
+            m_map->setZoom(_zoom);
+            update();
+        }
     }
-    catch(const std::exception& e) {
-        //complain
-        response = http_response_t(400, "Bad Request", e.what());
-    }
-
-    //does some tricky stuff with headers and different versions of http
-    response.from_info(info);
-
-    //formats the response to protocal that the client will understand
-    result.messages.emplace_back(response.to_string());
-    return result;
 }
 
-void Paparazzi::cleanup () {
+void Paparazzi::setTilt (const float &_deg) {
+    if (_deg != m_tilt) {
+        resetTimer("set tilt");
 
+        m_tilt = _deg;
+
+        if (m_map) {
+            m_map->setTilt(glm::radians(m_tilt));
+            update();
+        }
+    }
+}
+void Paparazzi::setRotation (const float &_deg) {
+    if (_deg != m_rotation) {
+        resetTimer("set rotation");
+
+        m_rotation = _deg;
+
+        if (m_map) {
+            m_map->setRotation(glm::radians(m_rotation));
+            update();
+        }
+    }
+}
+
+void Paparazzi::setPosition (const int &_lon, const int &_lat) {
+    if (_lon != m_lon || _lat != m_lat) {
+        resetTimer("set position");
+
+        m_lon = _lon;
+        m_lat = _lat;
+
+        if (m_map) {
+            m_map->setPosition(m_lon, m_lat);
+            update();
+        }
+    }
+}
+
+void Paparazzi::setStyle (const std::string &_url) {
+    if (_url != m_style) {
+        resetTimer("set style");
+
+        m_style = _url;
+
+        if (m_map) {
+            m_map->loadSceneAsync(m_style.c_str());
+            update();
+        }
+    }
 }
 
 void Paparazzi::update () {
@@ -167,138 +204,120 @@ void stbi_write_func(void *context, void *data, int size) {
     static_cast<string*>(context)->append(static_cast<const char*>(data), size);
 }
 
-std::string Paparazzi::render() {
-    std::string rta;
-    if (m_map) {
-        LOG("Rendering...");
-        // Render the Tangram scene inside an FrameBufferObject
-        renderFbo.bind();   // Bind main FBO
-        map->render();  // Render Tangram Scene
-        renderFbo.unbind(); // Unbind main FBO
+// prime_server stuff
+worker_t::result_t Paparazzi::work (const std::list<zmq::message_t>& job, void* request_info){
+    //false means this is going back to the client, there is no next stage of the pipeline
+    worker_t::result_t result{false};
+
+    //this type differs per protocol hence the void* fun
+    auto& info = *static_cast<http_request_t::info_t*>(request_info);
+    http_response_t response;
+    try {
+        //TODO: actually use/validate the request parameters
+        auto request = http_request_t::from_string(
+            static_cast<const char*>(job.front().data()), job.front().size());
+
+        auto lat_itr = request.query.find("lat");
+        if (lat_itr == request.query.cend() || lat_itr->size() == 0)
+            throw std::runtime_error("lat is required punk");
+
+        auto lon_itr = request.query.find("lon");
+        if (lon_itr == request.query.cend() || lon_itr->size() == 0)
+            throw std::runtime_error("lon is required punk");
+
+        auto zoom_itr = request.query.find("zoom");
+        if (zoom_itr == request.query.cend() || zoom_itr->size() == 0)
+            throw std::runtime_error("zoom is required punk");
+
+        auto width_itr = request.query.find("width");
+        if (width_itr == request.query.cend() || width_itr->size() == 0)
+            throw std::runtime_error("width is required punk");
+
+        auto height_itr = request.query.find("height");
+        if (height_itr == request.query.cend() || height_itr->size() == 0)
+            throw std::runtime_error("height is required punk");
+
+        auto style_itr = request.query.find("style");
+        if (style_itr == request.query.cend() || style_itr->size() == 0)
+            throw std::runtime_error("style is required punk");
         
-        // at the half of the size of the rendered scene
-        int width = width/AA_SCALE;
-        int hight = height/AA_SCALE;
-        int depth = IMAGE_DEPTH;
+        //values for the key 'lat' but we only take the first
+        double lat = std::stod(lat_values->front());
+        double lon = std::stod(lon_values->front());
+        float zoom = std::stof(zoom_values->front());
+        int width = std::stoi(width_values->front());
+        int height = std::stoi(height_values->front());
+        std::string style = style_values->front();
 
-        // Draw the main FBO inside the small one
-        smallFbo.bind();
-        smallShader.use();
-        smallShader.setUniform("u_resolution", width, hight);
-        smallShader.setUniform("u_buffer", &renderFbo, 0);
-        smallVbo->draw(&smallShader);
-        
-        // Once the main FBO is draw take a picture
-        LOG("Extracting pixels...");
-        unsigned char* pixels = new unsigned char[width * hight * depth];   // allocate memory for the pixels
-        glReadPixels(0, 0, width, hight, GL_RGBA, GL_UNSIGNED_BYTE, pixels); // Read throug the current buffer pixels
+        setZoom(zoom);
+        setPosition(lon, lat);
+        setSize(width, height);
+        setStyle(style);
 
-        unsigned char *result = new unsigned char[width*height*depth];
-        memcpy(result, _pixels, width*height*depth);
-        int row,col,z;
-        stbi_uc temp;
+        //TODO:get your image bytes here
+        std::string image;
 
-        for (row = 0; row < (height>>1); row++) {
-            for (col = 0; col < width; col++) {
-                for (z = 0; z < depth; z++) {
-                    temp = result[(row * width + col) * depth + z];
-                    result[(row * width + col) * depth + z] = result[((height - row - 1) * width + col) * depth + z];
-                    result[((height - row - 1) * width + col) * depth + z] = temp;
+        if (m_map) {
+            LOG("Rendering...");
+            // Render the Tangram scene inside an FrameBufferObject
+            m_renderFbo->bind();   // Bind main FBO
+            m_map->render();  // Render Tangram Scene
+            m_renderFbo->unbind(); // Unbind main FBO
+            
+            // at the half of the size of the rendered scene
+            int width = m_width/AA_SCALE;
+            int hight = m_height/AA_SCALE;
+            int depth = IMAGE_DEPTH;
+
+            // Draw the main FBO inside the small one
+            m_smallFbo->bind();
+            m_smallShader->use();
+            m_smallShader->setUniform("u_resolution", width, hight);
+            m_smallShader->setUniform("u_buffer", &m_renderFbo, 0);
+            m_smallVbo->draw(m_smallShader);
+            
+            // Once the main FBO is draw take a picture
+            LOG("Extracting pixels...");
+            unsigned char* pixels = new unsigned char[width * hight * depth];   // allocate memory for the pixels
+            glReadPixels(0, 0, width, hight, GL_RGBA, GL_UNSIGNED_BYTE, pixels); // Read throug the current buffer pixels
+
+            unsigned char *result = new unsigned char[width*height*depth];
+            memcpy(result, pixels, width*height*depth);
+            int row,col,z;
+            stbi_uc temp;
+
+            for (row = 0; row < (height>>1); row++) {
+                for (col = 0; col < width; col++) {
+                    for (z = 0; z < depth; z++) {
+                        temp = result[(row * width + col) * depth + z];
+                        result[(row * width + col) * depth + z] = result[((height - row - 1) * width + col) * depth + z];
+                        result[((height - row - 1) * width + col) * depth + z] = temp;
+                    }
                 }
             }
-        }
-        
-        // stbi_write_png_to_func(stbi_write_func *func, &rta, width, height, depth, result, width * depth);
-        delete [] result;
 
-        // Close the smaller FBO because we are civilize ppl
-        smallFbo.unbind();
+            // stbi_write_png_to_func(stbi_write_func *func, &image, width, height, depth, result, width * depth);
+            delete [] result;
+
+            // Close the smaller FBO because we are civilize ppl
+            m_smallFbo->unbind();
+        }
+
+        response = http_response_t(200, "OK", image);
     }
-    return rta;
+    catch(const std::exception& e) {
+        //complain
+        response = http_response_t(400, "Bad Request", e.what());
+    }
+
+    //does some tricky stuff with headers and different versions of http
+    response.from_info(info);
+
+    //formats the response to protocal that the client will understand
+    result.messages.emplace_back(response.to_string());
+    return result;
 }
 
-void Paparazzi::do (std::string &_command) {
-    if (m_map) {
-        std::vector<std::string> elements = split(_command, ' ');
-        if (elements[0] == "scene") {
-            if (elements.size() == 1) {
-                std::cout << style << std::endl;
-            }
-            else {
-                style = elements[1];
-                resetTimer(_command);
-                m_map->loadSceneAsync(style.c_str());
-            }
-        }
-        else if (elements[0] == "zoom") {
-            if (elements.size() == 1) {
-                std::cout << zoom << std::endl;
-            }
-            else if (zoom != toFloat(elements[1])) {
-                zoom = toFloat(elements[1]);
-                resetTimer(_command);
-                LOG("Set zoom: %f", zoom);
-                m_map->setZoom(zoom);
-            }
-        }
-        else if (elements[0] == "tilt") {
-            if (elements.size() == 1) {
-                std::cout << tilt << std::endl;
-            }
-            else if (tilt != toFloat(elements[1])) {
-                tilt = toFloat(elements[1]);
-                resetTimer(_command);
-                LOG("Set tilt: %f", tilt);
-                m_map->setTilt(tilt);
-            }
-        }
-        else if (elements[0] == "rotation") {
-            if (elements.size()) {
-                std::cout << rotation << std::endl;
-            }
-            else if (rotation != toFloat(elements[1])) {
-                rotation = toFloat(elements[1]);
-                resetTimer(_command);
-                LOG("Set rotation: %f", rotation);
-                m_map->setRotation(rotation);
-            }
-        }
-        else if (elements.size() > 2 && elements[0] == "position") {
-            if (elements.size() == 1) {
-                std::cout << lon << 'x' << lat << std::endl;
-            }
-            else if (lon != toDouble(elements[1]) || lat != toDouble(elements[2])) {
-                lon = toDouble(elements[1]);
-                lat = toDouble(elements[2]);
-                resetTimer(_command);
-                LOG("Set position: %f (lon), %f (lat)", lon, lat);
-                m_map->setPosition(lon, lat); 
-            }
+void Paparazzi::cleanup () {
 
-            if (elements.size() == 4) {
-                zoom = toFloat(elements[3]);
-                resetTimer(_command);
-                LOG("Set zoom: %f", zoom);
-                m_map->setZoom(zoom);
-            }  
-        }
-        else if (elements[0] == "size") {
-            if (elements.size() == 1) {
-                std::cout << width << "x" << height << std::endl;
-            }
-            else if (width != toInt(elements[1]) || height != toInt(elements[2])) {
-                width = toInt(elements[1]);
-                height = toInt(elements[2]);
-                resetTimer(_command);
-                resize(width, height);
-            }
-        }
-        else if (elements[0] == "print") {
-            resetTimer(_command);
-            screenshot(elements[1]);
-        }
-    }
-    else {
-        LOG("No TANGRAM instance");
-    }
 }

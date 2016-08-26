@@ -20,14 +20,20 @@ public:
     Paparazzi();
     ~Paparazzi();
 
-    void    setSize(int _width, int _height);
+    void    setSize(const int &_width, const int &_height);
+    void    setZoom(const float &_zoom);
+    void    setTilt(const float &_deg);
+    void    setRotation(const float &_deg);
+    void    setStyle(const std::string &_url);
+    void    setPosition(const int &_lon, const int &_lat);
 
     // prime_server stuff
     worker_t::result_t work (const std::list<zmq::message_t>& job, void* request_info);
-    void    update();
+
     void    cleanup();
-    
+
 protected:
+    void    update();
 
     std::string m_style;
     double      m_lat;

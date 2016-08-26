@@ -23,7 +23,7 @@ int main(int argc, char* argv[]) {
 
     //listen for requests
     zmq::context_t context;
-    Paparazzi paparazzi_worker();
+    Paparazzi paparazzi_worker{};
     worker_t worker(context, upstream_endpoint, "ipc:///dev/null", loopback_endpoint,
         std::bind(&Paparazzi::work, std::ref(paparazzi_worker), std::placeholders::_1, std::placeholders::_2),
         std::bind(&Paparazzi::cleanup, std::ref(paparazzi_worker)));
