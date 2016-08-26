@@ -265,10 +265,9 @@ worker_t::result_t Paparazzi::work (const std::list<zmq::message_t>& job, void* 
         setPosition(lon, lat);
         setScene(scene);
 
-        //TODO:get your image bytes here
+        resetTimer("Rendering");
         std::string image;
         if (m_map) {
-            LOG("Rendering...");
             // Render the Tangram scene inside an FrameBufferObject
             m_renderFbo->bind();   // Bind main FBO
             m_map->render();  // Render Tangram Scene
@@ -287,7 +286,7 @@ worker_t::result_t Paparazzi::work (const std::list<zmq::message_t>& job, void* 
             m_smallVbo->draw(m_smallShader);
             
             // Once the main FBO is draw take a picture
-            LOG("Extracting pixels...");
+            resetTimer("Extracting pixels...");
             unsigned char* pixels = new unsigned char[width * hight * depth];   // allocate memory for the pixels
             glReadPixels(0, 0, width, hight, GL_RGBA, GL_UNSIGNED_BYTE, pixels); // Read throug the current buffer pixels
 
