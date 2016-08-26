@@ -24,7 +24,7 @@ public:
     void    setZoom(const float &_zoom);
     void    setTilt(const float &_deg);
     void    setRotation(const float &_deg);
-    void    setStyle(const std::string &_url);
+    void    setScene(const std::string &_url);
     void    setPosition(const int &_lon, const int &_lat);
 
     // prime_server stuff
@@ -35,7 +35,7 @@ public:
 protected:
     void    update();
 
-    std::string m_style;
+    std::string m_scene;
     double      m_lat;
     double      m_lon;
     float       m_zoom;

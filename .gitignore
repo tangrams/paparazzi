@@ -1,8 +1,3 @@
 .DS_Store
 build
 fonts
-npm-debug.log
-node_modules
-cache
-paparazzi.log
-*.pem

@@ -17,14 +17,14 @@
 #include "platform_headless.h" // headless platforms (Linux and RPi)
 
 #include "types/shapes.h"   // Small library to compose basic shapes (use for rect)
-#include "utils.h"
+// #include "utils.h"
 
 #include "stb_image.h"
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
 
-Paparazzi::Paparazzi() : m_style("scene.yaml"), m_lat(0.0), m_lon(0.0), m_zoom(0.0f), m_rotation(0.0f), m_tilt(0.0), m_width(800), m_height(480) {
+Paparazzi::Paparazzi() : m_scene("scene.yaml"), m_lat(0.0), m_lon(0.0), m_zoom(0.0f), m_rotation(0.0f), m_tilt(0.0), m_width(800), m_height(480) {
 
     // Initialize cURL
     curl_global_init(CURL_GLOBAL_DEFAULT);
@@ -57,7 +57,7 @@ void main() {\n\
 
     LOG("Creating a new TANGRAM instances");
     m_map = new Tangram::Map();
-    m_map->loadSceneAsync(m_style.c_str());
+    m_map->loadSceneAsync(m_scene.c_str());
     m_map->setupGL();
 
     setSize(m_width, m_height);
@@ -173,14 +173,14 @@ void Paparazzi::setPosition (const int &_lon, const int &_lat) {
     }
 }
 
-void Paparazzi::setStyle (const std::string &_url) {
-    if (_url != m_style) {
-        resetTimer("set style");
+void Paparazzi::setScene (const std::string &_url) {
+    if (_url != m_scene) {
+        resetTimer("set scene");
 
-        m_style = _url;
+        m_scene = _url;
 
         if (m_map) {
-            m_map->loadSceneAsync(m_style.c_str());
+            m_map->loadSceneAsync(m_scene.c_str());
             update();
         }
     }
@@ -237,9 +237,9 @@ worker_t::result_t Paparazzi::work (const std::list<zmq::message_t>& job, void* 
         if (height_itr == request.query.cend() || height_itr->second.size() == 0)
             throw std::runtime_error("height is required punk");
 
-        auto style_itr = request.query.find("style");
-        if (style_itr == request.query.cend() || style_itr->second.size() == 0)
-            throw std::runtime_error("style is required punk");
+        auto scene_itr = request.query.find("scene");
+        if (scene_itr == request.query.cend() || scene_itr->second.size() == 0)
+            throw std::runtime_error("scene is required punk");
         
         //values for the key 'lat' but we only take the first
         double lat = std::stod(lat_itr->second.front());
@@ -247,12 +247,12 @@ worker_t::result_t Paparazzi::work (const std::list<zmq::message_t>& job, void* 
         float zoom = std::stof(zoom_itr->second.front());
         int width = std::stoi(width_itr->second.front());
         int height = std::stoi(height_itr->second.front());
-        std::string style = style_itr->second.front();
+        std::string scene = scene_itr->second.front();
 
         setZoom(zoom);
         setPosition(lon, lat);
         setSize(width, height);
-        setStyle(style);
+        setScene(scene);
 
         //TODO:get your image bytes here
         std::string image;
