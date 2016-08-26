@@ -323,6 +323,19 @@ inline std::istream& operator>>(std::istream& is, glm::vec3& vec) {
     return is;
 }
 
+//----------------------------------------  String
+
+inline std::vector<std::string> split(const std::string &text, char sep) {
+  std::vector<std::string> tokens;
+  std::size_t start = 0, end = 0;
+  while ((end = text.find(sep, start)) != std::string::npos) {
+    tokens.push_back(text.substr(start, end - start));
+    start = end + 1;
+  }
+  tokens.push_back(text.substr(start));
+  return tokens;
+}
+
 //----------------------------------------  String I/O
 
 static inline bool loadFromPath(const std::string& path, std::string* into) {

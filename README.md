@@ -2,25 +2,32 @@
 
 # Tangram Paparazzi
 
-Sneaky version of [Tangram-ES](https://github.com/tangrams/tangram-es) that loads a YAML scene file, take snapshots and runs away. Currently compiles in RaspberryPi and Ubuntu.
+Sneaky version of [Tangram-ES](https://github.com/tangrams/tangram-es) that loads a YAML scene file, take snapshots and runs away. Currently compiles in Amazon GPU Server, Rasbian, Ubuntu and OSX.
 
 ## Install
 
 ```bash
 git clone --recursive https://github.com/tangrams/paparazzi.git
 cd paparazzi
-./setup
-./start
+./paparazzi.sh install
 ```
 
-## Use
+## Start
 
-The Node.js `server.js` set a HTTP server that listen for calls and use the query calls to construct a picture of a map. 
+```bash
+./paparazzi.sh start
+```
 
-How that looks like? After running paparazzi with `./start` go to your browser 
+## Stop
+
+```bash
+./paparazzi.sh stop
+```
+
+## Constructing a URL 
 
 ```
-http://localhost:8080/?zoom=17&lat=40.7086&lon=-73.9924&scene=https://dl.dropboxusercontent.com/u/335522/openframe/tangram/blueprint.yaml
+http://localhost:8000/?zoom=17&lat=40.7086&lon=-73.9924&scene=https://dl.dropboxusercontent.com/u/335522/openframe/tangram/blueprint.yaml
 ```
 
 Here is a list of arguments to pass to the URL

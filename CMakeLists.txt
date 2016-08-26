@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 2.8)
 project(tangram)
 
+# set(CMAKE_BUILD_TYPE Debug)
+
 # helper functions
 include(${PROJECT_SOURCE_DIR}/tangram-es/toolchains/utils.cmake)
 
@@ -15,7 +17,7 @@ if(NOT EXISTS "${PROJECT_SOURCE_DIR}/tangram-es/external/alfons/deps/harfbuzz-ic
 endif()
 
 # common compiler options
-set(EXECUTABLE_NAME "paparazzi")
+set(EXECUTABLE_NAME "paparazzi_thread")
 
 # add sources and include headers
 find_sources_and_include_directories(
@@ -89,13 +91,16 @@ elseif(${PLATFORM_TARGET} MATCHES "osx")
     add_definitions(-DPLATFORM_OSX)
 
     # compiler options
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I/usr/local/include")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++ -std=c++1y")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wreturn-type -Wsign-compare")
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}  -L/usr/local/lib -lzmq ")
     set(CXX_FLAGS_DEBUG "-g -O0")
 
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I/usr/local/include")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -L/usr/local/lib")
+
 endif()
+
+
 
 # add sources and include headers
 find_sources_and_include_directories(
@@ -114,12 +119,10 @@ add_executable(${EXECUTABLE_NAME} ${SOURCES})
 # link libraries
 target_link_libraries(${EXECUTABLE_NAME} ${CORE_LIBRARY})
 target_link_libraries(${EXECUTABLE_NAME} -lcurl)
-target_link_libraries(${EXECUTABLE_NAME} zmq)
+target_link_libraries(${EXECUTABLE_NAME} prime_server)
 
 if(${PLATFORM_TARGET} MATCHES "linux")
     target_link_libraries(${EXECUTABLE_NAME} glfw)
-    target_link_libraries(${EXECUTABLE_NAME} -ldl)
-    target_link_libraries(${EXECUTABLE_NAME} ${GLFW_LIBRARIES})
     target_link_libraries(${EXECUTABLE_NAME} ${OPENGL_LIBRARIES})
 
 elseif(${PLATFORM_TARGET} MATCHES "osx")
@@ -127,6 +130,5 @@ elseif(${PLATFORM_TARGET} MATCHES "osx")
     target_link_libraries(${EXECUTABLE_NAME} ${OPENGL_LIBRARIES})
 
 endif()
-
 
 add_resources(${EXECUTABLE_NAME} "${PROJECT_SOURCE_DIR}/scenes")

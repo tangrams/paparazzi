@@ -10,7 +10,7 @@
 Fbo::Fbo():m_id(0), m_old_fbo_id(0), m_texture(0), m_depth_texture(0), m_width(0), m_height(0), m_allocated(false), m_binded(false)  {
 }
 
-Fbo::Fbo(unsigned int _width, unsigned int _height):Fbo() {
+Fbo::Fbo(const unsigned int &_width, const unsigned int &_height):Fbo() {
     // Allocate Textures
     resize(_width,_height);
 }
@@ -25,7 +25,7 @@ Fbo::~Fbo() {
     }
 }
 
-void Fbo::resize(const unsigned int _width, const unsigned int _height) {
+void Fbo::resize(const unsigned int &_width, const unsigned int &_height) {
     if (!m_allocated) {
         // Create a frame buffer
         glGenFramebuffers(1, &m_id);
