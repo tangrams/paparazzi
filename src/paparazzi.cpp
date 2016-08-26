@@ -200,8 +200,8 @@ void Paparazzi::update () {
     }
 }
 
-void stbi_write_func(void *context, void *data, int size) {
-    static_cast<string*>(context)->append(static_cast<const char*>(data), size);
+void write_func(void *context, void *data, int size) {
+    static_cast<std::string*>(context)->append(static_cast<const char*>(data), size);
 }
 
 // prime_server stuff
@@ -218,36 +218,36 @@ worker_t::result_t Paparazzi::work (const std::list<zmq::message_t>& job, void* 
             static_cast<const char*>(job.front().data()), job.front().size());
 
         auto lat_itr = request.query.find("lat");
-        if (lat_itr == request.query.cend() || lat_itr->size() == 0)
+        if (lat_itr == request.query.cend() || lat_itr->second.size() == 0)
             throw std::runtime_error("lat is required punk");
 
         auto lon_itr = request.query.find("lon");
-        if (lon_itr == request.query.cend() || lon_itr->size() == 0)
+        if (lon_itr == request.query.cend() || lon_itr->second.size() == 0)
             throw std::runtime_error("lon is required punk");
 
         auto zoom_itr = request.query.find("zoom");
-        if (zoom_itr == request.query.cend() || zoom_itr->size() == 0)
+        if (zoom_itr == request.query.cend() || zoom_itr->second.size() == 0)
             throw std::runtime_error("zoom is required punk");
 
         auto width_itr = request.query.find("width");
-        if (width_itr == request.query.cend() || width_itr->size() == 0)
+        if (width_itr == request.query.cend() || width_itr->second.size() == 0)
             throw std::runtime_error("width is required punk");
 
         auto height_itr = request.query.find("height");
-        if (height_itr == request.query.cend() || height_itr->size() == 0)
+        if (height_itr == request.query.cend() || height_itr->second.size() == 0)
             throw std::runtime_error("height is required punk");
 
         auto style_itr = request.query.find("style");
-        if (style_itr == request.query.cend() || style_itr->size() == 0)
+        if (style_itr == request.query.cend() || style_itr->second.size() == 0)
             throw std::runtime_error("style is required punk");
         
         //values for the key 'lat' but we only take the first
-        double lat = std::stod(lat_values->front());
-        double lon = std::stod(lon_values->front());
-        float zoom = std::stof(zoom_values->front());
-        int width = std::stoi(width_values->front());
-        int height = std::stoi(height_values->front());
-        std::string style = style_values->front();
+        double lat = std::stod(lat_itr->second.front());
+        double lon = std::stod(lon_itr->second.front());
+        float zoom = std::stof(zoom_itr->second.front());
+        int width = std::stoi(width_itr->second.front());
+        int height = std::stoi(height_itr->second.front());
+        std::string style = style_itr->second.front();
 
         setZoom(zoom);
         setPosition(lon, lat);
@@ -273,7 +273,7 @@ worker_t::result_t Paparazzi::work (const std::list<zmq::message_t>& job, void* 
             m_smallFbo->bind();
             m_smallShader->use();
             m_smallShader->setUniform("u_resolution", width, hight);
-            m_smallShader->setUniform("u_buffer", &m_renderFbo, 0);
+            m_smallShader->setUniform("u_buffer", m_renderFbo, 0);
             m_smallVbo->draw(m_smallShader);
             
             // Once the main FBO is draw take a picture
@@ -296,8 +296,8 @@ worker_t::result_t Paparazzi::work (const std::list<zmq::message_t>& job, void* 
                 }
             }
 
-            // stbi_write_png_to_func(stbi_write_func *func, &image, width, height, depth, result, width * depth);
-            delete [] result;
+            stbi_write_png_to_func(&write_func, &image, width, height, depth, result, width * depth);
+            delete result;
 
             // Close the smaller FBO because we are civilize ppl
             m_smallFbo->unbind();
