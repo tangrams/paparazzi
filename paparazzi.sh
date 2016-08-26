@@ -205,9 +205,9 @@ case "$1" in
         killall paparazzi_thread
         ;;
     status)
-        ps -ef | grep prime_httpd
-        ps -ef | grep prime_proxyd
-        ps -ef | grep paparazzi_thread
+        ps -ef | grep -v grep | grep prime_httpd
+        ps -ef | grep -v grep | grep prime_proxyd
+        ps -ef | grep -v grep | grep paparazzi_thread
         ;;
     *)
         echo "Usage: $0 start"
