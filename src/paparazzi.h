@@ -25,7 +25,7 @@ public:
     void    setTilt(const float &_deg);
     void    setRotation(const float &_deg);
     void    setScene(const std::string &_url);
-    void    setPosition(const int &_lon, const int &_lat);
+    void    setPosition(const double &_lon, const double &_lat);
 
     // prime_server stuff
     worker_t::result_t work (const std::list<zmq::message_t>& job, void* request_info);

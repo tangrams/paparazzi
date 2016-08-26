@@ -155,7 +155,7 @@ void Paparazzi::setRotation (const float &_deg) {
     }
 }
 
-void Paparazzi::setPosition (const int &_lon, const int &_lat) {
+void Paparazzi::setPosition (const double &_lon, const double &_lat) {
     if (_lon != m_lon || _lat != m_lat) {
         resetTimer("set position");
 
@@ -238,10 +238,8 @@ worker_t::result_t Paparazzi::work (const std::list<zmq::message_t>& job, void* 
         if (scene_itr == request.query.cend() || scene_itr->second.size() == 0)
             throw std::runtime_error("scene is required punk");
         
-        // double lat = std::stod(lat_itr->second.front());
-        // double lon = std::stod(lon_itr->second.front());
-        double lat = toDouble(lat_itr->second.front());
-        double lon = toDouble(lon_itr->second.front());
+        double lat = std::stod(lat_itr->second.front());
+        double lon = std::stod(lon_itr->second.front());
         float zoom = std::stof(zoom_itr->second.front());
         int width = std::stoi(width_itr->second.front());
         int height = std::stoi(height_itr->second.front());
