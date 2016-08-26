@@ -137,13 +137,7 @@ case "$1" in
             ln -s tangram-es/scenes/fonts .
         fi
 
-        # Compile
-        cmake . -Bbuild $cmake_arg
-        cd build
-        make -j $n_cores
-
-        sudo cp bin/paparazzi_thread /usr/local/bin/paparazzi_thread
-        cd ..
+        $0 make
         ;;
     make)
         if [ $OS == "Linux" ]; then
@@ -181,6 +175,7 @@ case "$1" in
             make -j $n_cores
         fi
 
+        sudo cp bin/paparazzi_thread /usr/local/bin/paparazzi_thread
         cd ..
         ;;
     clean)
@@ -204,6 +199,10 @@ case "$1" in
         killall prime_httpd
         killall prime_proxyd 
         killall paparazzi_thread
+        ;;
+    restart)
+        $0 stop
+        $0 start
         ;;
     status)
         ps -ef | grep -v grep | grep prime_httpd

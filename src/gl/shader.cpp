@@ -5,7 +5,7 @@
 
 #include "platform_headless.h"
 
-#include <regex>
+// #include <regex>
 #include "utils.h"
 
 Shader::Shader():m_program(0),m_fragmentShader(0),m_vertexShader(0) {

@@ -17,7 +17,7 @@
 #include "platform_headless.h" // headless platforms (Linux and RPi)
 
 #include "types/shapes.h"   // Small library to compose basic shapes (use for rect)
-// #include "utils.h"
+#include "utils.h"
 
 #include "stb_image.h"
 
@@ -54,6 +54,9 @@ void main() {\n\
 
     // Create a rectangular Billboard to draw the main FBO
     m_smallVbo = rect(0.0,0.0,1.,1.).getVbo();
+
+    m_renderFbo = new Fbo(m_width, m_height);
+    m_smallFbo = new Fbo(m_width, m_height);
 
     LOG("Creating a new TANGRAM instances");
     m_map = new Tangram::Map();
@@ -109,14 +112,7 @@ void Paparazzi::setSize (const int &_width, const int &_height) {
             update();
         }
 
-        if (!m_renderFbo) {
-            m_renderFbo = new Fbo();
-        }
         m_renderFbo->resize(m_width, m_height);    // Allocate the main FrameBufferObject were tangram will be draw
-
-        if (!m_smallFbo) {
-            m_smallFbo = new Fbo();
-        }
         m_smallFbo->resize(_width, _height); // Allocate the smaller FrameBufferObject were the main FBO will be draw
     }
 }
@@ -198,6 +194,7 @@ void Paparazzi::update () {
         bFinish = m_map->update(10.);
         delta = currentTime - lastTime;
     }
+    LOG("FINISH");
 }
 
 void write_func(void *context, void *data, int size) {
@@ -241,22 +238,37 @@ worker_t::result_t Paparazzi::work (const std::list<zmq::message_t>& job, void* 
         if (scene_itr == request.query.cend() || scene_itr->second.size() == 0)
             throw std::runtime_error("scene is required punk");
         
-        //values for the key 'lat' but we only take the first
-        double lat = std::stod(lat_itr->second.front());
-        double lon = std::stod(lon_itr->second.front());
+        // double lat = std::stod(lat_itr->second.front());
+        // double lon = std::stod(lon_itr->second.front());
+        double lat = toDouble(lat_itr->second.front());
+        double lon = toDouble(lon_itr->second.front());
         float zoom = std::stof(zoom_itr->second.front());
         int width = std::stoi(width_itr->second.front());
         int height = std::stoi(height_itr->second.front());
         std::string scene = scene_itr->second.front();
 
+        float tilt = 0;
+        float rotation = 0;
+
+        auto tilt_itr = request.query.find("tilt");
+        if (tilt_itr != request.query.cend() && tilt_itr->second.size() != 0) {
+            tilt = std::stof(tilt_itr->second.front());
+        }
+
+        auto rotation_itr = request.query.find("rotation");
+        if (rotation_itr != request.query.cend() && rotation_itr->second.size() != 0) {
+            rotation = std::stof(rotation_itr->second.front());
+        }
+
+        setSize(width, height);
+        setTilt(tilt);
+        setRotation(rotation);
         setZoom(zoom);
         setPosition(lon, lat);
-        setSize(width, height);
         setScene(scene);
 
         //TODO:get your image bytes here
         std::string image;
-
         if (m_map) {
             LOG("Rendering...");
             // Render the Tangram scene inside an FrameBufferObject
