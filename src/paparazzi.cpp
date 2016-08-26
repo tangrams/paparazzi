@@ -16,7 +16,13 @@
 #include "context.h"        // This set the headless context
 #include "platform_headless.h" // headless platforms (Linux and RPi)
 
+#include "types/shapes.h"   // Small library to compose basic shapes (use for rect)
 #include "utils.h"
+
+#include "stb_image.h"
+
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb_image_write.h"
 
 Paparazzi::Paparazzi() : m_style("scene.yaml"), m_lat(0.0), m_lon(0.0), m_zoom(0.0f), m_rotation(0.0f), m_tilt(0.0), m_width(800), m_height(480) {
 
@@ -121,8 +127,9 @@ worker_t::result_t Paparazzi::work (const std::list<zmq::message_t>& job, void* 
         //TODO: actually use/validate the request parameters
         auto request = http_request_t::from_string(
             static_cast<const char*>(job.front().data()), job.front().size());
+
             //TODO:get your image bytes here
-        std::string image(":p"); // = tangram.render(args...);
+        std::string image = render();
         response = http_response_t(200, "OK", image);
     }
     catch(const std::exception& e) {
@@ -132,7 +139,7 @@ worker_t::result_t Paparazzi::work (const std::list<zmq::message_t>& job, void* 
 
     //does some tricky stuff with headers and different versions of http
     response.from_info(info);
-    
+
     //formats the response to protocal that the client will understand
     result.messages.emplace_back(response.to_string());
     return result;
@@ -154,6 +161,60 @@ void Paparazzi::update () {
         bFinish = m_map->update(10.);
         delta = currentTime - lastTime;
     }
+}
+
+void stbi_write_func(void *context, void *data, int size) {
+    static_cast<string*>(context)->append(static_cast<const char*>(data), size);
+}
+
+std::string Paparazzi::render() {
+    std::string rta;
+    if (m_map) {
+        LOG("Rendering...");
+        // Render the Tangram scene inside an FrameBufferObject
+        renderFbo.bind();   // Bind main FBO
+        map->render();  // Render Tangram Scene
+        renderFbo.unbind(); // Unbind main FBO
+        
+        // at the half of the size of the rendered scene
+        int width = width/AA_SCALE;
+        int hight = height/AA_SCALE;
+        int depth = IMAGE_DEPTH;
+
+        // Draw the main FBO inside the small one
+        smallFbo.bind();
+        smallShader.use();
+        smallShader.setUniform("u_resolution", width, hight);
+        smallShader.setUniform("u_buffer", &renderFbo, 0);
+        smallVbo->draw(&smallShader);
+        
+        // Once the main FBO is draw take a picture
+        LOG("Extracting pixels...");
+        unsigned char* pixels = new unsigned char[width * hight * depth];   // allocate memory for the pixels
+        glReadPixels(0, 0, width, hight, GL_RGBA, GL_UNSIGNED_BYTE, pixels); // Read throug the current buffer pixels
+
+        unsigned char *result = new unsigned char[width*height*depth];
+        memcpy(result, _pixels, width*height*depth);
+        int row,col,z;
+        stbi_uc temp;
+
+        for (row = 0; row < (height>>1); row++) {
+            for (col = 0; col < width; col++) {
+                for (z = 0; z < depth; z++) {
+                    temp = result[(row * width + col) * depth + z];
+                    result[(row * width + col) * depth + z] = result[((height - row - 1) * width + col) * depth + z];
+                    result[((height - row - 1) * width + col) * depth + z] = temp;
+                }
+            }
+        }
+        
+        // stbi_write_png_to_func(stbi_write_func *func, &rta, width, height, depth, result, width * depth);
+        delete [] result;
+
+        // Close the smaller FBO because we are civilize ppl
+        smallFbo.unbind();
+    }
+    return rta;
 }
 
 void Paparazzi::do (std::string &_command) {
@@ -240,50 +301,4 @@ void Paparazzi::do (std::string &_command) {
     else {
         LOG("No TANGRAM instance");
     }
-}
-
-Pixels Paparazzi::getPixels () {
-    Pixels pixels;
-    if (m_map) {
-        LOG("Rendering...");
-        // Render the Tangram scene inside an FrameBufferObject
-        renderFbo.bind();   // Bind main FBO
-        map->render();  // Render Tangram Scene
-        renderFbo.unbind(); // Unbind main FBO
-        
-        // at the half of the size of the rendered scene
-        pixels.width = width/AA_SCALE;
-        pixels.height = height/AA_SCALE;
-        pixels.depth = IMAGE_DEPTH;
-
-        // Draw the main FBO inside the small one
-        smallFbo.bind();
-        smallShader.use();
-        smallShader.setUniform("u_resolution", pixels.width, pixels.height);
-        smallShader.setUniform("u_buffer", &renderFbo, 0);
-        smallVbo->draw(&smallShader);
-        
-        // Once the main FBO is draw take a picture
-        LOG("Extracting pixels...");
-        pixels.bytes = new unsigned char[pixels.width * pixels.height * pixels.depth];   // allocate memory for the pixels
-        glReadPixels(0, 0, pixels.width, pixels.height, GL_RGBA, GL_UNSIGNED_BYTE, raw_pixels); // Read throug the current buffer pixels
-
-        // Flip the image on Y
-        int row, col, z;
-        stbi_uc temp;
-
-        for (row = 0; row < (_height>>1); row++) {
-            for (col = 0; col < pixels.width; col++) {
-                for (z = 0; z < pixels.depth; z++) {
-                    temp = pixels.bytes[(row * pixels.width + col) * pixels.depth + z];
-                    pixels.bytes[(row * pixels.width + col) * pixels.depth + z] = result[((pixels.height - row - 1) * pixels.width + col) * pixels.depth + z];
-                    pixels.bytes[((pixels.height - row - 1) * pixels.width + col) * pixels.depth + z] = temp;
-                }
-            }
-        }
-
-        // Close the smaller FBO because we are civilize ppl
-        smallFbo.unbind();
-    }
-    return pixels;
 }

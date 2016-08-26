@@ -12,16 +12,8 @@ using namespace prime_server;
 #include "gl/fbo.h"         // simple FBO implementation
 #include "gl/shader.h"      // simple ShaderProgram implementation
 #include "gl/vbo.h"         // simple VBO implementation
-#include "types/shapes.h"   // Small library to compose basic shapes (use for rect)
 
 #include <string>
-
-typedef struct {
-    unsigned char * bytes;
-    int width;
-    int height;
-    int depth;
-} Pixels;
 
 class Paparazzi {
 public:
@@ -30,18 +22,11 @@ public:
 
     void    setSize(int _width, int _height);
 
-    void    update();
-
-    bool    do(std::string &_command);
-
-    int     getWidth() const { return m_width; };
-    int     getHeight() const { return m_height; };
-    Pixels  getPixels();
-
     // prime_server stuff
     worker_t::result_t work (const std::list<zmq::message_t>& job, void* request_info);
+    void    update();
     void    cleanup();
-
+    
 protected:
 
     std::string m_style;
