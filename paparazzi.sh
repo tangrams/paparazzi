@@ -98,6 +98,7 @@ case "$1" in
                 ./autogen.sh && ./configure && make -j $n_cores
                 make check && sudo make install && sudo ldconfig
                 cd ..
+                rm -rf libzmq
             fi
 
         elif [ $OS == "Darwin" ]; then
@@ -125,7 +126,7 @@ case "$1" in
             make test -j $n_cores
             sudo make install
             cd ..
-            # rm -rf prime_server
+            rm -rf prime_server
         fi
 
         # GET SUBMODULES
