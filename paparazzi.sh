@@ -1,5 +1,7 @@
 #!/bin/bash
-DIST="DARWIN"
+
+OS=$(uname)
+DIST="UNKNOWN"
 PORT=8000
 
 deps_common="cmake " 
@@ -114,6 +116,7 @@ case "$1" in
 
         # Install  the super awesome PRIME_SERVER by Kevin Kreiser ( https://mapzen.com/blog/zmq-http-server )
         if [ ! -e /usr/local/bin/prime_httpd ]; then
+            echo "installing prime_server"
             git clone https://github.com/kevinkreiser/prime_server.git
             cd prime_server
             git submodule update --init --recursive
@@ -122,7 +125,7 @@ case "$1" in
             make test -j $n_cores
             sudo make install
             cd ..
-            rm -rf prime_server
+            # rm -rf prime_server
         fi
 
         # GET SUBMODULES
