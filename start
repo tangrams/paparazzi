@@ -1,5 +1,4 @@
 #!/bin/bash
-
 PRE=""
 DIST="DARWIN"
 PORT=8080
@@ -14,13 +13,13 @@ if [ "$DIST" == "Amazon Linux AMI" ]; then
     export DISPLAY=:0
 fi
 
-if [ ! -e cache ]; then
-    mkdir cache
-fi
+#start http server
+prime_httpd tcp://*:8002 ipc:///tmp/proxy_in ipc:///tmp/loopback &
 
-$PRE npm start $PORT
+#start proxy
+prime_proxyd ipc:///tmp/proxy_in ipc:///tmp/proxy_out
 
-# while true; do
-#   sleep 1000
-#   $PRE npm start
-# done
+#start 3 tangram workers
+for i in {0..2}; do
+  ./build/bin/paparazzi ipc:///tmp/proxy_out ipc:///tmp/loopback &
+done
