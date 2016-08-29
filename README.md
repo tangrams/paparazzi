@@ -2,9 +2,11 @@
 
 # Tangram Paparazzi
 
-Sneaky version of [Tangram-ES](https://github.com/tangrams/tangram-es) that loads a YAML scene file, take snapshots and runs away. Currently compiles in Amazon GPU Server, Rasbian, Ubuntu and OSX.
+Repurposed version of [Tangram-ES](https://github.com/tangrams/tangram-es) to take pictures of maps (static maps). Designed to run on servers in a reliable, multi-thread and headless fashonable way. How? Thanks to the imperssive [```prime_server```](https://github.com/kevinkreiser/prime_server) develop by [Kevin Kreiser](https://twitter.com/kevinkreiser).
 
-## Install
+Currently compiles in Amazon GPU Server, Rasbian, Ubuntu and Darwin OSX.
+
+## Install Paparazzi
 
 ```bash
 git clone --recursive https://github.com/tangrams/paparazzi.git
@@ -12,34 +14,39 @@ cd paparazzi
 ./paparazzi.sh install
 ```
 
-## Start
+If you are trying things on the code and just want to compile do
 
 ```bash
-./paparazzi.sh start
+./paparazzi.sh make
 ```
 
-## Stop
+**Note**: if you want to make a xcode project do: `./paparazzi.sh make xcode`
 
-```bash
-./paparazzi.sh stop
+## Runing Paparazzi
+
+Once paparazzi is compile you can use the `paparazzi.sh` script to:
+
+* **start** (`./paparazzi.sh start [N_THREADS]`) runs [```prime_server```](https://github.com/kevinkreiser/prime_server), ```prime_proxy```, and N instances of ```paparazzi_thread```
+* **stop** (`./paparazzi.sh stop`) stops [```prime_server```](https://github.com/kevinkreiser/prime_server), ```prime_proxy```, and all ```paparazzi_thread```
+* **restart** (`./paparazzi.sh restart`) do `stop` and `start`
+* **add** (`./paparazzi.sh add [N_THREADS]`) add N instances of ```paparazzi_thread```
+* **status** (`./paparazzi.sh status`) do a `ps` for [```prime_server```](https://github.com/kevinkreiser/prime_server), ```prime_proxy``` and ```paparazzi_thread```
+
+## URL calls 
+
+```
+http://localhost:8000/?lat=40.7053&lon=-74.0098&zoom=16&width=1000&height=1000&scene=https://tangrams.github.io/tangram-sandbox/styles/default.yaml
 ```
 
-## Constructing a URL 
+### Query arguments
 
-```
-http://localhost:8000/?zoom=17&lat=40.7086&lon=-73.9924&scene=https://dl.dropboxusercontent.com/u/335522/openframe/tangram/blueprint.yaml
-```
-
-Here is a list of arguments to pass to the URL
-
-| Query Arguments   | Description                                |
-|-------------------|------------------------------------------|
-| `scene=[url]`   | Specify a valid url to the YAML scene file |
-| `width=[number]`  | Width of the final image |
-| `heigth=[number]` | Height of the final image |
-| `lat=[LAT]`       | Latitud    |
-| `lot=[LON]`       | Longitud |
-| `zoom=[zoom]`     | Zoom Level |
-| `tilt=[tilt deg]` | Tilt degree of the camera |
-| `rot=[rot deg]`   | Rotation degree of the map |
-| `api_key=[API_KEY]` | Mapzen API_KEY |
+| Arguments         | Req | Description                                   |
+|-------------------|-----|-----------------------------------------------|
+| `scene=[url]`     |  Y  | Specify a valid url to the YAML scene file    |
+| `width=[number]`  |  Y  | Width of the final image                      |
+| `heigth=[number]` |  Y  | Height of the final image                     |
+| `lat=[LAT]`       |  Y  | Latitud                                       |
+| `lot=[LON]`       |  Y  | Longitud                                      |
+| `zoom=[zoom]`     |  Y  | Zoom Level                                    |
+| `tilt=[deg]`      |  N  | Tilt degree of the camera                     |
+| `rotation=[deg]`  |  N  | Rotation degree of the map                    |

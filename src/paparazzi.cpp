@@ -24,6 +24,11 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
 
+// HTTP RESPONSE HEADERS
+const headers_t::value_type CORS{"Access-Control-Allow-Origin", "*"};
+const headers_t::value_type PNG_MIME{"Content-type", "image/png"};
+const headers_t::value_type TXT_MIME{"Content-type", "text/plain;charset=utf-8"};
+
 Paparazzi::Paparazzi() : m_scene("scene.yaml"), m_lat(0.0), m_lon(0.0), m_zoom(0.0f), m_rotation(0.0f), m_tilt(0.0), m_width(800), m_height(480) {
 
     // Initialize cURL
@@ -210,6 +215,8 @@ worker_t::result_t Paparazzi::work (const std::list<zmq::message_t>& job, void* 
     auto& info = *static_cast<http_request_t::info_t*>(request_info);
     http_response_t response;
     try {
+        double start = getTime();
+
         //TODO: actually use/validate the request parameters
         auto request = http_request_t::from_string(
             static_cast<const char*>(job.front().data()), job.front().size());
@@ -287,36 +294,36 @@ worker_t::result_t Paparazzi::work (const std::list<zmq::message_t>& job, void* 
             
             // Once the main FBO is draw take a picture
             resetTimer("Extracting pixels...");
-            unsigned char* pixels = new unsigned char[width * hight * depth];   // allocate memory for the pixels
+            unsigned char *pixels = new unsigned char[width * hight * depth];   // allocate memory for the pixels
             glReadPixels(0, 0, width, hight, GL_RGBA, GL_UNSIGNED_BYTE, pixels); // Read throug the current buffer pixels
 
-            unsigned char *result = new unsigned char[width*height*depth];
-            memcpy(result, pixels, width*height*depth);
             int row,col,z;
             stbi_uc temp;
 
             for (row = 0; row < (height>>1); row++) {
                 for (col = 0; col < width; col++) {
                     for (z = 0; z < depth; z++) {
-                        temp = result[(row * width + col) * depth + z];
-                        result[(row * width + col) * depth + z] = result[((height - row - 1) * width + col) * depth + z];
-                        result[((height - row - 1) * width + col) * depth + z] = temp;
+                        temp = pixels[(row * width + col) * depth + z];
+                        pixels[(row * width + col) * depth + z] = pixels[((height - row - 1) * width + col) * depth + z];
+                        pixels[((height - row - 1) * width + col) * depth + z] = temp;
                     }
                 }
             }
 
-            stbi_write_png_to_func(&write_func, &image, width, height, depth, result, width * depth);
-            delete result;
+            stbi_write_png_to_func(&write_func, &image, width, height, depth, pixels, width * depth);
+            delete [] pixels;
 
             // Close the smaller FBO because we are civilize ppl
             m_smallFbo->unbind();
+
+            LOG("TOTAL CALL: %f", getTime()-start);
         }
 
-        response = http_response_t(200, "OK", image);
+        response = http_response_t(200, "OK", image, headers_t{CORS, PNG_MIME});
     }
     catch(const std::exception& e) {
         //complain
-        response = http_response_t(400, "Bad Request", e.what());
+        response = http_response_t(400, "Bad Request", e.what(), headers_t{CORS});
     }
 
     //does some tricky stuff with headers and different versions of http

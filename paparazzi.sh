@@ -1,26 +1,30 @@
 #!/bin/bash
 
+# If something goes wrong terminate this script
+set -e
+
 OS=$(uname)
 DIST="UNKNOWN"
-PORT=8000
 
-deps_common="cmake " 
-deps_linux_devian="libcurl4-openssl-dev uuid-dev libtool pkg-config build-essential autoconf automake lcov libzmq3-dev"
-deps_linux_rpi="curl "
-deps_linux_ubuntu="xorg-dev libgl1-mesa-dev "
-deps_linux_amazon="libX*-devel mesa-libGL-devel curl-devel glx-utils git libmpc-devel mpfr-devel gmp-devel"
-deps_darwin="glfw3 pkg-config zeromq"
+PORT=8080
+N_THREAD=1
 
-cmake_arg=""
-n_cores="1"
+# Dependencies
+DEPS_COMMON="cmake " 
+DEPS_LINUX_COMMON="libcurl4-openssl-dev uuid-dev libtool pkg-config build-essential autoconf automake lcov libzmq3-dev"
+DEPS_LINUX_RASPBIAN="curl "
+DEPS_LINUX_UBUNTU="xorg-dev libgl1-mesa-dev "
+DEPS_LINUX_REDHAT="libX*-devel mesa-libGL-devel curl-devel glx-utils git libmpc-devel mpfr-devel gmp-devel"
+DEPS_DARWIN="glfw3 pkg-config zeromq"
 
+# COMPILING
+CMAKE_ARG=""
+N_CORES=1
+
+# what linux distribution is?
 if [ -f /etc/os-release ]; then
     . /etc/os-release
     DIST=$NAME
-fi
-
-if [ "$DIST" == "Amazon Linux AMI" ]; then
-    export DISPLAY=:0
 fi
 
 case "$1" in
@@ -28,13 +32,12 @@ case "$1" in
         # INSTALL DEPENDECIES
         if [ $OS == "Linux" ]; then
             echo "Install dependeces for Linux - $DIST"
-            n_cores=$(grep -c ^processor /proc/cpuinfo)
 
             if [ "$DIST" == "Amazon Linux AMI" ]; then
 
                 # Amazon Linux
                 sudo yum groupinstall "Development Tools"
-                sudo yum install $deps_linux_amazon -y
+                sudo yum install $DEPS_LINUX_REDHAT -y
 
                 if [ ! -e /usr/local/bin/cmake ]; then
                     # Install Cmake 3.6
@@ -55,7 +58,7 @@ case "$1" in
                     cd gcc-4.9.2
                     ./contrib/download_prerequisites
                     ./configure --disable-multilib --enable-languages=c,c++
-                    make -j $n_cores
+                    make -j $N_CORES
                     make install
                     cd ..
                     rm -rf gcc-4.9.2*
@@ -67,44 +70,44 @@ case "$1" in
                         echo 'export CXX=/usr/local/bin/g++' >> ~/.zshrc
                         echo 'export CC=/usr/local/bin/gcc' >> ~/.zshrc
                     fi
+
+                    # Run X in the back with out screen
+                    echo '/usr/bin/X :0 &' | sudo tee -a /etc/rc.d/rc.local
+                    echo 'export DISPLAY=:0' >> ~/.bashrc
+                    if [ ! -e ~/.zshrc ]; then
+                        echo 'export DISPLAY=:0' >> ~/.zshrc
+                    fi
                 fi
-                export CXX=/usr/local/bin/g++
-                export CC=/usr/local/bin/gcc
-                export DISPLAY=:0
-                cmake_arg="-DPLATFORM_TARGET=linux"
 
             elif [ "$DIST" == "Ubuntu" ]; then
 
                  # UBUNTU
                 sudo apt-get update
                 sudo apt-get upgrade
-                sudo apt-get install $deps_common $deps_linux_devian $deps_linux_ubuntu
-                cmake_arg="-DPLATFORM_TARGET=linux"
+                sudo apt-get install $DEPS_COMMON $DEPS_LINUX_COMMON $DEPS_LINUX_UBUNTU
 
             elif [ "$DIST" == "Raspbian GNU/Linux" ]; then
 
                 # Raspian
                 sudo apt-get update
                 sudo apt-get upgrade
-                sudo apt-get install $deps_common $deps_linux_devian $deps_linux_rpi
-                export CXX=/usr/bin/g++-4.9
-                cmake_arg="-DPLATFORM_TARGET=rpi"
+                sudo apt-get install $DEPS_COMMON $DEPS_LINUX_COMMON $DEPS_LINUX_RASPBIAN
+
             fi
 
             # Install ZeroMQ 
             if [ ! -e /usr/local/lib/libzmq.so ]; then
                 git clone https://github.com/zeromq/libzmq
                 cd libzmq
-                ./autogen.sh && ./configure && make -j $n_cores
+                ./autogen.sh && ./configure && make -j $N_CORES
                 make check && sudo make install && sudo ldconfig
                 cd ..
                 rm -rf libzmq
             fi
 
         elif [ $OS == "Darwin" ]; then
-            n_cores="4"
-            cmake_arg="-DPLATFORM_TARGET=osx"
-            
+            echo "Install dependeces for Darwin"
+
             # DARWIN
             if [ ! -e /usr/local/bin/brew ]; then
                 ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
@@ -112,7 +115,7 @@ case "$1" in
 
             brew update
             brew upgrade
-            brew install $deps_common $deps_darwin
+            brew install $DEPS_COMMON $DEPS_DARWIN
         fi
 
         # Install  the super awesome PRIME_SERVER by Kevin Kreiser ( https://mapzen.com/blog/zmq-http-server )
@@ -123,7 +126,7 @@ case "$1" in
             git submodule update --init --recursive
             ./autogen.sh
             ./configure
-            make test -j $n_cores
+            make test -j $N_CORES
             sudo make install
             cd ..
             rm -rf prime_server
@@ -139,76 +142,98 @@ case "$1" in
 
         $0 make
         ;;
+
     make)
         if [ $OS == "Linux" ]; then
-            echo "Install dependeces for Linux - $DIST"
-            n_cores=$(grep -c ^processor /proc/cpuinfo)
+            echo "Preparing CMAKE for Linux - $DIST"
+            N_CORES=$(grep -c ^processor /proc/cpuinfo)
 
             if [ "$DIST" == "Amazon Linux AMI" ]; then
                 export CXX=/usr/local/bin/g++
                 export CC=/usr/local/bin/gcc
-                export DISPLAY=:0
-                cmake_arg="-DPLATFORM_TARGET=linux"
+                CMAKE_ARG="-DPLATFORM_TARGET=linux"
 
             elif [ "$DIST" == "Ubuntu" ]; then
-                cmake_arg="-DPLATFORM_TARGET=linux"
+                CMAKE_ARG="-DPLATFORM_TARGET=linux"
 
             elif [ "$DIST" == "Raspbian GNU/Linux" ]; then
                 export CXX=/usr/bin/g++-4.9
-                cmake_arg="-DPLATFORM_TARGET=rpi"
+                CMAKE_ARG="-DPLATFORM_TARGET=rpi"
             fi
 
         elif [ $OS == "Darwin" ]; then
-            n_cores="4"
-            cmake_arg="-DPLATFORM_TARGET=osx"
+            echo "Preparing CMAKE for Darwin"
+            N_CORES="4"
+            CMAKE_ARG="-DPLATFORM_TARGET=osx"
         fi
 
+        echo "Updating submodules"
         git submodule update --init --recursive
 
         if [ $2 == "xcode" ]; then
+            echo "Making XCode project"
             mkdir build
             cd build
             cmake .. -GXcode -DPLATFORM_TARGET=osx
         else
-            cmake . -Bbuild $cmake_arg
+            echo "Compiling"
+            cmake . -Bbuild $CMAKE_ARG
             cd build
-            make -j $n_cores
+            make -j $N_CORES
         fi
 
+        echo "Installing"
         sudo cp bin/paparazzi_thread /usr/local/bin/paparazzi_thread
         cd ..
         ;;
+
     clean)
         rm -rf build
         ;;
+
     start)
-        #start http server
+        # start http server
         prime_httpd tcp://*:$PORT ipc:///tmp/proxy_in ipc:///tmp/loopback &
 
-        #start proxy
+        # start proxy
         prime_proxyd ipc:///tmp/proxy_in ipc:///tmp/proxy_out &
-
-        paparazzi_thread ipc:///tmp/proxy_out ipc:///tmp/loopback
         
-        # #start 3 tangram workers
-        # for i in {0..2}; do
-        #     paparazzi_thread ipc:///tmp/proxy_out ipc:///tmp/loopback &
-        # done
+        # Is important to attach the threads to the display on the Amazon servers 
+        if [ "$DIST" == "Amazon Linux AMI" ]; then
+            export DISPLAY=:0
+        fi
+
+        # run paparazzi threads
+        paparazzi_thread ipc:///tmp/proxy_out ipc:///tmp/loopback
         ;;
+    add)
+        if ($# -eq 3); then
+            N_THREAD = $2
+        fi
+
+        echo "Adding $N_THREAD paparazzi threads" 
+        for i in $(eval echo "{$0..$N_THREAD}"); do 
+            paparazzi_thread ipc:///tmp/proxy_out ipc:///tmp/loopback &
+        done 
+        ;;
+
     stop)
         killall prime_httpd
         killall prime_proxyd 
         killall paparazzi_thread
         ;;
+
     restart)
         $0 stop
         $0 start
         ;;
+
     status)
         ps -ef | grep -v grep | grep prime_httpd
         ps -ef | grep -v grep | grep prime_proxyd
         ps -ef | grep -v grep | grep paparazzi_thread
         ;;
+
     *)
         echo "Usage: $0 start"
         exit 1
