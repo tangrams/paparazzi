@@ -24,7 +24,6 @@ INSTALL_FOLDER="/usr/local/bin/"
 # Running
 PORT=8080
 N_THREAD=1
-
 # what linux distribution is?
 if [ -f /etc/os-release ]; then
     . /etc/os-release
@@ -178,7 +177,7 @@ case "$1" in
         echo "Updating submodules"
         git submodule update --init --recursive
 
-        if [ $2 == "xcode" ]; then
+        if [ "$2" == "xcode" ]; then
             echo "Making XCode project"
             mkdir build
             cd build
@@ -215,8 +214,8 @@ case "$1" in
         paparazzi_thread ipc:///tmp/proxy_out ipc:///tmp/loopback
         ;;
     add)
-        if ($# -eq 3); then
-            N_THREAD = $2
+        if [ $# -eq 2 ]; then
+            N_THREAD=$2
         fi
 
         echo "Adding $N_THREAD paparazzi threads" 
