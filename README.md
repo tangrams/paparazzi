@@ -26,17 +26,47 @@ If you are trying things on the code and just want to compile do
 
 Once paparazzi is compile you can use the `paparazzi.sh` script to:
 
-* **start** (`./paparazzi.sh start [N_THREADS]`) runs [```prime_server```](https://github.com/kevinkreiser/prime_server), ```prime_proxy```, and N instances of ```paparazzi_thread```
-* **stop** (`./paparazzi.sh stop`) stops [```prime_server```](https://github.com/kevinkreiser/prime_server), ```prime_proxy```, and all ```paparazzi_thread```
-* **restart** (`./paparazzi.sh restart`) do `stop` and `start`
-* **add** (`./paparazzi.sh add [N_THREADS]`) add N instances of ```paparazzi_thread```
-* **status** (`./paparazzi.sh status`) do a `ps` for [```prime_server```](https://github.com/kevinkreiser/prime_server), ```prime_proxy``` and ```paparazzi_thread```
+* **start**: runs [```prime_server```](https://github.com/kevinkreiser/prime_server), ```prime_proxy```, and N instances of ```paparazzi_thread```
+
+```bash
+./paparazzi.sh start [N_THREADS]
+```
+
+* **stop**: stops [```prime_server```](https://github.com/kevinkreiser/prime_server), ```prime_proxy```, and all ```paparazzi_thread```
+
+```bash
+./paparazzi.sh stop
+```
+
+* **restart**: do `stop` and `start`
+
+```bash
+./paparazzi.sh restart [N_THREADS]
+```
+
+* **add**: add N instances of ```paparazzi_thread```
+
+```bash
+./paparazzi.sh add [N_THREADS]
+```
+
+* **status** do a `ps` for [```prime_server```](https://github.com/kevinkreiser/prime_server), ```prime_proxy``` and ```paparazzi_thread```
+
+```bash
+./paparazzi.sh status
+```
 
 ## URL calls 
 
+You can test by making a dummy URL call like this:
+
 ```
-http://localhost:8000/?lat=40.7053&lon=-74.0098&zoom=16&width=1000&height=1000&scene=https://tangrams.github.io/tangram-sandbox/styles/default.yaml
+http://localhost:8080/?lat=40.7053&lon=-74.0098&zoom=16&width=1000&height=1000&scene=https://tangrams.github.io/tangram-sandbox/styles/default.yaml
 ```
+
+### Paths
+
+
 
 ### Query arguments
 
