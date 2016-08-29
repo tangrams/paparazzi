@@ -6,9 +6,6 @@ set -e
 OS=$(uname)
 DIST="UNKNOWN"
 
-PORT=8080
-N_THREAD=1
-
 # Dependencies
 DEPS_COMMON="cmake " 
 DEPS_LINUX_COMMON="libcurl4-openssl-dev uuid-dev libtool pkg-config build-essential autoconf automake lcov libzmq3-dev"
@@ -17,9 +14,16 @@ DEPS_LINUX_UBUNTU="xorg-dev libgl1-mesa-dev "
 DEPS_LINUX_REDHAT="libX*-devel mesa-libGL-devel curl-devel glx-utils git libmpc-devel mpfr-devel gmp-devel"
 DEPS_DARWIN="glfw3 pkg-config zeromq"
 
-# COMPILING
+# Compiling
 CMAKE_ARG=""
 N_CORES=1
+
+# Installing
+INSTALL_FOLDER="/usr/local/bin/"
+
+# Running
+PORT=8080
+N_THREAD=1
 
 # what linux distribution is?
 if [ -f /etc/os-release ]; then
@@ -235,7 +239,11 @@ case "$1" in
         ;;
 
     *)
-        echo "Usage: $0 start"
+        if [ ! -e /usr/local/bin/paparazzi_thread ]; then
+            echo "Usage: $0 install"
+        else
+            echo "Usage: $0 start"
+        fi
         exit 1
         ;;
 esac
