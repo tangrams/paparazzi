@@ -211,7 +211,9 @@ case "$1" in
         fi
 
         # run paparazzi threads
-        paparazzi_thread ipc:///tmp/proxy_out ipc:///tmp/loopback
+        # paparazzi_thread ipc:///tmp/proxy_out ipc:///tmp/loopback
+
+        $0 add $2
         ;;
     add)
         if [ $# -eq 2 ]; then
@@ -232,7 +234,7 @@ case "$1" in
 
     restart)
         $0 stop
-        $0 start
+        $0 start $2
         ;;
 
     status)
