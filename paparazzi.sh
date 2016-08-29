@@ -44,6 +44,7 @@ case "$1" in
                 sudo yum upgrade
                 sudo yum groupinstall "Development Tools"
                 sudo yum install $DEPS_LINUX_REDHAT -y
+                sudo yum purge zmq
 
                 if [ ! -e /usr/local/bin/cmake ]; then
                     # Install Cmake 3.6
@@ -157,6 +158,7 @@ case "$1" in
             if [ "$DIST" == "Amazon Linux AMI" ]; then
                 export CXX=/usr/local/bin/g++
                 export CC=/usr/local/bin/gcc
+                export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig 
                 CMAKE_ARG="-DPLATFORM_TARGET=linux"
 
             elif [ "$DIST" == "Ubuntu" ]; then
