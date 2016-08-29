@@ -34,8 +34,8 @@ if(${PLATFORM_TARGET} MATCHES "rpi")
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_CXX_FLAGS} -L/opt/vc/lib/ -lGLESv2 -lEGL -lbcm_host -lvchiq_arm -lvcos -lrt -lpthread")
     set(CXX_FLAGS_DEBUG "-g -O0")
 
-    git submodule update --init --recursive
-
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
+    
     include_directories(/opt/vc/include/)
     include_directories(/opt/vc/include/interface/vcos/pthreads)
     include_directories(/opt/vc/include/interface/vmcs_host/linux)
