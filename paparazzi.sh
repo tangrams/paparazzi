@@ -40,6 +40,8 @@ case "$1" in
             if [ "$DIST" == "Amazon Linux AMI" ]; then
 
                 # Amazon Linux
+                sudo yum update
+                sudo yum upgrade
                 sudo yum groupinstall "Development Tools"
                 sudo yum install $DEPS_LINUX_REDHAT -y
 
