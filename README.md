@@ -2,9 +2,13 @@
 
 # Tangram Paparazzi
 
-Repurposed version of [Tangram-ES](https://github.com/tangrams/tangram-es) to take pictures of maps (static maps). Designed to run on servers in a reliable, multi-thread and headless fashonable way. How? Thanks to the imperssive [```prime_server```](https://github.com/kevinkreiser/prime_server) develop by [Kevin Kreiser](https://twitter.com/kevinkreiser).
+Repurposed version of [Tangram-ES](https://github.com/tangrams/tangram-es) to take pictures of maps (static maps). Designed to run on servers in a reliable, multi-thread and headless fashonable way. 
 
-Currently compiles in Amazon GPU Server, Rasbian, Ubuntu and Darwin OSX.
+![](imgs/ascii.png)
+
+Although most of the worse power comes from [ZeroMQ](http://zeromq.org/), is thanks to the impressive work of [Kevin Kreiser](https://twitter.com/kevinkreiser) in [```prime_server```](https://github.com/kevinkreiser/prime_server) that all that power is rightly and effectivelly channeled into a easy to use library. Thanks [Kevin Kreiser](https://twitter.com/kevinkreiser)!
+
+This project currently compiles in Amazon GPU Server, Rasbian, Ubuntu and Darwin OSX.
 
 ## Install Paparazzi
 
@@ -72,11 +76,11 @@ http://localhost:8080/?lat=40.7053&lon=-74.0098&zoom=16&width=1000&height=1000&s
 
 | Arguments         | Req | Description                                   |
 |-------------------|-----|-----------------------------------------------|
-| `scene=[url]`     |  Y  | Specify a valid url to the YAML scene file    |
-| `width=[number]`  |  Y  | Width of the final image                      |
-| `heigth=[number]` |  Y  | Height of the final image                     |
-| `lat=[LAT]`       |  Y  | Latitud                                       |
-| `lot=[LON]`       |  Y  | Longitud                                      |
-| `zoom=[zoom]`     |  Y  | Zoom Level                                    |
+| `scene=[url]`     |**Y**| Specify a valid url to the YAML scene file    |
+| `width=[number]`  |**Y**| Width of the final image                      |
+| `heigth=[number]` |**Y**| Height of the final image                     |
+| `lat=[LAT]`       |**Y**| Latitud                                       |
+| `lot=[LON]`       |**Y**| Longitud                                      |
+| `zoom=[zoom]`     |**Y**| Zoom Level                                    |
 | `tilt=[deg]`      |  N  | Tilt degree of the camera                     |
 | `rotation=[deg]`  |  N  | Rotation degree of the map                    |
