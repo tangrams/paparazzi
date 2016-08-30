@@ -43,7 +43,7 @@ case "$1" in
                 sudo yum upgrade
                 sudo yum groupinstall "Development Tools"
                 sudo yum install $DEPS_LINUX_REDHAT -y
-                sudo yum purge zmq
+                sudo yum remove zmq
 
                 if [ ! -e /usr/local/bin/cmake ]; then
                     # Install Cmake 3.6
