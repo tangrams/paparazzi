@@ -191,8 +191,7 @@ void Paparazzi::setScene (const std::string &_url) {
 }
 
 void Paparazzi::update () {
-    double lastTime = getTime();
-    double currentTime = lastTime;
+    double startTime = getTime();
     float delta = 0.0;
 
     bool bFinish = false;
@@ -200,7 +199,7 @@ void Paparazzi::update () {
         // Update Network Queue
         processNetworkQueue();
         bFinish = m_map->update(10.);
-        delta = currentTime - lastTime;
+        delta = getTime() - startTime;
     }
     LOG("FINISH");
 }
