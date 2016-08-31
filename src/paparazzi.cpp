@@ -203,6 +203,7 @@ void Paparazzi::update () {
         bFinish = m_map->update(10.);
         LOG("check time");
         delta = getTime() - startTime;
+        LOG("Delta %f", delta);
     }
     LOG("FINISH");
 }
