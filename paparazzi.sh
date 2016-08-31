@@ -140,10 +140,12 @@ case "$1" in
         fi
 
         # GET SUBMODULES
+        echo "Installing submodules"
         git submodule update --init --recursive
 
         # Other needed files/folders
         if [ ! -e fonts ]; then
+            echo "Installing fonts"
             ln -s tangram-es/scenes/fonts .
         fi
 
@@ -173,9 +175,6 @@ case "$1" in
             N_CORES="4"
             CMAKE_ARG="-DPLATFORM_TARGET=osx"
         fi
-
-        echo "Updating submodules"
-        git submodule update --init --recursive
 
         if [ "$2" == "xcode" ]; then
             echo "Making XCode project"
