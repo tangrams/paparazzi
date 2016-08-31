@@ -29,14 +29,17 @@ const headers_t::value_type CORS{"Access-Control-Allow-Origin", "*"};
 const headers_t::value_type PNG_MIME{"Content-type", "image/png"};
 const headers_t::value_type TXT_MIME{"Content-type", "text/plain;charset=utf-8"};
 
-Paparazzi::Paparazzi() : m_scene("scene.yaml"), m_lat(0.0), m_lon(0.0), m_zoom(0.0f), m_rotation(0.0f), m_tilt(0.0), m_width(800), m_height(480) {
+Paparazzi::Paparazzi() : m_scene("scene.yaml"), m_lat(0.0), m_lon(0.0), m_zoom(0.0f), m_rotation(0.0f), m_tilt(0.0), m_width(0), m_height(0) {
 
     // Initialize cURL
     curl_global_init(CURL_GLOBAL_DEFAULT);
 
     // Start OpenGL ES context
     LOG("Creating OpenGL ES context");
-    initGL(m_width, m_height);
+
+    int width = 800;
+    int height = 480;
+    initGL(width, height);
 
     // Create a simple vert/frag glsl shader to draw the main FBO with
     std::string smallVert = "#ifdef GL_ES\n\
@@ -60,15 +63,15 @@ void main() {\n\
     // Create a rectangular Billboard to draw the main FBO
     m_smallVbo = rect(0.0,0.0,1.,1.).getVbo();
 
-    m_renderFbo = new Fbo(m_width, m_height);
-    m_smallFbo = new Fbo(m_width, m_height);
+    m_renderFbo = new Fbo(width, height);
+    m_smallFbo = new Fbo(width, height);
 
     LOG("Creating a new TANGRAM instances");
     m_map = new Tangram::Map();
     m_map->loadSceneAsync(m_scene.c_str());
     m_map->setupGL();
 
-    setSize(m_width, m_height);
+    setSize(width, height);
 
     update();
 }
