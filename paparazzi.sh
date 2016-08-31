@@ -197,6 +197,11 @@ case "$1" in
         rm -rf build
         ;;
 
+    remake)
+        $0 clean
+        $0 make $2
+        ;;
+
     start)
         # start http server
         prime_httpd tcp://*:$PORT ipc:///tmp/proxy_in ipc:///tmp/loopback &
@@ -210,9 +215,9 @@ case "$1" in
         fi
 
         # run paparazzi threads
-        # paparazzi_thread ipc:///tmp/proxy_out ipc:///tmp/loopback
+        paparazzi_thread ipc:///tmp/proxy_out ipc:///tmp/loopback
 
-        $0 add $2
+        # $0 add $2
         ;;
     add)
         if [ $# -eq 2 ]; then
