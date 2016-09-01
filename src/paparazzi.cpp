@@ -313,7 +313,7 @@ worker_t::result_t Paparazzi::work (const std::list<zmq::message_t>& job, void* 
 
                 double total_time = getTime()-start_call;
                 LOG("TOTAL CALL: %f", total_time);
-                LOG("TOTAL sec/pixel: %f", total_time/total_pixels);
+                LOG("TOTAL speed: %f millisec per pixel", (total_time/(total_pixels/1000.0)));
             }
 
             response = http_response_t(200, "OK", image, headers_t{CORS, PNG_MIME});
