@@ -226,12 +226,9 @@ worker_t::result_t Paparazzi::work (const std::list<zmq::message_t>& job, void* 
         auto request = http_request_t::from_string(
             static_cast<const char*>(job.front().data()), job.front().size());
 
-        if (request.path == "/") {
+        if (request.path == "/check") {
             response = http_response_t(200, "OK", "OK", headers_t{CORS, TXT_MIME});
         } else {
-                
-
-
             auto lat_itr = request.query.find("lat");
             if (lat_itr == request.query.cend() || lat_itr->second.size() == 0)
                 throw std::runtime_error("lat is required punk");
