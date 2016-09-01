@@ -218,6 +218,7 @@ worker_t::result_t Paparazzi::work (const std::list<zmq::message_t>& job, void* 
     //this type differs per protocol hence the void* fun
     auto& info = *static_cast<http_request_t::info_t*>(request_info);
     http_response_t response;
+
     try {
         double start = getTime();
 
@@ -225,95 +226,98 @@ worker_t::result_t Paparazzi::work (const std::list<zmq::message_t>& job, void* 
         auto request = http_request_t::from_string(
             static_cast<const char*>(job.front().data()), job.front().size());
 
-        auto lat_itr = request.query.find("lat");
-        if (lat_itr == request.query.cend() || lat_itr->second.size() == 0)
-            throw std::runtime_error("lat is required punk");
+        if (request.path == "/") {
+            response = http_response_t(200, "OK", "OK", headers_t{CORS, TXT_MIME});
+        } else {
+                
 
-        auto lon_itr = request.query.find("lon");
-        if (lon_itr == request.query.cend() || lon_itr->second.size() == 0)
-            throw std::runtime_error("lon is required punk");
 
-        auto zoom_itr = request.query.find("zoom");
-        if (zoom_itr == request.query.cend() || zoom_itr->second.size() == 0)
-            throw std::runtime_error("zoom is required punk");
+            auto lat_itr = request.query.find("lat");
+            if (lat_itr == request.query.cend() || lat_itr->second.size() == 0)
+                throw std::runtime_error("lat is required punk");
 
-        auto width_itr = request.query.find("width");
-        if (width_itr == request.query.cend() || width_itr->second.size() == 0)
-            throw std::runtime_error("width is required punk");
+            auto lon_itr = request.query.find("lon");
+            if (lon_itr == request.query.cend() || lon_itr->second.size() == 0)
+                throw std::runtime_error("lon is required punk");
 
-        auto height_itr = request.query.find("height");
-        if (height_itr == request.query.cend() || height_itr->second.size() == 0)
-            throw std::runtime_error("height is required punk");
+            auto zoom_itr = request.query.find("zoom");
+            if (zoom_itr == request.query.cend() || zoom_itr->second.size() == 0)
+                throw std::runtime_error("zoom is required punk");
 
-        auto scene_itr = request.query.find("scene");
-        if (scene_itr == request.query.cend() || scene_itr->second.size() == 0)
-            throw std::runtime_error("scene is required punk");
-        
-        double lat = std::stod(lat_itr->second.front());
-        double lon = std::stod(lon_itr->second.front());
-        float zoom = std::stof(zoom_itr->second.front());
-        int width = std::stoi(width_itr->second.front());
-        int height = std::stoi(height_itr->second.front());
-        std::string scene = scene_itr->second.front();
+            auto width_itr = request.query.find("width");
+            if (width_itr == request.query.cend() || width_itr->second.size() == 0)
+                throw std::runtime_error("width is required punk");
 
-        float tilt = 0;
-        float rotation = 0;
+            auto height_itr = request.query.find("height");
+            if (height_itr == request.query.cend() || height_itr->second.size() == 0)
+                throw std::runtime_error("height is required punk");
 
-        auto tilt_itr = request.query.find("tilt");
-        if (tilt_itr != request.query.cend() && tilt_itr->second.size() != 0) {
-            tilt = std::stof(tilt_itr->second.front());
-        }
-
-        auto rotation_itr = request.query.find("rotation");
-        if (rotation_itr != request.query.cend() && rotation_itr->second.size() != 0) {
-            rotation = std::stof(rotation_itr->second.front());
-        }
-
-        setSize(width, height);
-        setTilt(tilt);
-        setRotation(rotation);
-        setZoom(zoom);
-        setPosition(lon, lat);
-        setScene(scene);
-
-        resetTimer("Rendering");
-        std::string image;
-        if (m_map) {
-            // Render the Tangram scene inside an FrameBufferObject
-            m_renderFbo->bind();   // Bind main FBO
-            m_map->render();  // Render Tangram Scene
-            m_renderFbo->unbind(); // Unbind main FBO
+            auto scene_itr = request.query.find("scene");
+            if (scene_itr == request.query.cend() || scene_itr->second.size() == 0)
+                throw std::runtime_error("scene is required punk");
             
-            // at the half of the size of the rendered scene
-            int width = m_width/AA_SCALE;
-            int hight = m_height/AA_SCALE;
-            int depth = IMAGE_DEPTH;
+            double lat = std::stod(lat_itr->second.front());
+            double lon = std::stod(lon_itr->second.front());
+            float zoom = std::stof(zoom_itr->second.front());
+            int width = std::stoi(width_itr->second.front());
+            int height = std::stoi(height_itr->second.front());
+            std::string scene = scene_itr->second.front();
 
-            // Draw the main FBO inside the small one
-            m_smallFbo->bind();
-            m_smallShader->use();
-            m_smallShader->setUniform("u_resolution", width, hight);
-            m_smallShader->setUniform("u_buffer", m_renderFbo, 0);
-            m_smallVbo->draw(m_smallShader);
-            
-            // Once the main FBO is draw take a picture
-            resetTimer("Extracting pixels...");
-            unsigned char *pixels = new unsigned char[width * hight * depth];   // allocate memory for the pixels
-            LOG("glReadPixels");
-            glReadPixels(0, 0, width, hight, GL_RGBA, GL_UNSIGNED_BYTE, pixels); // Read throug the current buffer pixels
-            LOG("stbi_write_png_to_func");
-            stbi_write_png_to_func(&write_func, &image, width, height, depth, pixels, width * depth);
-            LOG("delete []");
-            delete [] pixels;
-            LOG("m_smallFbo->unbind()");
+            float tilt = 0;
+            float rotation = 0;
 
-            // Close the smaller FBO because we are civilize ppl
-            m_smallFbo->unbind();
+            auto tilt_itr = request.query.find("tilt");
+            if (tilt_itr != request.query.cend() && tilt_itr->second.size() != 0) {
+                tilt = std::stof(tilt_itr->second.front());
+            }
 
-            LOG("TOTAL CALL: %f", getTime()-start);
+            auto rotation_itr = request.query.find("rotation");
+            if (rotation_itr != request.query.cend() && rotation_itr->second.size() != 0) {
+                rotation = std::stof(rotation_itr->second.front());
+            }
+
+            setSize(width, height);
+            setTilt(tilt);
+            setRotation(rotation);
+            setZoom(zoom);
+            setPosition(lon, lat);
+            setScene(scene);
+
+            resetTimer("Rendering");
+            std::string image;
+            if (m_map) {
+                // Render the Tangram scene inside an FrameBufferObject
+                m_renderFbo->bind();   // Bind main FBO
+                m_map->render();  // Render Tangram Scene
+                m_renderFbo->unbind(); // Unbind main FBO
+                
+                // at the half of the size of the rendered scene
+                int width = m_width/AA_SCALE;
+                int hight = m_height/AA_SCALE;
+                int depth = IMAGE_DEPTH;
+
+                // Draw the main FBO inside the small one
+                m_smallFbo->bind();
+                m_smallShader->use();
+                m_smallShader->setUniform("u_resolution", width, hight);
+                m_smallShader->setUniform("u_buffer", m_renderFbo, 0);
+                m_smallVbo->draw(m_smallShader);
+                
+                // Once the main FBO is draw take a picture
+                resetTimer("Extracting pixels...");
+                unsigned char *pixels = new unsigned char[width * hight * depth];   // allocate memory for the pixels
+                glReadPixels(0, 0, width, hight, GL_RGBA, GL_UNSIGNED_BYTE, pixels); // Read throug the current buffer pixels
+                stbi_write_png_to_func(&write_func, &image, width, height, depth, pixels, width * depth);
+                delete [] pixels;
+
+                // Close the smaller FBO because we are civilize ppl
+                m_smallFbo->unbind();
+
+                LOG("TOTAL CALL: %f", getTime()-start);
+            }
+
+            response = http_response_t(200, "OK", image, headers_t{CORS, PNG_MIME});
         }
-
-        response = http_response_t(200, "OK", image, headers_t{CORS, PNG_MIME});
     }
     catch(const std::exception& e) {
         //complain
