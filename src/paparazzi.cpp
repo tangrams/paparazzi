@@ -220,7 +220,7 @@ worker_t::result_t Paparazzi::work (const std::list<zmq::message_t>& job, void* 
     http_response_t response;
 
     try {
-        double start = getTime();
+        double start_call = getTime();
 
         //TODO: actually use/validate the request parameters
         auto request = http_request_t::from_string(
@@ -289,28 +289,33 @@ worker_t::result_t Paparazzi::work (const std::list<zmq::message_t>& job, void* 
                 m_renderFbo->unbind(); // Unbind main FBO
                 
                 // at the half of the size of the rendered scene
-                int width = m_width/AA_SCALE;
-                int hight = m_height/AA_SCALE;
-                int depth = IMAGE_DEPTH;
+                int _width = m_width/AA_SCALE;
+                int _height = m_height/AA_SCALE;
+                int _depth = IMAGE_DEPTH;
+                double total_pixels = _width*_height;
 
                 // Draw the main FBO inside the small one
                 m_smallFbo->bind();
                 m_smallShader->use();
-                m_smallShader->setUniform("u_resolution", width, hight);
+                m_smallShader->setUniform("u_resolution", _width, _height);
                 m_smallShader->setUniform("u_buffer", m_renderFbo, 0);
                 m_smallVbo->draw(m_smallShader);
                 
                 // Once the main FBO is draw take a picture
                 resetTimer("Extracting pixels...");
-                unsigned char *pixels = new unsigned char[width * hight * depth];   // allocate memory for the pixels
-                glReadPixels(0, 0, width, hight, GL_RGBA, GL_UNSIGNED_BYTE, pixels); // Read throug the current buffer pixels
-                stbi_write_png_to_func(&write_func, &image, width, height, depth, pixels, width * depth);
+                double start_encoding = getTime();
+                unsigned char *pixels = new unsigned char[_width * _height * _depth];   // allocate memory for the pixels
+                glReadPixels(0, 0, _width, _height, GL_RGBA, GL_UNSIGNED_BYTE, pixels); // Read throug the current buffer pixels
+                stbi_write_png_to_func(&write_func, &image, _width, _height, _depth, pixels, _width * _depth);
                 delete [] pixels;
+                LOG("pixel recall at %f seconds/pixel", (getTime()-start_call)/total_pixels);
 
                 // Close the smaller FBO because we are civilize ppl
                 m_smallFbo->unbind();
 
-                LOG("TOTAL CALL: %f", getTime()-start);
+                double total_time = getTime()-start_call;
+                LOG("TOTAL CALL: %f", total_time);
+                LOG("TOTAL sec/pixel: %f", total_time/total_pixels);
             }
 
             response = http_response_t(200, "OK", image, headers_t{CORS, PNG_MIME});

@@ -189,7 +189,7 @@ case "$1" in
         fi
 
         echo "Installing"
-        sudo cp bin/paparazzi_thread /usr/local/bin/paparazzi_thread
+        sudo cp bin/paparazzi_worker /usr/local/bin/paparazzi_worker
         cd ..
         ;;
 
@@ -215,9 +215,9 @@ case "$1" in
         fi
 
         # run paparazzi threads
-        paparazzi_thread ipc:///tmp/proxy_out ipc:///tmp/loopback
+        # paparazzi_worker ipc:///tmp/proxy_out ipc:///tmp/loopback
 
-        # $0 add $2
+        $0 add $2
         ;;
     add)
         if [ $# -eq 2 ]; then
@@ -226,14 +226,14 @@ case "$1" in
 
         echo "Adding $N_THREAD paparazzi threads" 
         for i in $(eval echo "{0..$N_THREAD}"); do 
-            paparazzi_thread ipc:///tmp/proxy_out ipc:///tmp/loopback &
+            paparazzi_worker ipc:///tmp/proxy_out ipc:///tmp/loopback &
         done 
         ;;
 
     stop)
         killall prime_httpd
         killall prime_proxyd 
-        killall paparazzi_thread
+        killall paparazzi_worker
         ;;
 
     restart)
@@ -244,11 +244,11 @@ case "$1" in
     status)
         ps -ef | grep -v grep | grep prime_httpd
         ps -ef | grep -v grep | grep prime_proxyd
-        ps -ef | grep -v grep | grep paparazzi_thread
+        ps -ef | grep -v grep | grep paparazzi_worker
         ;;
 
     *)
-        if [ ! -e /usr/local/bin/paparazzi_thread ]; then
+        if [ ! -e /usr/local/bin/paparazzi_worker ]; then
             echo "Usage: $0 install"
         else
             echo "Usage: $0 start"

@@ -30,13 +30,13 @@ If you are trying things on the code and just want to compile do
 
 Once paparazzi is compile you can use the `paparazzi.sh` script to:
 
-* **start**: runs [```prime_server```](https://github.com/kevinkreiser/prime_server), ```prime_proxy```, and N instances of ```paparazzi_thread```
+* **start**: runs [```prime_server```](https://github.com/kevinkreiser/prime_server), ```prime_proxy```, and N instances of ```paparazzi_worker```
 
 ```bash
 ./paparazzi.sh start [N_THREADS]
 ```
 
-* **stop**: stops [```prime_server```](https://github.com/kevinkreiser/prime_server), ```prime_proxy```, and all ```paparazzi_thread```
+* **stop**: stops [```prime_server```](https://github.com/kevinkreiser/prime_server), ```prime_proxy```, and all ```paparazzi_worker```
 
 ```bash
 ./paparazzi.sh stop
@@ -48,13 +48,13 @@ Once paparazzi is compile you can use the `paparazzi.sh` script to:
 ./paparazzi.sh restart [N_THREADS]
 ```
 
-* **add**: add N instances of ```paparazzi_thread```
+* **add**: add N instances of ```paparazzi_worker```
 
 ```bash
 ./paparazzi.sh add [N_THREADS]
 ```
 
-* **status** do a `ps` for [```prime_server```](https://github.com/kevinkreiser/prime_server), ```prime_proxy``` and ```paparazzi_thread```
+* **status** do a `ps` for [```prime_server```](https://github.com/kevinkreiser/prime_server), ```prime_proxy``` and ```paparazzi_worker```
 
 ```bash
 ./paparazzi.sh status

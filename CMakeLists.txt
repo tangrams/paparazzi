@@ -17,7 +17,7 @@ if(NOT EXISTS "${PROJECT_SOURCE_DIR}/tangram-es/external/alfons/deps/harfbuzz-ic
 endif()
 
 # common compiler options
-set(EXECUTABLE_NAME "paparazzi_thread")
+set(EXECUTABLE_NAME "paparazzi_worker")
 
 # add sources and include headers
 find_sources_and_include_directories(
