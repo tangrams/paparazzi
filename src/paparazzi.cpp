@@ -55,7 +55,9 @@ precision mediump float;\n\
 uniform sampler2D u_buffer;\n\
 uniform vec2 u_resolution;\n\
 void main() {\n\
-    gl_FragColor = texture2D(u_buffer, gl_FragCoord.xy/u_resolution.xy);\n\
+    vec2 st = gl_FragCoord.xy/u_resolution.xy;\n\
+    st.y = 1.-st.y;\n\
+    gl_FragColor = texture2D(u_buffer, st);\n\
 }";
     m_smallShader = new Shader();
     m_smallShader->load(smallFrag, smallVert);
@@ -297,23 +299,13 @@ worker_t::result_t Paparazzi::work (const std::list<zmq::message_t>& job, void* 
             // Once the main FBO is draw take a picture
             resetTimer("Extracting pixels...");
             unsigned char *pixels = new unsigned char[width * hight * depth];   // allocate memory for the pixels
+            LOG("glReadPixels");
             glReadPixels(0, 0, width, hight, GL_RGBA, GL_UNSIGNED_BYTE, pixels); // Read throug the current buffer pixels
-
-            int row,col,z;
-            stbi_uc temp;
-
-            for (row = 0; row < (height>>1); row++) {
-                for (col = 0; col < width; col++) {
-                    for (z = 0; z < depth; z++) {
-                        temp = pixels[(row * width + col) * depth + z];
-                        pixels[(row * width + col) * depth + z] = pixels[((height - row - 1) * width + col) * depth + z];
-                        pixels[((height - row - 1) * width + col) * depth + z] = temp;
-                    }
-                }
-            }
-
+            LOG("stbi_write_png_to_func");
             stbi_write_png_to_func(&write_func, &image, width, height, depth, pixels, width * depth);
+            LOG("delete []");
             delete [] pixels;
+            LOG("m_smallFbo->unbind()");
 
             // Close the smaller FBO because we are civilize ppl
             m_smallFbo->unbind();
