@@ -303,12 +303,10 @@ worker_t::result_t Paparazzi::work (const std::list<zmq::message_t>& job, void* 
                 
                 // Once the main FBO is draw take a picture
                 resetTimer("Extracting pixels...");
-                double start_encoding = getTime();
                 unsigned char *pixels = new unsigned char[_width * _height * _depth];   // allocate memory for the pixels
                 glReadPixels(0, 0, _width, _height, GL_RGBA, GL_UNSIGNED_BYTE, pixels); // Read throug the current buffer pixels
                 stbi_write_png_to_func(&write_func, &image, _width, _height, _depth, pixels, _width * _depth);
                 delete [] pixels;
-                LOG("pixel recall at %f seconds/pixel", (getTime()-start_call)/total_pixels);
 
                 // Close the smaller FBO because we are civilize ppl
                 m_smallFbo->unbind();
