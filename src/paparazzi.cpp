@@ -253,7 +253,7 @@ worker_t::result_t Paparazzi::work (const std::list<zmq::message_t>& job, void* 
             if (scene_itr == request.query.cend() || scene_itr->second.size() == 0) {
                 if(!request.body.empty()) {
                     // std::istringstream is(request.body);
-                    std::string name = "cache/"md5(request.body)+".yaml";
+                    std::string name = "cache/"+md5(request.body)+".yaml";
                     std::ofstream out(name.c_str());
                     out << request.body.c_str();
                     out.close();
