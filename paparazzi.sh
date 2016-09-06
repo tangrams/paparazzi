@@ -150,7 +150,7 @@ case "$1" in
         fi
 
         # Other needed files/folders
-        if [ ! -e cache ]; then
+        if [ ! -d cache ]; then
             echo "Creating cache folder"
             mkdir cache
         fi
@@ -221,9 +221,9 @@ case "$1" in
         fi
 
         # run paparazzi threads
-        paparazzi_worker ipc:///tmp/proxy_out ipc:///tmp/loopback
+        # paparazzi_worker ipc:///tmp/proxy_out ipc:///tmp/loopback
 
-        # $0 add $2
+        $0 add $2
         ;;
     add)
         if [ $# -eq 2 ]; then
