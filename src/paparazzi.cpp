@@ -70,12 +70,13 @@ void main() {\n\
 
     LOG("Creating a new TANGRAM instances");
     m_map = new Tangram::Map();
-    m_map->loadScene(m_scene.c_str());
+    m_map->loadSceneAsync(m_scene.c_str());
     m_map->setupGL();
+    m_map->setPixelScale(AA_SCALE);
+    m_map->resize(m_width, m_height);
+    update();
 
     setSize(800, 600);
-
-    update();
 }
 
 Paparazzi::~Paparazzi() {
@@ -186,7 +187,8 @@ void Paparazzi::setScene (const std::string &_url) {
         m_scene = _url;
 
         if (m_map) {
-            m_map->loadScene(m_scene.c_str());
+            m_map->loadSceneAsync(m_scene.c_str());
+            update();
         }
     }
 }
