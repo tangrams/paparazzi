@@ -4,6 +4,8 @@
 #define MAX_WAITING_TIME 5.0
 #define IMAGE_DEPTH 4
 
+#include "md5.h"
+
 //nuts and bolts required
 #include <functional>
 #include <csignal>
@@ -29,7 +31,7 @@ const headers_t::value_type CORS{"Access-Control-Allow-Origin", "*"};
 const headers_t::value_type PNG_MIME{"Content-type", "image/png"};
 const headers_t::value_type TXT_MIME{"Content-type", "text/plain;charset=utf-8"};
 
-Paparazzi::Paparazzi() : m_scene("scene.yaml"), m_lat(0.0), m_lon(0.0), m_zoom(0.0f), m_rotation(0.0f), m_tilt(0.0), m_width(0), m_height(0) {
+Paparazzi::Paparazzi() : m_scene("scene.yaml"), m_lat(0.0), m_lon(0.0), m_zoom(0.0f), m_rotation(0.0f), m_tilt(0.0), m_width(100), m_height(100) {
 
     // Initialize cURL
     curl_global_init(CURL_GLOBAL_DEFAULT);
@@ -37,9 +39,7 @@ Paparazzi::Paparazzi() : m_scene("scene.yaml"), m_lat(0.0), m_lon(0.0), m_zoom(0
     // Start OpenGL ES context
     LOG("Creating OpenGL ES context");
 
-    int width = 800;
-    int height = 480;
-    initGL(width, height);
+    initGL(m_width, m_height);
 
     // Create a simple vert/frag glsl shader to draw the main FBO with
     std::string smallVert = "#ifdef GL_ES\n\
@@ -65,15 +65,15 @@ void main() {\n\
     // Create a rectangular Billboard to draw the main FBO
     m_smallVbo = rect(0.0,0.0,1.,1.).getVbo();
 
-    m_renderFbo = new Fbo(width, height);
-    m_smallFbo = new Fbo(width, height);
+    m_renderFbo = new Fbo(m_width, m_height);
+    m_smallFbo = new Fbo(m_width, m_height);
 
     LOG("Creating a new TANGRAM instances");
     m_map = new Tangram::Map();
-    m_map->loadSceneAsync(m_scene.c_str());
+    m_map->loadScene(m_scene.c_str());
     m_map->setupGL();
 
-    setSize(width, height);
+    setSize(800, 600);
 
     update();
 }
@@ -186,8 +186,7 @@ void Paparazzi::setScene (const std::string &_url) {
         m_scene = _url;
 
         if (m_map) {
-            m_map->loadSceneAsync(m_scene.c_str());
-            update();
+            m_map->loadScene(m_scene.c_str());
         }
     }
 }
@@ -249,16 +248,29 @@ worker_t::result_t Paparazzi::work (const std::list<zmq::message_t>& job, void* 
             if (height_itr == request.query.cend() || height_itr->second.size() == 0)
                 throw std::runtime_error("height is required punk");
 
+            std::string scene = "scene.yaml";
             auto scene_itr = request.query.find("scene");
-            if (scene_itr == request.query.cend() || scene_itr->second.size() == 0)
-                throw std::runtime_error("scene is required punk");
+            if (scene_itr == request.query.cend() || scene_itr->second.size() == 0) {
+                if(!request.body.empty()) {
+                    // std::istringstream is(request.body);
+                    std::string name = "cache/"+md5(request.body)+".yaml";
+                    std::ofstream out(name.c_str());
+                    out << request.body.c_str();
+                    out.close();
+                    scene = name;
+                } else {
+                    throw std::runtime_error("scene is required punk");
+                }
+            } else {
+                 scene = scene_itr->second.front();
+            }
             
             double lat = std::stod(lat_itr->second.front());
             double lon = std::stod(lon_itr->second.front());
             float zoom = std::stof(zoom_itr->second.front());
             int width = std::stoi(width_itr->second.front());
             int height = std::stoi(height_itr->second.front());
-            std::string scene = scene_itr->second.front();
+            
 
             float tilt = 0;
             float rotation = 0;
