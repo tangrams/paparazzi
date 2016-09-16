@@ -1,4 +1,5 @@
 #include "paparazzi.h"
+
 #define MAX_WAITING_TIME 5.0
 #define IMAGE_DEPTH 4
 
@@ -71,6 +72,7 @@ void Paparazzi::setSize (const int &_width, const int &_height) {
         // Setup the size of the image
         if (m_map) {
             m_map->resize(m_width, m_height);
+            m_map->setPixelScale(1.);
             update();
         }
     }
@@ -250,51 +252,51 @@ worker_t::result_t Paparazzi::work (const std::list<zmq::message_t>& job, void* 
                 throw std::runtime_error("zoom is required punk");
             setZoom(std::stof(zoom_itr->second.front()));
 
-            //  TILT (optional)
-            //  ---------------------
-            auto tilt_itr = request.query.find("tilt");
-            if (tilt_itr == request.query.cend() && tilt_itr->second.size() == 0) {
-                // If TILT QUERRY is provided assigned ...
-                setTilt(std::stof(tilt_itr->second.front()));
-            }
-            else {
-                // othewise use default (0.)
-                setTilt(0.0f);
-            }
+            // //  TILT (optional)
+            // //  ---------------------
+            // std::cout << "Tilt" << std::endl;
+            // auto tilt_itr = request.query.find("tilt");
+            // if (tilt_itr == request.query.cend() && tilt_itr->second.size() == 0) {
+            //     // If TILT QUERRY is provided assigned ...
+            //     setTilt(std::stof(tilt_itr->second.front()));
+            // }
+            // else {
+            //     // othewise use default (0.)
+            //     setTilt(0.0f);
+            // }
         
-            //  ROTATION (OPTIONAL)
-            //  ---------------------
-            auto rotation_itr = request.query.find("rotation");
-            if (rotation_itr != request.query.cend() && rotation_itr->second.size() != 0) {
-                // If ROTATION QUERRY is provided assigned ...
-                setRotation(std::stof(rotation_itr->second.front()));
-            }
-            else {
-                // othewise use default (0.)
-                setRotation(0.0f);
-            }
+            // //  ROTATION (OPTIONAL)
+            // //  ---------------------
+            // std::cout << "Rotation" << std::endl;
+            // auto rotation_itr = request.query.find("rotation");
+            // if (rotation_itr != request.query.cend() && rotation_itr->second.size() != 0) {
+            //     // If ROTATION QUERRY is provided assigned ...
+            //     setRotation(std::stof(rotation_itr->second.front()));
+            // }
+            // else {
+            //     // othewise use default (0.)
+            //     setRotation(0.0f);
+            // }
 
+            std::cout << "Rendering" << std::endl;
             resetTimer("Rendering");
             std::string image;
             if (m_map) {
+
+                Tangram::GL::clearColor(0.f, 0.f, 0.f, 1.0f);
+                Tangram::GL::clear(GL_COLOR_BUFFER_BIT);
                 m_map->render();  // Render Tangram Scene
-                
-                // at the half of the size of the rendered scene
-                int _width = m_width;
-                int _height = m_height;
-                int _depth = IMAGE_DEPTH;
-                double total_pixels = _width*_height;
-                
+   
                 // Once the main FBO is draw take a picture
                 resetTimer("Extracting pixels...");
-                unsigned char *pixels = new unsigned char[_width * _height * _depth];   // allocate memory for the pixels
-                Tangram::GL::readPixels(0, 0, _width, _height, GL_RGBA, GL_UNSIGNED_BYTE, pixels); // Read throug the current buffer pixels
-                stbi_write_png_to_func(&write_func, &image, _width, _height, _depth, pixels, _width * _depth);
+                unsigned char *pixels = new unsigned char[m_width * m_height * IMAGE_DEPTH];   // allocate memory for the pixels
+                Tangram::GL::readPixels(0, 0, m_width, m_height, GL_RGBA, GL_UNSIGNED_BYTE, pixels); // Read throug the current buffer pixels
+                stbi_write_png_to_func(&write_func, &image, m_width, m_height, IMAGE_DEPTH, pixels, m_width * IMAGE_DEPTH);
                 delete [] pixels;
 
                 double total_time = getTime()-start_call;
                 LOG("TOTAL CALL: %f", total_time);
-                LOG("TOTAL speed: %f millisec per pixel", (total_time/(total_pixels/1000.0)));
+                LOG("TOTAL speed: %f millisec per pixel", (total_time/((m_width * m_height)/1000.0)));
             }
 
             response = http_response_t(200, "OK", image, headers_t{CORS, PNG_MIME});
