@@ -193,6 +193,21 @@ void Paparazzi::setScene (const std::string &_url) {
     }
 }
 
+void Paparazzi::setSceneContent(const std::string &_yaml_content) {
+    std::string md5_scene =  md5(_yaml_content);
+
+    if (md5_scene != m_scene) {
+        resetTimer("set scene");
+
+        m_scene = md5_scene;
+
+        if (m_map) {
+            m_map->loadSceneAsync(_yaml_content.c_str());
+            update();
+        }
+    }
+}
+
 void Paparazzi::update () {
     double startTime = getTime();
     float delta = 0.0;
@@ -218,81 +233,91 @@ worker_t::result_t Paparazzi::work (const std::list<zmq::message_t>& job, void* 
 
     //this type differs per protocol hence the void* fun
     auto& info = *static_cast<http_request_t::info_t*>(request_info);
-    http_response_t response;
 
+    // Try to generate a response 
+    http_response_t response;
     try {
         double start_call = getTime();
 
-        //TODO: actually use/validate the request parameters
-        auto request = http_request_t::from_string(
-            static_cast<const char*>(job.front().data()), job.front().size());
+        //TODO: 
+        //   - actually use/validate the request parameters
+        auto request = http_request_t::from_string(static_cast<const char*>(job.front().data()), job.front().size());
 
         if (request.path == "/check") {
+            // ELB check
             response = http_response_t(200, "OK", "OK", headers_t{CORS, TXT_MIME});
         } else {
-            auto lat_itr = request.query.find("lat");
-            if (lat_itr == request.query.cend() || lat_itr->second.size() == 0)
-                throw std::runtime_error("lat is required punk");
 
-            auto lon_itr = request.query.find("lon");
-            if (lon_itr == request.query.cend() || lon_itr->second.size() == 0)
-                throw std::runtime_error("lon is required punk");
-
-            auto zoom_itr = request.query.find("zoom");
-            if (zoom_itr == request.query.cend() || zoom_itr->second.size() == 0)
-                throw std::runtime_error("zoom is required punk");
-
-            auto width_itr = request.query.find("width");
-            if (width_itr == request.query.cend() || width_itr->second.size() == 0)
-                throw std::runtime_error("width is required punk");
-
-            auto height_itr = request.query.find("height");
-            if (height_itr == request.query.cend() || height_itr->second.size() == 0)
-                throw std::runtime_error("height is required punk");
-
-            std::string scene = "scene.yaml";
+            //  SCENE
+            //  ---------------------
             auto scene_itr = request.query.find("scene");
             if (scene_itr == request.query.cend() || scene_itr->second.size() == 0) {
-                if(!request.body.empty()) {
-                    // std::istringstream is(request.body);
-                    std::string name = "cache/"+md5(request.body)+".yaml";
-                    std::ofstream out(name.c_str());
-                    out << request.body.c_str();
-                    out.close();
-                    scene = name;
-                } else {
+                // If there is NO SCENE QUERY value 
+                if (request.body.empty()) 
+                    // if there is not POST body content return error
                     throw std::runtime_error("scene is required punk");
-                }
-            } else {
-                 scene = scene_itr->second.front();
+
+                // other whise load content
+                setSceneContent(request.body);
             }
-            
-            double lat = std::stod(lat_itr->second.front());
-            double lon = std::stod(lon_itr->second.front());
-            float zoom = std::stof(zoom_itr->second.front());
-            int width = std::stoi(width_itr->second.front());
-            int height = std::stoi(height_itr->second.front());
-            
+            else {
+                // If there IS a SCENE QUERRY value load it
+                setScene(scene_itr->second.front());
+            }
 
-            float tilt = 0;
-            float rotation = 0;
+            //  SIZE
+            //  ---------------------
+            auto width_itr = request.query.find("width");
+            if (width_itr == request.query.cend() || width_itr->second.size() == 0)
+                // If no WIDTH QUERRY return error
+                throw std::runtime_error("width is required punk");
+            auto height_itr = request.query.find("height");
+            if (height_itr == request.query.cend() || height_itr->second.size() == 0)
+                // If no HEIGHT QUERRY return error
+                throw std::runtime_error("height is required punk");
+            // Set Map and OpenGL context size
+            setSize(std::stoi(width_itr->second.front()), std::stoi(height_itr->second.front()));
 
+            //  POSITION
+            //  ---------------------
+            auto lat_itr = request.query.find("lat");
+            if (lat_itr == request.query.cend() || lat_itr->second.size() == 0)
+                // If not LAT QUERRY return error
+                throw std::runtime_error("lat is required punk");
+            auto lon_itr = request.query.find("lon");
+            if (lon_itr == request.query.cend() || lon_itr->second.size() == 0)
+                // If not LON QUERRY return error
+                throw std::runtime_error("lon is required punk");
+            setPosition(std::stod(lon_itr->second.front()), std::stod(lat_itr->second.front()));
+            auto zoom_itr = request.query.find("zoom");
+            if (zoom_itr == request.query.cend() || zoom_itr->second.size() == 0)
+                // If not ZOOM QUERRY return error
+                throw std::runtime_error("zoom is required punk");
+            setZoom(std::stof(zoom_itr->second.front()));
+
+            //  TILT (optional)
+            //  ---------------------
             auto tilt_itr = request.query.find("tilt");
-            if (tilt_itr != request.query.cend() && tilt_itr->second.size() != 0) {
-                tilt = std::stof(tilt_itr->second.front());
+            if (tilt_itr == request.query.cend() && tilt_itr->second.size() == 0) {
+                // If TILT QUERRY is provided assigned ...
+                setTilt(std::stof(tilt_itr->second.front()));
             }
-
+            else {
+                // othewise use default (0.)
+                setTilt(0.0f);
+            }
+        
+            //  ROTATION (OPTIONAL)
+            //  ---------------------
             auto rotation_itr = request.query.find("rotation");
             if (rotation_itr != request.query.cend() && rotation_itr->second.size() != 0) {
-                rotation = std::stof(rotation_itr->second.front());
+                // If ROTATION QUERRY is provided assigned ...
+                setRotation(std::stof(rotation_itr->second.front()));
             }
-
-            setSize(width, height);
-            setTilt(tilt);
-            setRotation(rotation);
-            setZoom(zoom);
-            setPosition(lon, lat);
-            setScene(scene);
+            else {
+                // othewise use default (0.)
+                setRotation(0.0f);
+            }
 
             resetTimer("Rendering");
             std::string image;

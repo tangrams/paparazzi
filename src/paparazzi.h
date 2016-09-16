@@ -25,6 +25,7 @@ public:
     void    setTilt(const float &_deg);
     void    setRotation(const float &_deg);
     void    setScene(const std::string &_url);
+    void    setSceneContent(const std::string &_yaml_content);
     void    setPosition(const double &_lon, const double &_lat);
 
     // prime_server stuff
