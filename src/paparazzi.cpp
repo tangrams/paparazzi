@@ -1,4 +1,5 @@
 #include "paparazzi.h"
+#include "log.h"
 
 #define AA_SCALE 2.0
 #define MAX_WAITING_TIME 5.0
@@ -198,11 +199,18 @@ void Paparazzi::setSceneContent(const std::string &_yaml_content) {
 
     if (md5_scene != m_scene) {
         resetTimer("set scene");
-
         m_scene = md5_scene;
 
+        // TODO:
+        //    - This is waiting for LoadSceneConfig to be implemented in Tangram::Map
+        //      Once that's done there is no need to save the file.
+        std::string name = "cache/"+md5_scene+".yaml";
+        std::ofstream out(name.c_str());
+        out << _yaml_content.c_str();
+        out.close();
+
         if (m_map) {
-            m_map->loadSceneAsync(_yaml_content.c_str());
+            m_map->loadSceneAsync(name.c_str());
             update();
         }
     }
@@ -254,10 +262,10 @@ worker_t::result_t Paparazzi::work (const std::list<zmq::message_t>& job, void* 
             if (scene_itr == request.query.cend() || scene_itr->second.size() == 0) {
                 // If there is NO SCENE QUERY value 
                 if (request.body.empty()) 
-                    // if there is not POST body content return error
+                    // if there is not POST body content return error...
                     throw std::runtime_error("scene is required punk");
 
-                // other whise load content
+                // ... other whise load content
                 setSceneContent(request.body);
             }
             else {

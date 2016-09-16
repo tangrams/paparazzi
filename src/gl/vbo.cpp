@@ -9,8 +9,8 @@ Vbo::Vbo() : m_vLayout(NULL), m_glVertexBuffer(0), m_nVertices(0), m_glIndexBuff
 }
 
 Vbo::~Vbo() {
-    glDeleteBuffers(1, &m_glVertexBuffer);
-    glDeleteBuffers(1, &m_glIndexBuffer);
+    Tangram::GL::deleteBuffers(1, &m_glVertexBuffer);
+    Tangram::GL::deleteBuffers(1, &m_glIndexBuffer);
     
     m_vertexData.clear();
     m_indices.clear();
@@ -89,23 +89,23 @@ void Vbo::upload() {
     if (m_nVertices > 0) {
         // Generate vertex buffer, if needed
         if (m_glVertexBuffer == 0) {
-            glGenBuffers(1, &m_glVertexBuffer);
+            Tangram::GL::genBuffers(1, &m_glVertexBuffer);
         }
         
         // Buffer vertex data
-        glBindBuffer(GL_ARRAY_BUFFER, m_glVertexBuffer);
-        glBufferData(GL_ARRAY_BUFFER, m_vertexData.size(), m_vertexData.data(), GL_STATIC_DRAW);
+        Tangram::GL::bindBuffer(GL_ARRAY_BUFFER, m_glVertexBuffer);
+        Tangram::GL::bufferData(GL_ARRAY_BUFFER, m_vertexData.size(), m_vertexData.data(), GL_STATIC_DRAW);
     }
 
     if (m_nIndices > 0) {
         // Generate index buffer, if needed
         if (m_glIndexBuffer == 0) {
-            glGenBuffers(1, &m_glIndexBuffer);
+            Tangram::GL::genBuffers(1, &m_glIndexBuffer);
         }
 
         // Buffer element index data
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_glIndexBuffer);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, m_indices.size() * sizeof(GLushort), m_indices.data(), GL_STATIC_DRAW);
+        Tangram::GL::bindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_glIndexBuffer);
+        Tangram::GL::bufferData(GL_ELEMENT_ARRAY_BUFFER, m_indices.size() * sizeof(GLushort), m_indices.data(), GL_STATIC_DRAW);
     }
 
     m_vertexData.clear();
@@ -123,11 +123,11 @@ void Vbo::draw(const Shader* _shader) {
     
     // Bind buffers for drawing
     if (m_nVertices > 0) {
-        glBindBuffer(GL_ARRAY_BUFFER, m_glVertexBuffer);
+        Tangram::GL::bindBuffer(GL_ARRAY_BUFFER, m_glVertexBuffer);
     }
 
     if (m_nIndices > 0) {
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_glIndexBuffer);
+        Tangram::GL::bindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_glIndexBuffer);
     }
 
     // Enable shader program
@@ -138,8 +138,8 @@ void Vbo::draw(const Shader* _shader) {
 
     // Draw as elements or arrays
     if (m_nIndices > 0) {
-        glDrawElements(m_drawMode, m_nIndices, GL_UNSIGNED_SHORT, 0);
+        Tangram::GL::drawElements(m_drawMode, m_nIndices, GL_UNSIGNED_SHORT, 0);
     } else if (m_nVertices > 0) {
-        glDrawArrays(m_drawMode, 0, m_nVertices);
+        Tangram::GL::drawArrays(m_drawMode, 0, m_nVertices);
     }
 }

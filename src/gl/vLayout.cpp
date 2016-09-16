@@ -54,8 +54,8 @@ void VLayout::enable(const Shader* _program) {
     for (unsigned int i = 0; i < m_attribs.size(); i++) {
         const GLint location = _program->getAttribLocation("a_"+m_attribs[i].name);
         if (location != -1) {
-            glEnableVertexAttribArray(location);
-            glVertexAttribPointer(location, m_attribs[i].size, m_attribs[i].type, m_attribs[i].normalized, m_stride, m_attribs[i].offset);
+            Tangram::GL::enableVertexAttribArray(location);
+            Tangram::GL::vertexAttribPointer(location, m_attribs[i].size, m_attribs[i].type, m_attribs[i].normalized, m_stride, m_attribs[i].offset);
             s_enabledAttribs[location] = glProgram; // Track currently enabled attribs by the program to which they are bound
         }
     }
@@ -66,7 +66,7 @@ void VLayout::enable(const Shader* _program) {
         GLuint& boundProgram = it->second;
 
         if (boundProgram != glProgram && boundProgram != 0) {
-            glDisableVertexAttribArray(location);
+            Tangram::GL::disableVertexAttribArray(location);
             boundProgram = 0;
         }
     }

@@ -41,7 +41,7 @@ void drawLine(const glm::vec3 &_a, const glm::vec3 &_b){
     GLfloat g_vertex_buffer_data[] = {  _a.x,_a.y,_a.z,
                                         _b.x,_b.y,_b.z  };
 
-    glVertexAttribPointer(
+    Tangram::GL::vertexAttribPointer(
                         0,                      //vertexPosition_modelspaceID,
                         3,                      // size
                         GL_FLOAT,               // type
@@ -50,8 +50,8 @@ void drawLine(const glm::vec3 &_a, const glm::vec3 &_b){
                         g_vertex_buffer_data    // (void*)0 
                 );
 
-    glEnableVertexAttribArray ( 0 );
-    glDrawArrays(GL_LINES, 0, 2);
+    Tangram::GL::enableVertexAttribArray ( 0 );
+    Tangram::GL::drawArrays(GL_LINES, 0, 2);
 };
 
 Mesh cross (const glm::vec3 &_pos, float _width) {
@@ -84,9 +84,9 @@ void drawCross(const glm::vec3 &_pos, float _width ){
 
     // glEnableClientState(GL_VERTEX_ARRAY);
     // glVertexPointer(3, GL_FLOAT, 0, &linePoints[0].x);
-    // glDrawArrays(GL_LINES, 0, 4);
+    // Tangram::GL::drawArrays(GL_LINES, 0, 4);
 
-    glVertexAttribPointer(
+    Tangram::GL::vertexAttribPointer(
                         0,                  // vertexPosition_modelspaceID,
                         3,                  // size
                         GL_FLOAT,           // type
@@ -95,8 +95,8 @@ void drawCross(const glm::vec3 &_pos, float _width ){
                         (void*)&linePoints[0].x // (void*)0 
                         );
 
-    glEnableVertexAttribArray( 0 );
-    glDrawArrays(GL_LINES, 0, 4);
+    Tangram::GL::enableVertexAttribArray( 0 );
+    Tangram::GL::drawArrays(GL_LINES, 0, 4);
 }
 
 // Billboard
@@ -174,7 +174,7 @@ Mesh rectBorders(const Rectangle &_rect){
 void drawBorders( const Rectangle &_rect ){
     glm::vec3 linePoints[5] = { _rect.getTopLeft(), _rect.getTopRight(), _rect.getBottomRight(), _rect.getBottomLeft(), _rect.getTopLeft()};
     
-    glVertexAttribPointer(
+    Tangram::GL::vertexAttribPointer(
                         0,                  //vertexPosition_modelspaceID,
                         3,                  // size
                         GL_FLOAT,           // type
@@ -183,8 +183,8 @@ void drawBorders( const Rectangle &_rect ){
                         &linePoints[0].x    // (void*)0 
                         );
 
-    glEnableVertexAttribArray ( 0 );
-    glDrawArrays(GL_LINE_STRIP, 0, 5);
+    Tangram::GL::enableVertexAttribArray ( 0 );
+    Tangram::GL::drawArrays(GL_LINE_STRIP, 0, 5);
 }
 
 Mesh rectCorners(const Rectangle &_rect, float _width ){
@@ -228,7 +228,7 @@ void drawCorners(const Rectangle &_rect, float _width){
     linePoints[12].x += _width;
     linePoints[15].y -= _width;
 
-    glVertexAttribPointer(
+    Tangram::GL::vertexAttribPointer(
                         0,                  //vertexPosition_modelspaceID,
                         3,                  // size
                         GL_FLOAT,           // type
@@ -237,8 +237,8 @@ void drawCorners(const Rectangle &_rect, float _width){
                         &linePoints[0].x    // (void*)0 
                         );
 
-    glEnableVertexAttribArray ( 0 );
-    glDrawArrays(GL_LINES, 0, 16);
+    Tangram::GL::enableVertexAttribArray ( 0 );
+    Tangram::GL::drawArrays(GL_LINES, 0, 16);
 }
 
 Mesh polyline (const std::vector<glm::vec3> &_pts ) {
@@ -249,7 +249,7 @@ Mesh polyline (const std::vector<glm::vec3> &_pts ) {
 }
 
 void drawPolyline(const std::vector<glm::vec3> &_pts ){
-    glVertexAttribPointer(
+    Tangram::GL::vertexAttribPointer(
                         0,          //vertexPosition_modelspaceID,
                         3,          // size
                         GL_FLOAT,   // type
@@ -258,6 +258,6 @@ void drawPolyline(const std::vector<glm::vec3> &_pts ){
                         &_pts[0].x  // (void*)0 
                         );
 
-    glEnableVertexAttribArray ( 0 );
-    glDrawArrays(GL_LINE_STRIP, 0, _pts.size());
+    Tangram::GL::enableVertexAttribArray ( 0 );
+    Tangram::GL::drawArrays(GL_LINE_STRIP, 0, _pts.size());
 }
