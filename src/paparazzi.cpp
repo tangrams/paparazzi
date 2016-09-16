@@ -1,29 +1,23 @@
 #include "paparazzi.h"
-#include "log.h"
-
-#define AA_SCALE 2.0
 #define MAX_WAITING_TIME 5.0
 #define IMAGE_DEPTH 4
 
-#include "md5.h"
+#include "platform.h"       // Tangram platform specifics
+#include "log.h"
+#include "gl.h"
+
+#include "context.h"        // This set the headless context
+#include "platform_headless.h" // headless platforms (Linux and RPi)
+#include "utils.h"
 
 //nuts and bolts required
 #include <functional>
 #include <csignal>
-
 #include <curl/curl.h>      // Curl
 #include "glm/trigonometric.hpp" // GLM for the radians/degree calc
-
-#include "platform.h"       // Tangram platform specifics
-
-#include "context.h"        // This set the headless context
-#include "platform_headless.h" // headless platforms (Linux and RPi)
-
-#include "types/shapes.h"   // Small library to compose basic shapes (use for rect)
-#include "utils.h"
+#include "md5.h"
 
 #include "stb_image.h"
-
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
 
@@ -42,38 +36,11 @@ Paparazzi::Paparazzi() : m_scene("scene.yaml"), m_lat(0.0), m_lon(0.0), m_zoom(0
 
     initGL(m_width, m_height);
 
-    // Create a simple vert/frag glsl shader to draw the main FBO with
-    std::string smallVert = "#ifdef GL_ES\n\
-precision mediump float;\n\
-#endif\n\
-attribute vec4 a_position;\n\
-void main(void) {\n\
-    gl_Position = a_position;\n\
-}";
-    std::string smallFrag = "#ifdef GL_ES\n\
-precision mediump float;\n\
-#endif\n\
-uniform sampler2D u_buffer;\n\
-uniform vec2 u_resolution;\n\
-void main() {\n\
-    vec2 st = gl_FragCoord.xy/u_resolution.xy;\n\
-    st.y = 1.-st.y;\n\
-    gl_FragColor = texture2D(u_buffer, st);\n\
-}";
-    m_smallShader = new Shader();
-    m_smallShader->load(smallFrag, smallVert);
-
-    // Create a rectangular Billboard to draw the main FBO
-    m_smallVbo = rect(0.0,0.0,1.,1.).getVbo();
-
-    m_renderFbo = new Fbo(m_width, m_height);
-    m_smallFbo = new Fbo(m_width, m_height);
-
     LOG("Creating a new TANGRAM instances");
     m_map = new Tangram::Map();
     m_map->loadSceneAsync(m_scene.c_str());
     m_map->setupGL();
-    m_map->setPixelScale(AA_SCALE);
+    m_map->setPixelScale(1.);
     m_map->resize(m_width, m_height);
     update();
 
@@ -85,22 +52,6 @@ Paparazzi::~Paparazzi() {
 
     finishUrlRequests();
     curl_global_cleanup();
-
-    if (m_smallShader) {
-        delete m_smallShader;
-    }
-    
-    if (m_smallFbo) {
-        delete m_smallFbo;
-    }
-    
-    if (m_smallVbo) {
-        delete m_smallVbo;
-    }
-    
-    if (m_renderFbo) {
-        delete m_renderFbo;
-    }
 
     if (m_map) {
         delete m_map;
@@ -114,18 +65,14 @@ void Paparazzi::setSize (const int &_width, const int &_height) {
     if (_width != m_width || _height != m_height) {
         resetTimer("set size");
 
-        m_width = _width*AA_SCALE;
-        m_height = _height*AA_SCALE;
+        m_width = _width;
+        m_height = _height;
 
         // Setup the size of the image
         if (m_map) {
-            m_map->setPixelScale(AA_SCALE);
             m_map->resize(m_width, m_height);
             update();
         }
-
-        m_renderFbo->resize(m_width, m_height);    // Allocate the main FrameBufferObject were tangram will be draw
-        m_smallFbo->resize(_width, _height); // Allocate the smaller FrameBufferObject were the main FBO will be draw
     }
 }
 
@@ -330,33 +277,20 @@ worker_t::result_t Paparazzi::work (const std::list<zmq::message_t>& job, void* 
             resetTimer("Rendering");
             std::string image;
             if (m_map) {
-                // Render the Tangram scene inside an FrameBufferObject
-                m_renderFbo->bind();   // Bind main FBO
                 m_map->render();  // Render Tangram Scene
-                m_renderFbo->unbind(); // Unbind main FBO
                 
                 // at the half of the size of the rendered scene
-                int _width = m_width/AA_SCALE;
-                int _height = m_height/AA_SCALE;
+                int _width = m_width;
+                int _height = m_height;
                 int _depth = IMAGE_DEPTH;
                 double total_pixels = _width*_height;
-
-                // Draw the main FBO inside the small one
-                m_smallFbo->bind();
-                m_smallShader->use();
-                m_smallShader->setUniform("u_resolution", _width, _height);
-                m_smallShader->setUniform("u_buffer", m_renderFbo, 0);
-                m_smallVbo->draw(m_smallShader);
                 
                 // Once the main FBO is draw take a picture
                 resetTimer("Extracting pixels...");
                 unsigned char *pixels = new unsigned char[_width * _height * _depth];   // allocate memory for the pixels
-                glReadPixels(0, 0, _width, _height, GL_RGBA, GL_UNSIGNED_BYTE, pixels); // Read throug the current buffer pixels
+                Tangram::GL::readPixels(0, 0, _width, _height, GL_RGBA, GL_UNSIGNED_BYTE, pixels); // Read throug the current buffer pixels
                 stbi_write_png_to_func(&write_func, &image, _width, _height, _depth, pixels, _width * _depth);
                 delete [] pixels;
-
-                // Close the smaller FBO because we are civilize ppl
-                m_smallFbo->unbind();
 
                 double total_time = getTime()-start_call;
                 LOG("TOTAL CALL: %f", total_time);

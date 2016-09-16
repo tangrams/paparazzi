@@ -7,12 +7,6 @@ using namespace prime_server;
 
 // Tangram-ES
 #include "tangram.h"
-
-// Some of my own tools to scale down the rendering image and download it to a file
-#include "gl/fbo.h"         // simple FBO implementation
-#include "gl/shader.h"      // simple ShaderProgram implementation
-#include "gl/vbo.h"         // simple VBO implementation
-
 #include <string>
 
 class Paparazzi {
@@ -45,9 +39,5 @@ protected:
     int         m_width;
     int         m_height;
 
-    Shader*         m_smallShader;  // Shader program to use to down sample the renderFbo with
-    Fbo*            m_smallFbo;     // FrameBufferObject of the half of the size to fake an antialiased image
-    Vbo*            m_smallVbo;     // VertexBufferObject to down sample the renderFbo to (like a billboard)
-    Fbo*            m_renderFbo;    // FrameBufferObject where the tangram scene will be renderd 
     Tangram::Map*   m_map;          // Tangram
 };

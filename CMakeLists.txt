@@ -100,6 +100,11 @@ find_sources_and_include_directories(
     ${PROJECT_SOURCE_DIR}/tangram-es/linux/src/urlWorker.cpp)
 
 # add sources and include headers
+find_sources_and_include_directories(
+    ${PROJECT_SOURCE_DIR}/tangram-es/core/common/platform_gl.h
+    ${PROJECT_SOURCE_DIR}/tangram-es/core/common/platform_gl.cpp)
+
+# add sources and include headers
 add_subdirectory(${PROJECT_SOURCE_DIR}/tangram-es/external)
 add_subdirectory(${PROJECT_SOURCE_DIR}/tangram-es/core)
 include_directories(${CORE_INCLUDE_DIRS})
