@@ -282,7 +282,8 @@ worker_t::result_t Paparazzi::work (const std::list<zmq::message_t>& job, void* 
             resetTimer("Rendering");
             std::string image;
             if (m_map) {
-
+                update();
+                
                 Tangram::GL::clearColor(0.f, 0.f, 0.f, 1.0f);
                 Tangram::GL::clear(GL_COLOR_BUFFER_BIT);
                 m_map->render();  // Render Tangram Scene
