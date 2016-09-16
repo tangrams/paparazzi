@@ -38,12 +38,14 @@ Paparazzi::Paparazzi() : m_scene("scene.yaml"), m_lat(0.0), m_lon(0.0), m_zoom(0
     initGL(m_width, m_height);
 
     LOG("Creating a new TANGRAM instances");
-    m_map = new Tangram::Map();
+    m_map = std::unique_ptr<Tangram::Map>(new Tangram::Map());
     m_map->loadSceneAsync(m_scene.c_str());
     m_map->setupGL();
     m_map->setPixelScale(1.);
     m_map->resize(m_width, m_height);
     update();
+
+    m_fbo = std::unique_ptr<Fbo>(new Fbo(m_width, m_height));
 
     setSize(800, 600);
 }
@@ -53,10 +55,6 @@ Paparazzi::~Paparazzi() {
 
     finishUrlRequests();
     curl_global_cleanup();
-
-    if (m_map) {
-        delete m_map;
-    }
 
     closeGL();
     LOG("END\n");
@@ -70,11 +68,11 @@ void Paparazzi::setSize (const int &_width, const int &_height) {
         m_height = _height;
 
         // Setup the size of the image
-        if (m_map) {
-            m_map->resize(m_width, m_height);
-            m_map->setPixelScale(1.);
-            update();
-        }
+        m_map->resize(m_width, m_height);
+        m_map->setPixelScale(1.);
+        update();
+
+        m_fbo->resize(m_width, m_height);
     }
 }
 
@@ -84,10 +82,8 @@ void Paparazzi::setZoom (const float &_zoom) {
 
         m_zoom = _zoom;
 
-        if (m_map) {
-            m_map->setZoom(_zoom);
-            update();
-        }
+        m_map->setZoom(_zoom);
+        update();
     }
 }
 
@@ -97,10 +93,8 @@ void Paparazzi::setTilt (const float &_deg) {
 
         m_tilt = _deg;
 
-        if (m_map) {
-            m_map->setTilt(glm::radians(m_tilt));
-            update();
-        }
+        m_map->setTilt(glm::radians(m_tilt));
+        update();
     }
 }
 void Paparazzi::setRotation (const float &_deg) {
@@ -109,10 +103,8 @@ void Paparazzi::setRotation (const float &_deg) {
 
         m_rotation = _deg;
 
-        if (m_map) {
-            m_map->setRotation(glm::radians(m_rotation));
-            update();
-        }
+        m_map->setRotation(glm::radians(m_rotation));
+        update();
     }
 }
 
@@ -123,10 +115,8 @@ void Paparazzi::setPosition (const double &_lon, const double &_lat) {
         m_lon = _lon;
         m_lat = _lat;
 
-        if (m_map) {
-            m_map->setPosition(m_lon, m_lat);
-            update();
-        }
+        m_map->setPosition(m_lon, m_lat);
+        update();
     }
 }
 
@@ -136,10 +126,8 @@ void Paparazzi::setScene (const std::string &_url) {
 
         m_scene = _url;
 
-        if (m_map) {
-            m_map->loadSceneAsync(m_scene.c_str());
-            update();
-        }
+        m_map->loadSceneAsync(m_scene.c_str());
+        update();
     }
 }
 
@@ -158,10 +146,8 @@ void Paparazzi::setSceneContent(const std::string &_yaml_content) {
         out << _yaml_content.c_str();
         out.close();
 
-        if (m_map) {
-            m_map->loadSceneAsync(name.c_str());
-            update();
-        }
+        m_map->loadSceneAsync(name.c_str());
+        update();
     }
 }
 
@@ -283,9 +269,11 @@ worker_t::result_t Paparazzi::work (const std::list<zmq::message_t>& job, void* 
             std::string image;
             if (m_map) {
                 update();
-                
-                Tangram::GL::clearColor(0.f, 0.f, 0.f, 1.0f);
-                Tangram::GL::clear(GL_COLOR_BUFFER_BIT);
+
+                m_fbo->bind();
+                Tangram::GL::viewport(0.0f, 0.0f, m_width, m_height);
+                Tangram::GL::clearColor(0.0f, 0.0f, 0.0f, 1.0f);
+                Tangram::GL::clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
                 m_map->render();  // Render Tangram Scene
    
                 // Once the main FBO is draw take a picture
@@ -294,6 +282,8 @@ worker_t::result_t Paparazzi::work (const std::list<zmq::message_t>& job, void* 
                 Tangram::GL::readPixels(0, 0, m_width, m_height, GL_RGBA, GL_UNSIGNED_BYTE, pixels); // Read throug the current buffer pixels
                 stbi_write_png_to_func(&write_func, &image, m_width, m_height, IMAGE_DEPTH, pixels, m_width * IMAGE_DEPTH);
                 delete [] pixels;
+
+                m_fbo->unbind();
 
                 double total_time = getTime()-start_call;
                 LOG("TOTAL CALL: %f", total_time);

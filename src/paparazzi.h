@@ -9,6 +9,8 @@ using namespace prime_server;
 #include "tangram.h"
 #include <string>
 
+#include "fbo.h"         // simple FBO implementation
+
 class Paparazzi {
 public:
     Paparazzi();
@@ -39,5 +41,6 @@ protected:
     int         m_width;
     int         m_height;
 
-    Tangram::Map*   m_map;          // Tangram
+    std::unique_ptr<Tangram::Map>   m_map;          // Tangram
+    std::unique_ptr<Fbo>            m_fbo;          // FBO
 };
