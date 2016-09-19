@@ -1,15 +1,14 @@
 #pragma once
 
+#include <string>
+
 //prime_server guts
 #include <prime_server/prime_server.hpp>
 #include <prime_server/http_protocol.hpp>
 using namespace prime_server;
 
-// Tangram-ES
-#include "tangram.h"
-#include <string>
-
-#include "fbo.h"         // simple FBO implementation
+#include "tools/aab.h"        // AntiAliased Buffer
+#include "tangram.h"    // Tangram-ES
 
 class Paparazzi {
 public:
@@ -26,21 +25,21 @@ public:
 
     // prime_server stuff
     worker_t::result_t work (const std::list<zmq::message_t>& job, void* request_info);
-
     void    cleanup();
 
 protected:
     void    update();
 
-    std::string m_scene;
-    double      m_lat;
-    double      m_lon;
-    float       m_zoom;
-    float       m_rotation;
-    float       m_tilt;
-    int         m_width;
-    int         m_height;
-
-    std::unique_ptr<Tangram::Map>   m_map;          // Tangram
-    std::unique_ptr<Fbo>            m_fbo;          // FBO
+    std::string         m_scene;
+    double              m_lat;
+    double              m_lon;
+    float               m_zoom;
+    float               m_rotation;
+    float               m_tilt;
+    int                 m_width;
+    int                 m_height;
+    
+    std::unique_ptr<Tangram::Map>       m_map;  // Tangram Map instance
+    std::unique_ptr<AntiAliasedBuffer>  m_aab;  // Antialiased Buffer
+    
 };

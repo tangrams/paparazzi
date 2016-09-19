@@ -1,7 +1,7 @@
 #include "paparazzi.h"
 
+#define AA_SCALE 2.0
 #define MAX_WAITING_TIME 5.0
-#define IMAGE_DEPTH 4
 
 #include "platform.h"       // Tangram platform specifics
 #include "log.h"
@@ -9,18 +9,16 @@
 
 #include "context.h"        // This set the headless context
 #include "platform_headless.h" // headless platforms (Linux and RPi)
-#include "utils.h"
+
+// MD5
+#include "tools/md5.h"
 
 //nuts and bolts required
 #include <functional>
 #include <csignal>
+#include <fstream>
 #include <curl/curl.h>      // Curl
 #include "glm/trigonometric.hpp" // GLM for the radians/degree calc
-#include "md5.h"
-
-#include "stb_image.h"
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-#include "stb_image_write.h"
 
 // HTTP RESPONSE HEADERS
 const headers_t::value_type CORS{"Access-Control-Allow-Origin", "*"};
@@ -41,11 +39,12 @@ Paparazzi::Paparazzi() : m_scene("scene.yaml"), m_lat(0.0), m_lon(0.0), m_zoom(0
     m_map = std::unique_ptr<Tangram::Map>(new Tangram::Map());
     m_map->loadSceneAsync(m_scene.c_str());
     m_map->setupGL();
-    m_map->setPixelScale(1.);
+    m_map->setPixelScale(AA_SCALE);
     m_map->resize(m_width, m_height);
     update();
 
-    m_fbo = std::unique_ptr<Fbo>(new Fbo(m_width, m_height));
+    m_aab = std::unique_ptr<AntiAliasedBuffer>(new AntiAliasedBuffer(m_width, m_height));
+    m_aab->setScale(AA_SCALE);
 
     setSize(800, 600);
 }
@@ -68,11 +67,11 @@ void Paparazzi::setSize (const int &_width, const int &_height) {
         m_height = _height;
 
         // Setup the size of the image
-        m_map->resize(m_width, m_height);
-        m_map->setPixelScale(1.);
+        m_map->resize(m_width*AA_SCALE, m_height*AA_SCALE);
+        // m_map->setPixelScale(AA_SCALE);
         update();
 
-        m_fbo->resize(m_width, m_height);
+        m_aab->setSize(m_width, m_height);
     }
 }
 
@@ -163,10 +162,6 @@ void Paparazzi::update () {
         delta = float(getTime() - startTime);
     }
     LOG("FINISH");
-}
-
-void write_func(void *context, void *data, int size) {
-    static_cast<std::string*>(context)->append(static_cast<const char*>(data), size);
 }
 
 // prime_server stuff
@@ -270,20 +265,16 @@ worker_t::result_t Paparazzi::work (const std::list<zmq::message_t>& job, void* 
             if (m_map) {
                 update();
 
-                m_fbo->bind();
+                m_aab->bind();
                 Tangram::GL::viewport(0.0f, 0.0f, m_width, m_height);
                 Tangram::GL::clearColor(0.0f, 0.0f, 0.0f, 1.0f);
                 Tangram::GL::clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
                 m_map->render();  // Render Tangram Scene
+                m_aab->unbind();
    
                 // Once the main FBO is draw take a picture
                 resetTimer("Extracting pixels...");
-                unsigned char *pixels = new unsigned char[m_width * m_height * IMAGE_DEPTH];   // allocate memory for the pixels
-                Tangram::GL::readPixels(0, 0, m_width, m_height, GL_RGBA, GL_UNSIGNED_BYTE, pixels); // Read throug the current buffer pixels
-                stbi_write_png_to_func(&write_func, &image, m_width, m_height, IMAGE_DEPTH, pixels, m_width * IMAGE_DEPTH);
-                delete [] pixels;
-
-                m_fbo->unbind();
+                m_aab->getPixelsAsString(image);
 
                 double total_time = getTime()-start_call;
                 LOG("TOTAL CALL: %f", total_time);
