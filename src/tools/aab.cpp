@@ -30,6 +30,7 @@ void main() {\n\
     vec2 st = gl_FragCoord.xy/u_resolution.xy;\n\
     st.y = 1.-st.y;\n\
     gl_FragColor = texture2D(u_buffer, st);\n\
+    // gl_FragColor = vec4(st.x,st.y,0.,1.);\n\
 }";
 
     m_fbo_in = std::unique_ptr<Fbo>(new Fbo());
@@ -50,12 +51,10 @@ void main() {\n\
     Tangram::GL::bufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
     // GLuint indices[] = {    0, 1, 2,
-    //                         2, 3, 0 };
-
+    //                         2, 3, 0  };
     // Tangram::GL::genBuffers(1, &m_index_vbo);
     // Tangram::GL::bindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_index_vbo);
     // Tangram::GL::bufferData(GL_ELEMENT_ARRAY_BUFFER, 6 * sizeof(GLushort), indices, GL_STATIC_DRAW);
-
     // m_pos_attrib = m_shader->getAttribLocation("a_position");
 }
 
@@ -69,6 +68,9 @@ AntiAliasedBuffer::~AntiAliasedBuffer() {
 
 void AntiAliasedBuffer::bind() {
     m_fbo_in->bind();
+    Tangram::GL::viewport(0.0f, 0.0f, m_fbo_in->getWidth()*m_scale, m_fbo_in->getHeight()*m_scale);
+    Tangram::GL::clearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    Tangram::GL::clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
 void AntiAliasedBuffer::unbind() {
@@ -93,6 +95,9 @@ void AntiAliasedBuffer::getPixelsAsString(std::string &_image) {
     int height = m_fbo_out->getHeight();
 
     m_fbo_out->bind();
+    Tangram::GL::viewport(0.0f, 0.0f, width, height);
+    Tangram::GL::clearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    Tangram::GL::clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     
     // Load the vertex data
     // Tangram::GL::enableVertexAttribArray(0);

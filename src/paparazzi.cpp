@@ -266,7 +266,7 @@ worker_t::result_t Paparazzi::work (const std::list<zmq::message_t>& job, void* 
                 update();
 
                 m_aab->bind();
-                Tangram::GL::viewport(0.0f, 0.0f, m_width, m_height);
+                Tangram::GL::viewport(0.0f, 0.0f, m_width*AA_SCALE, m_height*AA_SCALE);
                 Tangram::GL::clearColor(0.0f, 0.0f, 0.0f, 1.0f);
                 Tangram::GL::clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
                 m_map->render();  // Render Tangram Scene
