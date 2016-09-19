@@ -1,5 +1,6 @@
 #pragma once
 
+#include <memory>
 #include <string>
 
 //prime_server guts
@@ -38,7 +39,7 @@ protected:
     float               m_tilt;
     int                 m_width;
     int                 m_height;
-    
+
     std::unique_ptr<Tangram::Map>       m_map;  // Tangram Map instance
     std::unique_ptr<AntiAliasedBuffer>  m_aab;  // Antialiased Buffer
     
