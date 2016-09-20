@@ -40,7 +40,7 @@ Paparazzi::Paparazzi() : m_scene("scene.yaml"), m_lat(0.0), m_lon(0.0), m_zoom(0
     m_map->loadSceneAsync(m_scene.c_str());
     m_map->setupGL();
     m_map->setPixelScale(AA_SCALE);
-    m_map->resize(m_width, m_height);
+    m_map->resize(m_width*AA_SCALE, m_height*AA_SCALE);
     update();
 
     m_aab = std::unique_ptr<AntiAliasedBuffer>(new AntiAliasedBuffer(m_width, m_height));
@@ -68,7 +68,7 @@ void Paparazzi::setSize (const int &_width, const int &_height) {
 
         // Setup the size of the image
         m_map->resize(m_width*AA_SCALE, m_height*AA_SCALE);
-        // m_map->setPixelScale(AA_SCALE);
+        m_map->setPixelScale(AA_SCALE);
         update();
 
         m_aab->setSize(m_width, m_height);

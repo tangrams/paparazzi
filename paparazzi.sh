@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # If something goes wrong terminate this script
-set -e
+# set -e
 
 OS=$(uname)
 DIST="UNKNOWN"
@@ -195,6 +195,7 @@ case "$1" in
         fi
 
         echo "Installing"
+        ../$0 stop
         sudo cp bin/paparazzi_worker /usr/local/bin/paparazzi_worker
         cd ..
         ;;

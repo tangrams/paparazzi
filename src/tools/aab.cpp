@@ -49,13 +49,6 @@ void main() {\n\
     Tangram::GL::genBuffers(1, &m_vbo);
     Tangram::GL::bindBuffer(GL_ARRAY_BUFFER, m_vbo);
     Tangram::GL::bufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-    // GLuint indices[] = {    0, 1, 2,
-    //                         2, 3, 0  };
-    // Tangram::GL::genBuffers(1, &m_index_vbo);
-    // Tangram::GL::bindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_index_vbo);
-    // Tangram::GL::bufferData(GL_ELEMENT_ARRAY_BUFFER, 6 * sizeof(GLushort), indices, GL_STATIC_DRAW);
-    // m_pos_attrib = m_shader->getAttribLocation("a_position");
 }
 
 AntiAliasedBuffer::AntiAliasedBuffer(const unsigned int &_width, const unsigned int &_height) : AntiAliasedBuffer() {
@@ -68,7 +61,7 @@ AntiAliasedBuffer::~AntiAliasedBuffer() {
 
 void AntiAliasedBuffer::bind() {
     m_fbo_in->bind();
-    Tangram::GL::viewport(0.0f, 0.0f, m_fbo_in->getWidth()*m_scale, m_fbo_in->getHeight()*m_scale);
+    Tangram::GL::viewport(0.0f, 0.0f, m_fbo_in->getWidth(), m_fbo_in->getHeight());
     Tangram::GL::clearColor(0.0f, 0.0f, 0.0f, 1.0f);
     Tangram::GL::clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
@@ -100,19 +93,13 @@ void AntiAliasedBuffer::getPixelsAsString(std::string &_image) {
     Tangram::GL::clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     
     // Load the vertex data
-    // Tangram::GL::enableVertexAttribArray(0);
     Tangram::GL::bindBuffer(GL_ARRAY_BUFFER, m_vbo);
-    // Tangram::GL::bindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_index_vbo);
 
     m_shader->use();
     m_shader->setUniform("u_resolution", width, height);
     m_shader->setUniform("u_buffer", m_fbo_in.get(), 0);
     Tangram::GL::enableVertexAttribArray(0);
     Tangram::GL::vertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
-    // Tangram::GL::enableVertexAttribArray(m_pos_attrib);
-    // Tangram::GL::vertexAttribPointer(m_pos_attrib, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
-
-    // Tangram::GL::drawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
     Tangram::GL::drawArrays(GL_TRIANGLES, 0, 6);
 
     unsigned char *pixels = new unsigned char[width * height * IMAGE_DEPTH];   // allocate memory for the pixels
