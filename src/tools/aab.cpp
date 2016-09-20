@@ -72,7 +72,7 @@ void AntiAliasedBuffer::unbind() {
 
 void AntiAliasedBuffer::setSize(const unsigned int &_width, const unsigned int &_height) {
     m_fbo_in->resize(_width*m_scale, _height*m_scale);
-    m_fbo_out->resize(_width, _height);
+    m_fbo_out->resize(_width, _height, false);
 }
 
 void AntiAliasedBuffer::setScale(const float &_scale){

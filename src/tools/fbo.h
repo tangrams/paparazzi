@@ -14,7 +14,7 @@ public:
     const GLuint getTextureId() const { return m_texture; };
     const GLuint getDepthTextureId() const { return m_depth_texture; };
 
-    void resize(const unsigned int &_width, const unsigned int &_height);
+    void resize(const unsigned int &_width, const unsigned int &_height, bool _depth = true);
 
     void bind();
     void unbind();
