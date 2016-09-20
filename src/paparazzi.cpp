@@ -1,6 +1,11 @@
 #include "paparazzi.h"
 
+#ifdef PLATFORM_RPI
+#define AA_SCALE 1.0    // RaspberryPi actually have Antiliased 
+#else
 #define AA_SCALE 2.0
+#endif
+
 #define MAX_WAITING_TIME 5.0
 
 #include "platform.h"       // Tangram platform specifics
@@ -43,8 +48,10 @@ Paparazzi::Paparazzi() : m_scene("scene.yaml"), m_lat(0.0), m_lon(0.0), m_zoom(0
     m_map->resize(m_width*AA_SCALE, m_height*AA_SCALE);
     update();
 
+#ifndef PLATFORM_RPI
     m_aab = std::unique_ptr<AntiAliasedBuffer>(new AntiAliasedBuffer(m_width, m_height));
     m_aab->setScale(AA_SCALE);
+#endif
 
     setSize(800, 600);
 }

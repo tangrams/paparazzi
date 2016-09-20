@@ -62,14 +62,18 @@ AntiAliasedBuffer::~AntiAliasedBuffer() {
 }
 
 void AntiAliasedBuffer::bind() {
+#ifndef PLATFORM_RPI
     m_fbo_in->bind();
+#endif
     Tangram::GL::viewport(0.0f, 0.0f, m_fbo_in->getWidth(), m_fbo_in->getHeight());
     Tangram::GL::clearColor(0.0f, 0.0f, 0.0f, 1.0f);
     Tangram::GL::clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
 void AntiAliasedBuffer::unbind() {
+#ifndef PLATFORM_RPI
     m_fbo_in->unbind();
+#endif
 }
 
 void AntiAliasedBuffer::setSize(const unsigned int &_width, const unsigned int &_height) {
@@ -89,6 +93,7 @@ void AntiAliasedBuffer::getPixelsAsString(std::string &_image) {
     int width = m_fbo_out->getWidth();
     int height = m_fbo_out->getHeight();
 
+#ifndef PLATFORM_RPI
     m_fbo_out->bind();
     Tangram::GL::viewport(0.0f, 0.0f, width, height);
     Tangram::GL::clearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -103,11 +108,14 @@ void AntiAliasedBuffer::getPixelsAsString(std::string &_image) {
     Tangram::GL::enableVertexAttribArray(0);
     Tangram::GL::vertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
     Tangram::GL::drawArrays(GL_TRIANGLES, 0, 6);
+#endif
 
     unsigned char *pixels = new unsigned char[width * height * IMAGE_DEPTH];   // allocate memory for the pixels
     Tangram::GL::readPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, pixels); // Read throug the current buffer pixels
     stbi_write_png_to_func(&write_func, &_image, width, height, IMAGE_DEPTH, pixels, width * IMAGE_DEPTH);
     delete [] pixels;
 
+#ifndef PLATFORM_RPI
     m_fbo_out->unbind();
+#endif
 }
