@@ -5,7 +5,7 @@
 #include "platform.h"
 #include "tangram.h"
 
-#include "platform_headless.h"
+#include "platform_gl.h"
 
 Shader::Shader():m_program(0),m_fragmentShader(0),m_vertexShader(0) {
 

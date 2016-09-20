@@ -1,6 +1,6 @@
 #pragma once
 
-#include "platform_headless.h"
+#include "platform_gl.h"
 #undef countof
 
 // GL Context

@@ -1,35 +1,30 @@
-//#ifdef PLATFORM_RPI
+// //#ifdef PLATFORM_RPI
 #include "platform.h"
-#include "gl.h"
+// #include "gl.h"
 #include "log.h"
 #include "context.h"
-//#endif
+// //#endif
 
 #include <stdio.h>
 #include <stdarg.h>
 #include <iostream>
 #include <fstream>
+#include <functional>
 #include <string>
 #include <list>
 
 #include "urlWorker.h"
 #include "platform_headless.h"
+#include "gl/hardware.h"
 
 #include <libgen.h>
 #include <unistd.h>
 #include <sys/resource.h>
 #include <sys/syscall.h>
 
-#define NUM_WORKERS 3
-
-#ifdef PLATFORM_LINUX
-PFNGLBINDVERTEXARRAYPROC glBindVertexArrayOESEXT = 0;
-PFNGLDELETEVERTEXARRAYSPROC glDeleteVertexArraysOESEXT = 0;
-PFNGLGENVERTEXARRAYSPROC glGenVertexArraysOESEXT = 0;
-#endif
+#define NUM_WORKERS 10
 
 static bool s_isContinuousRendering = false;
-static std::string s_resourceRoot;
 
 static UrlWorker s_Workers[NUM_WORKERS];
 static std::list<std::unique_ptr<UrlTask>> s_urlTaskQueue;
@@ -65,7 +60,7 @@ void processNetworkQueue() {
 }
 
 void requestRender() {
-    #ifdef PLATFORM_LINUX
+    #ifndef PLATFORM_RPI
     glfwPostEmptyEvent();
     #endif
 }
@@ -81,6 +76,7 @@ bool isContinuousRendering() {
 std::string stringFromFile(const char* _path) {
     size_t length = 0;
     unsigned char* bytes = bytesFromFile(_path, length);
+    if (!bytes) { return {}; }
 
     std::string out(reinterpret_cast<char*>(bytes), length);
     free(bytes);
@@ -166,17 +162,18 @@ void setCurrentThreadPriority(int priority){
 }
 
 void initGLExtensions() {
-    #ifdef PLATFORM_LINUX
-    glBindVertexArrayOESEXT = (PFNGLBINDVERTEXARRAYPROC)glfwGetProcAddress("glBindVertexArray");
-    glDeleteVertexArraysOESEXT = (PFNGLDELETEVERTEXARRAYSPROC)glfwGetProcAddress("glDeleteVertexArrays");
-    glGenVertexArraysOESEXT = (PFNGLGENVERTEXARRAYSPROC)glfwGetProcAddress("glGenVertexArrays");
-    #endif
+    Tangram::Hardware::supportsMapBuffer = true;
+    // #ifdef PLATFORM_LINUX
+    // glBindVertexArrayOESEXT = (PFNGLBINDVERTEXARRAYPROC)glfwGetProcAddress("glBindVertexArray");
+    // glDeleteVertexArraysOESEXT = (PFNGLDELETEVERTEXARRAYSPROC)glfwGetProcAddress("glDeleteVertexArrays");
+    // glGenVertexArraysOESEXT = (PFNGLGENVERTEXARRAYSPROC)glfwGetProcAddress("glGenVertexArrays");
+    // #endif
 }
 
-#ifdef PLATFORM_RPI
-// Dummy VertexArray functions
-GL_APICALL void GL_APIENTRY glBindVertexArray(GLuint array) {}
-GL_APICALL void GL_APIENTRY glDeleteVertexArrays(GLsizei n, const GLuint *arrays) {}
-GL_APICALL void GL_APIENTRY glGenVertexArrays(GLsizei n, GLuint *arrays) {}
-#endif
+// #ifdef PLATFORM_RPI
+// // Dummy VertexArray functions
+// GL_APICALL void GL_APIENTRY glBindVertexArray(GLuint array) {}
+// GL_APICALL void GL_APIENTRY glDeleteVertexArrays(GLsizei n, const GLuint *arrays) {}
+// GL_APICALL void GL_APIENTRY glGenVertexArrays(GLsizei n, GLuint *arrays) {}
+// #endif
 
