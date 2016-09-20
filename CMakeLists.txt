@@ -11,7 +11,7 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
-if(NOT EXISTS "${PROJECT_SOURCE_DIR}/tangram-es/external/alfons/deps/harfbuzz-icu-freetype/CMakeLists.txt")
+if(NOT EXISTS "${PROJECT_SOURCE_DIR}/tangram-es/external/alfons/CMakeLists.txt")
     message(SEND_ERROR "Missing submodules - Please run:\n 'git submodule update --init --recursive'")
     return()
 endif()
@@ -98,6 +98,11 @@ endif()
 find_sources_and_include_directories(
     ${PROJECT_SOURCE_DIR}/tangram-es/linux/src/urlWorker.h
     ${PROJECT_SOURCE_DIR}/tangram-es/linux/src/urlWorker.cpp)
+
+# add sources and include headers
+find_sources_and_include_directories(
+    ${PROJECT_SOURCE_DIR}/tangram-es/core/common/platform_gl.h
+    ${PROJECT_SOURCE_DIR}/tangram-es/core/common/platform_gl.cpp)
 
 # add sources and include headers
 add_subdirectory(${PROJECT_SOURCE_DIR}/tangram-es/external)

@@ -1,30 +1,29 @@
 #include "paparazzi.h"
 
+#ifdef PLATFORM_RPI
+#define AA_SCALE 1.0    // RaspberryPi actually have Antiliased 
+#else
 #define AA_SCALE 2.0
+#endif
+
 #define MAX_WAITING_TIME 5.0
-#define IMAGE_DEPTH 4
-
-#include "md5.h"
-
-//nuts and bolts required
-#include <functional>
-#include <csignal>
-
-#include <curl/curl.h>      // Curl
-#include "glm/trigonometric.hpp" // GLM for the radians/degree calc
 
 #include "platform.h"       // Tangram platform specifics
+#include "log.h"
+#include "gl.h"
 
 #include "context.h"        // This set the headless context
 #include "platform_headless.h" // headless platforms (Linux and RPi)
 
-#include "types/shapes.h"   // Small library to compose basic shapes (use for rect)
-#include "utils.h"
+// MD5
+#include "tools/md5.h"
 
-#include "stb_image.h"
-
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-#include "stb_image_write.h"
+//nuts and bolts required
+#include <functional>
+#include <csignal>
+#include <fstream>
+#include <curl/curl.h>      // Curl
+#include "glm/trigonometric.hpp" // GLM for the radians/degree calc
 
 // HTTP RESPONSE HEADERS
 const headers_t::value_type CORS{"Access-Control-Allow-Origin", "*"};
@@ -41,40 +40,18 @@ Paparazzi::Paparazzi() : m_scene("scene.yaml"), m_lat(0.0), m_lon(0.0), m_zoom(0
 
     initGL(m_width, m_height);
 
-    // Create a simple vert/frag glsl shader to draw the main FBO with
-    std::string smallVert = "#ifdef GL_ES\n\
-precision mediump float;\n\
-#endif\n\
-attribute vec4 a_position;\n\
-void main(void) {\n\
-    gl_Position = a_position;\n\
-}";
-    std::string smallFrag = "#ifdef GL_ES\n\
-precision mediump float;\n\
-#endif\n\
-uniform sampler2D u_buffer;\n\
-uniform vec2 u_resolution;\n\
-void main() {\n\
-    vec2 st = gl_FragCoord.xy/u_resolution.xy;\n\
-    st.y = 1.-st.y;\n\
-    gl_FragColor = texture2D(u_buffer, st);\n\
-}";
-    m_smallShader = new Shader();
-    m_smallShader->load(smallFrag, smallVert);
-
-    // Create a rectangular Billboard to draw the main FBO
-    m_smallVbo = rect(0.0,0.0,1.,1.).getVbo();
-
-    m_renderFbo = new Fbo(m_width, m_height);
-    m_smallFbo = new Fbo(m_width, m_height);
-
     LOG("Creating a new TANGRAM instances");
-    m_map = new Tangram::Map();
+    m_map = std::unique_ptr<Tangram::Map>(new Tangram::Map());
     m_map->loadSceneAsync(m_scene.c_str());
     m_map->setupGL();
     m_map->setPixelScale(AA_SCALE);
-    m_map->resize(m_width, m_height);
+    m_map->resize(m_width*AA_SCALE, m_height*AA_SCALE);
     update();
+
+#ifndef PLATFORM_RPI
+    m_aab = std::unique_ptr<AntiAliasedBuffer>(new AntiAliasedBuffer(m_width, m_height));
+    m_aab->setScale(AA_SCALE);
+#endif
 
     setSize(800, 600);
 }
@@ -85,26 +62,6 @@ Paparazzi::~Paparazzi() {
     finishUrlRequests();
     curl_global_cleanup();
 
-    if (m_smallShader) {
-        delete m_smallShader;
-    }
-    
-    if (m_smallFbo) {
-        delete m_smallFbo;
-    }
-    
-    if (m_smallVbo) {
-        delete m_smallVbo;
-    }
-    
-    if (m_renderFbo) {
-        delete m_renderFbo;
-    }
-
-    if (m_map) {
-        delete m_map;
-    }
-
     closeGL();
     LOG("END\n");
 }
@@ -113,18 +70,15 @@ void Paparazzi::setSize (const int &_width, const int &_height) {
     if (_width != m_width || _height != m_height) {
         resetTimer("set size");
 
-        m_width = _width*AA_SCALE;
-        m_height = _height*AA_SCALE;
+        m_width = _width;
+        m_height = _height;
 
         // Setup the size of the image
-        if (m_map) {
-            m_map->setPixelScale(AA_SCALE);
-            m_map->resize(m_width, m_height);
-            update();
-        }
+        m_map->resize(m_width*AA_SCALE, m_height*AA_SCALE);
+        m_map->setPixelScale(AA_SCALE);
+        update();
 
-        m_renderFbo->resize(m_width, m_height);    // Allocate the main FrameBufferObject were tangram will be draw
-        m_smallFbo->resize(_width, _height); // Allocate the smaller FrameBufferObject were the main FBO will be draw
+        m_aab->setSize(m_width, m_height);
     }
 }
 
@@ -134,10 +88,8 @@ void Paparazzi::setZoom (const float &_zoom) {
 
         m_zoom = _zoom;
 
-        if (m_map) {
-            m_map->setZoom(_zoom);
-            update();
-        }
+        m_map->setZoom(_zoom);
+        update();
     }
 }
 
@@ -147,10 +99,8 @@ void Paparazzi::setTilt (const float &_deg) {
 
         m_tilt = _deg;
 
-        if (m_map) {
-            m_map->setTilt(glm::radians(m_tilt));
-            update();
-        }
+        m_map->setTilt(glm::radians(m_tilt));
+        update();
     }
 }
 void Paparazzi::setRotation (const float &_deg) {
@@ -159,10 +109,8 @@ void Paparazzi::setRotation (const float &_deg) {
 
         m_rotation = _deg;
 
-        if (m_map) {
-            m_map->setRotation(glm::radians(m_rotation));
-            update();
-        }
+        m_map->setRotation(glm::radians(m_rotation));
+        update();
     }
 }
 
@@ -173,10 +121,8 @@ void Paparazzi::setPosition (const double &_lon, const double &_lat) {
         m_lon = _lon;
         m_lat = _lat;
 
-        if (m_map) {
-            m_map->setPosition(m_lon, m_lat);
-            update();
-        }
+        m_map->setPosition(m_lon, m_lat);
+        update();
     }
 }
 
@@ -186,10 +132,28 @@ void Paparazzi::setScene (const std::string &_url) {
 
         m_scene = _url;
 
-        if (m_map) {
-            m_map->loadSceneAsync(m_scene.c_str());
-            update();
-        }
+        m_map->loadSceneAsync(m_scene.c_str());
+        update();
+    }
+}
+
+void Paparazzi::setSceneContent(const std::string &_yaml_content) {
+    std::string md5_scene =  md5(_yaml_content);
+
+    if (md5_scene != m_scene) {
+        resetTimer("set scene");
+        m_scene = md5_scene;
+
+        // TODO:
+        //    - This is waiting for LoadSceneConfig to be implemented in Tangram::Map
+        //      Once that's done there is no need to save the file.
+        std::string name = "cache/"+md5_scene+".yaml";
+        std::ofstream out(name.c_str());
+        out << _yaml_content.c_str();
+        out.close();
+
+        m_map->loadSceneAsync(name.c_str());
+        update();
     }
 }
 
@@ -207,10 +171,6 @@ void Paparazzi::update () {
     LOG("FINISH");
 }
 
-void write_func(void *context, void *data, int size) {
-    static_cast<std::string*>(context)->append(static_cast<const char*>(data), size);
-}
-
 // prime_server stuff
 worker_t::result_t Paparazzi::work (const std::list<zmq::message_t>& job, void* request_info){
     //false means this is going back to the client, there is no next stage of the pipeline
@@ -218,116 +178,111 @@ worker_t::result_t Paparazzi::work (const std::list<zmq::message_t>& job, void* 
 
     //this type differs per protocol hence the void* fun
     auto& info = *static_cast<http_request_t::info_t*>(request_info);
-    http_response_t response;
 
+    // Try to generate a response 
+    http_response_t response;
     try {
         double start_call = getTime();
 
-        //TODO: actually use/validate the request parameters
-        auto request = http_request_t::from_string(
-            static_cast<const char*>(job.front().data()), job.front().size());
+        //TODO: 
+        //   - actually use/validate the request parameters
+        auto request = http_request_t::from_string(static_cast<const char*>(job.front().data()), job.front().size());
 
         if (request.path == "/check") {
+            // ELB check
             response = http_response_t(200, "OK", "OK", headers_t{CORS, TXT_MIME});
         } else {
-            auto lat_itr = request.query.find("lat");
-            if (lat_itr == request.query.cend() || lat_itr->second.size() == 0)
-                throw std::runtime_error("lat is required punk");
 
-            auto lon_itr = request.query.find("lon");
-            if (lon_itr == request.query.cend() || lon_itr->second.size() == 0)
-                throw std::runtime_error("lon is required punk");
-
-            auto zoom_itr = request.query.find("zoom");
-            if (zoom_itr == request.query.cend() || zoom_itr->second.size() == 0)
-                throw std::runtime_error("zoom is required punk");
-
-            auto width_itr = request.query.find("width");
-            if (width_itr == request.query.cend() || width_itr->second.size() == 0)
-                throw std::runtime_error("width is required punk");
-
-            auto height_itr = request.query.find("height");
-            if (height_itr == request.query.cend() || height_itr->second.size() == 0)
-                throw std::runtime_error("height is required punk");
-
-            std::string scene = "scene.yaml";
+            //  SCENE
+            //  ---------------------
             auto scene_itr = request.query.find("scene");
             if (scene_itr == request.query.cend() || scene_itr->second.size() == 0) {
-                if(!request.body.empty()) {
-                    // std::istringstream is(request.body);
-                    std::string name = "cache/"+md5(request.body)+".yaml";
-                    std::ofstream out(name.c_str());
-                    out << request.body.c_str();
-                    out.close();
-                    scene = name;
-                } else {
+                // If there is NO SCENE QUERY value 
+                if (request.body.empty()) 
+                    // if there is not POST body content return error...
                     throw std::runtime_error("scene is required punk");
-                }
-            } else {
-                 scene = scene_itr->second.front();
+
+                // ... other whise load content
+                setSceneContent(request.body);
             }
-            
-            double lat = std::stod(lat_itr->second.front());
-            double lon = std::stod(lon_itr->second.front());
-            float zoom = std::stof(zoom_itr->second.front());
-            int width = std::stoi(width_itr->second.front());
-            int height = std::stoi(height_itr->second.front());
-            
-
-            float tilt = 0;
-            float rotation = 0;
-
-            auto tilt_itr = request.query.find("tilt");
-            if (tilt_itr != request.query.cend() && tilt_itr->second.size() != 0) {
-                tilt = std::stof(tilt_itr->second.front());
+            else {
+                // If there IS a SCENE QUERRY value load it
+                setScene(scene_itr->second.front());
             }
 
-            auto rotation_itr = request.query.find("rotation");
-            if (rotation_itr != request.query.cend() && rotation_itr->second.size() != 0) {
-                rotation = std::stof(rotation_itr->second.front());
-            }
+            //  SIZE
+            //  ---------------------
+            auto width_itr = request.query.find("width");
+            if (width_itr == request.query.cend() || width_itr->second.size() == 0)
+                // If no WIDTH QUERRY return error
+                throw std::runtime_error("width is required punk");
+            auto height_itr = request.query.find("height");
+            if (height_itr == request.query.cend() || height_itr->second.size() == 0)
+                // If no HEIGHT QUERRY return error
+                throw std::runtime_error("height is required punk");
+            // Set Map and OpenGL context size
+            setSize(std::stoi(width_itr->second.front()), std::stoi(height_itr->second.front()));
 
-            setSize(width, height);
-            setTilt(tilt);
-            setRotation(rotation);
-            setZoom(zoom);
-            setPosition(lon, lat);
-            setScene(scene);
+            //  POSITION
+            //  ---------------------
+            auto lat_itr = request.query.find("lat");
+            if (lat_itr == request.query.cend() || lat_itr->second.size() == 0)
+                // If not LAT QUERRY return error
+                throw std::runtime_error("lat is required punk");
+            auto lon_itr = request.query.find("lon");
+            if (lon_itr == request.query.cend() || lon_itr->second.size() == 0)
+                // If not LON QUERRY return error
+                throw std::runtime_error("lon is required punk");
+            setPosition(std::stod(lon_itr->second.front()), std::stod(lat_itr->second.front()));
+            auto zoom_itr = request.query.find("zoom");
+            if (zoom_itr == request.query.cend() || zoom_itr->second.size() == 0)
+                // If not ZOOM QUERRY return error
+                throw std::runtime_error("zoom is required punk");
+            setZoom(std::stof(zoom_itr->second.front()));
 
+            // //  TILT (optional)
+            // //  ---------------------
+            // std::cout << "Tilt" << std::endl;
+            // auto tilt_itr = request.query.find("tilt");
+            // if (tilt_itr == request.query.cend() && tilt_itr->second.size() == 0) {
+            //     // If TILT QUERRY is provided assigned ...
+            //     setTilt(std::stof(tilt_itr->second.front()));
+            // }
+            // else {
+            //     // othewise use default (0.)
+            //     setTilt(0.0f);
+            // }
+        
+            // //  ROTATION (OPTIONAL)
+            // //  ---------------------
+            // std::cout << "Rotation" << std::endl;
+            // auto rotation_itr = request.query.find("rotation");
+            // if (rotation_itr != request.query.cend() && rotation_itr->second.size() != 0) {
+            //     // If ROTATION QUERRY is provided assigned ...
+            //     setRotation(std::stof(rotation_itr->second.front()));
+            // }
+            // else {
+            //     // othewise use default (0.)
+            //     setRotation(0.0f);
+            // }
+
+            std::cout << "Rendering" << std::endl;
             resetTimer("Rendering");
             std::string image;
             if (m_map) {
-                // Render the Tangram scene inside an FrameBufferObject
-                m_renderFbo->bind();   // Bind main FBO
-                m_map->render();  // Render Tangram Scene
-                m_renderFbo->unbind(); // Unbind main FBO
-                
-                // at the half of the size of the rendered scene
-                int _width = m_width/AA_SCALE;
-                int _height = m_height/AA_SCALE;
-                int _depth = IMAGE_DEPTH;
-                double total_pixels = _width*_height;
+                update();
 
-                // Draw the main FBO inside the small one
-                m_smallFbo->bind();
-                m_smallShader->use();
-                m_smallShader->setUniform("u_resolution", _width, _height);
-                m_smallShader->setUniform("u_buffer", m_renderFbo, 0);
-                m_smallVbo->draw(m_smallShader);
-                
+                m_aab->bind();
+                m_map->render();  // Render Tangram Scene
+                m_aab->unbind();
+   
                 // Once the main FBO is draw take a picture
                 resetTimer("Extracting pixels...");
-                unsigned char *pixels = new unsigned char[_width * _height * _depth];   // allocate memory for the pixels
-                glReadPixels(0, 0, _width, _height, GL_RGBA, GL_UNSIGNED_BYTE, pixels); // Read throug the current buffer pixels
-                stbi_write_png_to_func(&write_func, &image, _width, _height, _depth, pixels, _width * _depth);
-                delete [] pixels;
-
-                // Close the smaller FBO because we are civilize ppl
-                m_smallFbo->unbind();
+                m_aab->getPixelsAsString(image);
 
                 double total_time = getTime()-start_call;
                 LOG("TOTAL CALL: %f", total_time);
-                LOG("TOTAL speed: %f millisec per pixel", (total_time/(total_pixels/1000.0)));
+                LOG("TOTAL speed: %f millisec per pixel", (total_time/((m_width * m_height)/1000.0)));
             }
 
             response = http_response_t(200, "OK", image, headers_t{CORS, PNG_MIME});

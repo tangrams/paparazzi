@@ -1,12 +1,11 @@
 #include "shader.h"
 
+#include <iostream>
+
 #include "platform.h"
 #include "tangram.h"
 
-#include "platform_headless.h"
-
-// #include <regex>
-#include "utils.h"
+#include "platform_gl.h"
 
 Shader::Shader():m_program(0),m_fragmentShader(0),m_vertexShader(0) {
 
@@ -81,7 +80,6 @@ bool Shader::load(const std::string& _fragmentSrc, const std::string& _vertexSrc
             std::size_t start = error.find("line ")+5;
             std::size_t end = error.find_last_of(")");
             std::string lineNum = error.substr(start,end-start);
-            std::cerr << (unsigned)getInt(lineNum) << ": " << getLineNumber(_fragmentSrc,(unsigned)getInt(lineNum)) << std::endl;
         }
         glDeleteProgram(m_program);
         return false;
@@ -189,10 +187,12 @@ void Shader::setUniform(const std::string& _name, const Fbo* _fbo, unsigned int 
         glActiveTexture(GL_TEXTURE0 + _texLoc);
         glBindTexture(GL_TEXTURE_2D, _fbo->getTextureId());
         glUniform1i(getUniformLocation(_name), _texLoc);
-        _texLoc++;
-        glActiveTexture(GL_TEXTURE0 + _texLoc);
-        glBindTexture(GL_TEXTURE_2D, _fbo->getDepthTextureId());
-        glUniform1i(getUniformLocation(_name+"Depth"), _texLoc);
+        // if (_fbo->getDepthTextureId()) {
+        //     _texLoc++;
+        //     glActiveTexture(GL_TEXTURE0 + _texLoc);
+        //     glBindTexture(GL_TEXTURE_2D, _fbo->getDepthTextureId());
+        //     glUniform1i(getUniformLocation(_name+"Depth"), _texLoc);
+        // }
     }
 }
 
