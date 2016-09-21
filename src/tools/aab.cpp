@@ -137,6 +137,21 @@ void AntiAliasedBuffer::getPixelsAsString(std::string &_image) {
 
     unsigned char *pixels = new unsigned char[m_width * m_height * IMAGE_DEPTH];   // allocate memory for the pixels
     Tangram::GL::readPixels(0, 0, m_width, m_height, GL_RGBA, GL_UNSIGNED_BYTE, pixels); // Read throug the current buffer pixels
+
+#ifdef PLATFORM_RPI
+    int row,col,z;
+    stbi_uc temp;
+    for (row = 0; row < (_height>>1); row++) {
+        for (col = 0; col < _width; col++) {
+            for (z = 0; z < IMAGE_DEPTH; z++) {
+                temp = pixels[(row * _width + col) * IMAGE_DEPTH + z];
+                pixels[(row * _width + col) * IMAGE_DEPTH + z] = pixels[((_height - row - 1) * _width + col) * IMAGE_DEPTH + z];
+                pixels[((_height - row - 1) * _width + col) * IMAGE_DEPTH + z] = temp;
+            }
+        }
+    }
+#endif
+
     stbi_write_png_to_func(&write_func, &_image, m_width, m_height, IMAGE_DEPTH, pixels, m_width * IMAGE_DEPTH);
     delete [] pixels;
 
