@@ -172,10 +172,10 @@ void renderGL() {
 // Release OpenGL resources
 void closeGL() {
     #ifdef PLATFORM_RPI
-    eglMakeCurrent( display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT );
-    eglDestroySurface( display, surface );
-    eglDestroyContext( display, context );
-    eglTerminate( display );
+    eglMakeCurrent(display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+    eglDestroySurface(display, surface);
+    eglDestroyContext(display, context);
+    eglTerminate(display);
     #else
     //  ---------------------------------------- using GLFW
     //

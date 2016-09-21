@@ -69,9 +69,7 @@ void Fbo::resize(const unsigned int &_width, const unsigned int &_height, bool _
             m_depth_texture = 0;
         }
         
-
         // Associate the textures with the FBO
-     
         bind();
         glFramebufferTexture2D( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
                                 GL_TEXTURE_2D, m_texture, 0);
@@ -89,7 +87,7 @@ void Fbo::resize(const unsigned int &_width, const unsigned int &_height, bool _
 
 void Fbo::bind() {
     if (!m_binded) {
-        Tangram::GL::getIntegerv(GL_FRAMEBUFFER_BINDING, (GLint *)&m_old_fbo_id);
+        // Tangram::GL::getIntegerv(GL_FRAMEBUFFER_BINDING, (GLint *)&m_old_fbo_id);
         glBindFramebuffer(GL_FRAMEBUFFER, m_id);
         Tangram::GL::viewport(0.0f, 0.0f, m_width, m_height);
         Tangram::GL::clearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -105,7 +103,7 @@ void Fbo::bind() {
 
 void Fbo::unbind() {
     if (m_binded) {
-        glBindFramebuffer(GL_FRAMEBUFFER, m_old_fbo_id);
+        // glBindFramebuffer(GL_FRAMEBUFFER, m_old_fbo_id);
         m_binded = false;
     }
 }
