@@ -2,6 +2,10 @@
 
 #define IMAGE_DEPTH 4
 
+#ifdef PLATFORM_RPI
+#include "context.cpp"
+#endif
+
 // Tangram
 #include "log.h"
 
@@ -11,8 +15,8 @@
 #include "stb_image_write.h"
 
 AntiAliasedBuffer::AntiAliasedBuffer() : 
-                                        m_fbo_in(nullptr),
 #ifndef PLATFORM_RPI
+                                        m_fbo_in(nullptr),
                                         m_fbo_out(nullptr), 
 #endif
                                         m_shader(nullptr), m_vbo(0), m_width(0), m_height(0), m_scale(2.) {
@@ -64,9 +68,14 @@ AntiAliasedBuffer::~AntiAliasedBuffer() {
 }
 
 void AntiAliasedBuffer::bind() {
+#ifndef PLATFORM_RPI
     m_fbo_in->bind();
+#else
+    Tangram::GL::viewport(0.0f, 0.0f, m_width, m_height);
+    Tangram::GL::clearColor(0.0f, 0.0f, 0.0f, 1.0f);
     Tangram::GL::clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     Tangram::GL::enable(GL_DEPTH_TEST);
+#endif
 }
 
 void AntiAliasedBuffer::unbind() {
@@ -81,17 +90,13 @@ void AntiAliasedBuffer::setSize(const unsigned int &_width, const unsigned int &
         m_height = _height;
         bool depth = true;
 
-#ifdef PLATFORM_RPI
-        depth = false;
-#endif
-
+#ifndef PLATFORM_RPI
         if (!m_fbo_in) {
             m_fbo_in = std::unique_ptr<Fbo>(new Fbo(m_width*m_scale, m_height*m_scale, depth));
         } else {
             m_fbo_in->resize(m_width*m_scale, m_height*m_scale, depth);
         }
 
-#ifndef PLATFORM_RPI
         if (!m_fbo_out) {
             m_fbo_out = std::unique_ptr<Fbo>(new Fbo(m_width, m_height, false));
         } else {
@@ -137,6 +142,6 @@ void AntiAliasedBuffer::getPixelsAsString(std::string &_image) {
 #ifndef PLATFORM_RPI
     m_fbo_out->unbind();
 #else
-    m_fbo_in->unbind();
+    renderGL();
 #endif
 }
