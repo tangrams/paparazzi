@@ -66,7 +66,7 @@ void AntiAliasedBuffer::bind() {
 #ifndef PLATFORM_RPI
     m_fbo_in->bind();
 #endif
-    Tangram::GL::viewport(0.0f, 0.0f, m_width*m_scale, m_height*_scale);
+    Tangram::GL::viewport(0.0f, 0.0f, m_width*m_scale, m_height*m_scale);
     Tangram::GL::clearColor(0.0f, 0.0f, 0.0f, 1.0f);
     Tangram::GL::clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
