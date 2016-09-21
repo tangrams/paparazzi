@@ -273,7 +273,8 @@ worker_t::result_t Paparazzi::work (const std::list<zmq::message_t>& job, void* 
                 update();
 
                 m_aab->bind();
-                m_map->render();  // Render Tangram Scene
+                // Render Tangram Scene
+                m_map->render();
                 m_aab->unbind();
    
                 // Once the main FBO is draw take a picture

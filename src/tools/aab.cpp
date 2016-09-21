@@ -10,7 +10,11 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
 
-AntiAliasedBuffer::AntiAliasedBuffer() : m_fbo_in(nullptr), m_fbo_out(nullptr), m_shader(nullptr), m_vbo(0), m_scale(2.) {
+AntiAliasedBuffer::AntiAliasedBuffer() : 
+#ifndef PLATFORM_RPI
+                                        m_fbo_in(nullptr), m_fbo_out(nullptr), 
+#endif
+                                        m_shader(nullptr), m_vbo(0), m_width(0), m_height(0), m_scale(2.) {
 
     // Create a simple vert/frag glsl shader to draw the main FBO with
     std::string vertexShader = "#ifdef GL_ES\n\
@@ -34,9 +38,6 @@ void main() {\n\
     gl_FragColor.a = 1.;\n\
     // gl_FragColor = vec4(st.x,st.y,0.,1.);\n\
 }";
-
-    m_fbo_in = std::unique_ptr<Fbo>(new Fbo());
-    m_fbo_out = std::unique_ptr<Fbo>(new Fbo());
 
     m_shader = std::unique_ptr<Shader>(new Shader());
     m_shader->load(fragmentShader, vertexShader);
@@ -77,8 +78,23 @@ void AntiAliasedBuffer::unbind() {
 }
 
 void AntiAliasedBuffer::setSize(const unsigned int &_width, const unsigned int &_height) {
-    m_fbo_in->resize(_width*m_scale, _height*m_scale);
-    m_fbo_out->resize(_width, _height, false);
+    if (_width != m_width || _height != m_height) {
+        m_width = _width;
+        m_height = _height;
+#ifndef PLATFORM_RPI
+        if (!m_fbo_in) {
+            m_fbo_in = std::unique_ptr<Fbo>(new Fbo(m_width*m_scale, m_height*m_scale));
+        } else {
+            m_fbo_in->resize(m_width*m_scale, m_height*m_scale);
+        }
+        
+        if (!m_fbo_out) {
+            m_fbo_out = std::unique_ptr<Fbo>(new Fbo(m_width, m_height, false));
+        } else {
+            m_fbo_out->resize(m_width, m_height, false);
+        }
+#endif
+    }
 }
 
 void AntiAliasedBuffer::setScale(const float &_scale){
@@ -90,12 +106,9 @@ void write_func(void *context, void *data, int size) {
 }
 
 void AntiAliasedBuffer::getPixelsAsString(std::string &_image) {
-    int width = m_fbo_out->getWidth();
-    int height = m_fbo_out->getHeight();
-
 #ifndef PLATFORM_RPI
     m_fbo_out->bind();
-    Tangram::GL::viewport(0.0f, 0.0f, width, height);
+    Tangram::GL::viewport(0.0f, 0.0f, m_width, m_height);
     Tangram::GL::clearColor(0.0f, 0.0f, 0.0f, 1.0f);
     Tangram::GL::clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     
@@ -103,16 +116,16 @@ void AntiAliasedBuffer::getPixelsAsString(std::string &_image) {
     Tangram::GL::bindBuffer(GL_ARRAY_BUFFER, m_vbo);
 
     m_shader->use();
-    m_shader->setUniform("u_resolution", width, height);
+    m_shader->setUniform("u_resolution", m_width, m_height);
     m_shader->setUniform("u_buffer", m_fbo_in.get(), 0);
     Tangram::GL::enableVertexAttribArray(0);
     Tangram::GL::vertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
     Tangram::GL::drawArrays(GL_TRIANGLES, 0, 6);
 #endif
 
-    unsigned char *pixels = new unsigned char[width * height * IMAGE_DEPTH];   // allocate memory for the pixels
-    Tangram::GL::readPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, pixels); // Read throug the current buffer pixels
-    stbi_write_png_to_func(&write_func, &_image, width, height, IMAGE_DEPTH, pixels, width * IMAGE_DEPTH);
+    unsigned char *pixels = new unsigned char[m_width * m_height * IMAGE_DEPTH];   // allocate memory for the pixels
+    Tangram::GL::readPixels(0, 0, m_width, m_height, GL_RGBA, GL_UNSIGNED_BYTE, pixels); // Read throug the current buffer pixels
+    stbi_write_png_to_func(&write_func, &_image, m_width, m_height, IMAGE_DEPTH, pixels, m_width * IMAGE_DEPTH);
     delete [] pixels;
 
 #ifndef PLATFORM_RPI
