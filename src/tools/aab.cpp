@@ -66,6 +66,7 @@ AntiAliasedBuffer::~AntiAliasedBuffer() {
 void AntiAliasedBuffer::bind() {
     m_fbo_in->bind();
     Tangram::GL::clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    Tangram::GL::enable(GL_DEPTH_TEST);
 }
 
 void AntiAliasedBuffer::unbind() {
@@ -79,7 +80,7 @@ void AntiAliasedBuffer::setSize(const unsigned int &_width, const unsigned int &
         m_width = _width;
         m_height = _height;
         bool depth = true;
-        
+
 #ifdef PLATFORM_RPI
         depth = false;
 #endif
