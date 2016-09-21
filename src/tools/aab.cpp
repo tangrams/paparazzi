@@ -141,12 +141,12 @@ void AntiAliasedBuffer::getPixelsAsString(std::string &_image) {
 #ifdef PLATFORM_RPI
     int row,col,z;
     stbi_uc temp;
-    for (row = 0; row < (_height>>1); row++) {
-        for (col = 0; col < _width; col++) {
+    for (row = 0; row < (m_height>>1); row++) {
+        for (col = 0; col < m_width; col++) {
             for (z = 0; z < IMAGE_DEPTH; z++) {
-                temp = pixels[(row * _width + col) * IMAGE_DEPTH + z];
-                pixels[(row * _width + col) * IMAGE_DEPTH + z] = pixels[((_height - row - 1) * _width + col) * IMAGE_DEPTH + z];
-                pixels[((_height - row - 1) * _width + col) * IMAGE_DEPTH + z] = temp;
+                temp = pixels[(row * m_width + col) * IMAGE_DEPTH + z];
+                pixels[(row * m_width + col) * IMAGE_DEPTH + z] = pixels[((m_height - row - 1) * m_width + col) * IMAGE_DEPTH + z];
+                pixels[((m_height - row - 1) * m_width + col) * IMAGE_DEPTH + z] = temp;
             }
         }
     }
