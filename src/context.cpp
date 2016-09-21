@@ -11,6 +11,8 @@
 #include <fstream>
 
 #define check() assert(glGetError() == 0)
+DISPMANX_DISPLAY_HANDLE_T dispman_display;
+
 EGLDisplay display;
 EGLSurface surface;
 EGLContext context;
@@ -80,14 +82,13 @@ void initGL(int width, int height) {
 
     // create an EGL rendering context
     context = eglCreateContext(display, config, EGL_NO_CONTEXT, context_attributes);
-    assert(context!=EGL_NO_CONTEXT);
+    assert(context != EGL_NO_CONTEXT);
     check();
     
     static EGL_DISPMANX_WINDOW_T nativeviewport;
 
     DISPMANX_RESOURCE_HANDLE_T dispman_resource;
     DISPMANX_ELEMENT_HANDLE_T dispman_element;
-    DISPMANX_DISPLAY_HANDLE_T dispman_display;
     DISPMANX_UPDATE_HANDLE_T dispman_update;
 
     VC_RECT_T dst_rect;
@@ -121,10 +122,10 @@ void initGL(int width, int height) {
     nativeviewport.element = dispman_element;
     nativeviewport.width = screen_width;
     nativeviewport.height = screen_height;
-    vc_dispmanx_update_submit_sync( dispman_update );
+    vc_dispmanx_update_submit_sync(dispman_update);
     check();
 
-    surface = eglCreateWindowSurface( display, config, &nativeviewport, NULL );
+    surface = eglCreateWindowSurface(display, config, &nativeviewport, NULL);
     assert(surface != EGL_NO_SURFACE);
     check();
 
@@ -173,9 +174,25 @@ void renderGL() {
 void closeGL() {
     #ifdef PLATFORM_RPI
     eglMakeCurrent(display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
-    eglDestroySurface(display, surface);
-    eglDestroyContext(display, context);
-    eglTerminate(display);
+
+    if (surface != EGL_NO_SURFACE && eglDestroySurface(display, surface)) {
+        printf("Surface destroyed ok\n");
+    }
+    if (context !=  EGL_NO_CONTEXT && eglDestroyContext(display, context)) {
+        printf("Main context destroyed ok\n");
+    }
+    if (display != EGL_NO_DISPLAY && eglTerminate(display)) {
+        printf("Display terminated ok\n");
+    }
+    if (eglReleaseThread()) {
+        printf("EGL thread resources released ok\n");
+    }
+    if (vc_dispmanx_display_close(dispman_display) == 0) {
+        printf("Dispmanx display rleased ok\n");
+    }
+    bcm_host_deinit();
+    exit(s);
+
     #else
     //  ---------------------------------------- using GLFW
     //

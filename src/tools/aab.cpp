@@ -65,6 +65,7 @@ AntiAliasedBuffer::~AntiAliasedBuffer() {
 
 void AntiAliasedBuffer::bind() {
     m_fbo_in->bind();
+    Tangram::GL::clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
 void AntiAliasedBuffer::unbind() {
@@ -77,11 +78,16 @@ void AntiAliasedBuffer::setSize(const unsigned int &_width, const unsigned int &
     if (_width != m_width || _height != m_height) {
         m_width = _width;
         m_height = _height;
+        bool depth = true;
+        
+#ifdef PLATFORM_RPI
+        depth = false;
+#endif
 
         if (!m_fbo_in) {
-            m_fbo_in = std::unique_ptr<Fbo>(new Fbo(m_width*m_scale, m_height*m_scale));
+            m_fbo_in = std::unique_ptr<Fbo>(new Fbo(m_width*m_scale, m_height*m_scale, depth));
         } else {
-            m_fbo_in->resize(m_width*m_scale, m_height*m_scale);
+            m_fbo_in->resize(m_width*m_scale, m_height*m_scale, depth);
         }
 
 #ifndef PLATFORM_RPI
