@@ -132,7 +132,7 @@ void AntiAliasedBuffer::getPixelsAsString(std::string &_image) {
 
 #ifndef PLATFORM_RPI
     m_fbo_out->unbind();
-#elif
+#else
     m_fbo_in->unbind();
 #endif
 }
