@@ -78,6 +78,7 @@ void AntiAliasedBuffer::bind() {
 //     Tangram::GL::clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 //     Tangram::GL::enable(GL_DEPTH_TEST);
 // #endif
+    Tangram::GL::enable(GL_DEPTH_TEST);
 }
 
 void AntiAliasedBuffer::unbind() {
