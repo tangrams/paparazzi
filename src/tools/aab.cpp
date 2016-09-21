@@ -16,11 +16,12 @@
 
 AntiAliasedBuffer::AntiAliasedBuffer() : 
 #ifndef PLATFORM_RPI
-                                        m_fbo_in(nullptr),
-                                        m_fbo_out(nullptr), 
+                                        m_fbo_in(nullptr), m_fbo_out(nullptr), 
+                                        m_shader(nullptr), m_vbo(0),
 #endif
-                                        m_shader(nullptr), m_vbo(0), m_width(0), m_height(0), m_scale(2.) {
+                                        m_width(0), m_height(0), m_scale(2.) {
 
+#ifndef PLATFORM_RPI
     // Create a simple vert/frag glsl shader to draw the main FBO with
     std::string vertexShader = "#ifdef GL_ES\n\
 precision mediump float;\n\
@@ -57,6 +58,7 @@ void main() {\n\
     Tangram::GL::genBuffers(1, &m_vbo);
     Tangram::GL::bindBuffer(GL_ARRAY_BUFFER, m_vbo);
     Tangram::GL::bufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+#endif
 }
 
 AntiAliasedBuffer::AntiAliasedBuffer(const unsigned int &_width, const unsigned int &_height) : AntiAliasedBuffer() {
