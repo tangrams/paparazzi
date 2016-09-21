@@ -191,7 +191,6 @@ void closeGL() {
         printf("Dispmanx display rleased ok\n");
     }
     bcm_host_deinit();
-    exit(s);
 
     #else
     //  ---------------------------------------- using GLFW
