@@ -9,9 +9,9 @@
 Fbo::Fbo():m_id(0), m_old_fbo_id(0), m_texture(0), m_depth_texture(0), m_width(0), m_height(0), m_allocated(false), m_binded(false) {
 }
 
-Fbo::Fbo(const unsigned int &_width, const unsigned int &_height):Fbo() {
+Fbo::Fbo(const unsigned int &_width, const unsigned int &_height, bool _depth):Fbo() {
     // Allocate Textures
-    resize(_width,_height);
+    resize(_width, _height, _depth);
 }
 
 Fbo::~Fbo() {

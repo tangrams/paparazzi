@@ -5,7 +5,7 @@
 class Fbo {
 public:
     Fbo();
-    Fbo(const unsigned int &_width, const unsigned int &_height);
+    Fbo(const unsigned int &_width, const unsigned int &_height, bool _depth = true);
     virtual ~Fbo();
 
     const unsigned int getWidth() const { return m_width; };
