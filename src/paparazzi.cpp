@@ -1,11 +1,6 @@
 #include "paparazzi.h"
 
-#ifdef PLATFORM_RPI
-#define AA_SCALE 1.0    // RaspberryPi actually have Antiliased 
-#else
 #define AA_SCALE 2.0
-#endif
-
 #define MAX_WAITING_TIME 5.0
 
 #include "platform.h"       // Tangram platform specifics
@@ -30,7 +25,7 @@ const headers_t::value_type CORS{"Access-Control-Allow-Origin", "*"};
 const headers_t::value_type PNG_MIME{"Content-type", "image/png"};
 const headers_t::value_type TXT_MIME{"Content-type", "text/plain;charset=utf-8"};
 
-Paparazzi::Paparazzi() : m_scene("scene.yaml"), m_lat(0.0), m_lon(0.0), m_zoom(0.0f), m_rotation(0.0f), m_tilt(0.0), m_width(1000), m_height(1000) {
+Paparazzi::Paparazzi() : m_scene("scene.yaml"), m_lat(0.0), m_lon(0.0), m_zoom(0.0f), m_rotation(0.0f), m_tilt(0.0), m_width(100), m_height(100) {
 
     // Initialize cURL
     curl_global_init(CURL_GLOBAL_DEFAULT);
@@ -269,8 +264,8 @@ worker_t::result_t Paparazzi::work (const std::list<zmq::message_t>& job, void* 
             if (m_map) {
                 update();
 
-                m_aab->bind();
                 // Render Tangram Scene
+                m_aab->bind();
                 m_map->render();
                 m_aab->unbind();
    

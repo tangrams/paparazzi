@@ -2,10 +2,6 @@
 
 #define IMAGE_DEPTH 4
 
-#ifdef PLATFORM_RPI
-#include "context.h"
-#endif
-
 // Tangram
 #include "log.h"
 
@@ -14,14 +10,8 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
 
-AntiAliasedBuffer::AntiAliasedBuffer() : 
-// #ifndef PLATFORM_RPI
-                                        m_fbo_in(nullptr), m_fbo_out(nullptr), 
-                                        m_shader(nullptr), m_vbo(0),
-// #endif
-                                        m_width(0), m_height(0), m_scale(2.) {
+AntiAliasedBuffer::AntiAliasedBuffer() : m_fbo_in(nullptr), m_fbo_out(nullptr), m_shader(nullptr), m_vbo(0), m_width(0), m_height(0), m_scale(2.) {
 
-// #ifndef PLATFORM_RPI
     // Create a simple vert/frag glsl shader to draw the main FBO with
     std::string vertexShader = "#ifdef GL_ES\n\
 precision mediump float;\n\
@@ -58,7 +48,9 @@ void main() {\n\
     Tangram::GL::genBuffers(1, &m_vbo);
     Tangram::GL::bindBuffer(GL_ARRAY_BUFFER, m_vbo);
     Tangram::GL::bufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-// #endif
+
+    m_fbo_in = std::unique_ptr<Fbo>(new Fbo());
+    m_fbo_out = std::unique_ptr<Fbo>(new Fbo());
 }
 
 AntiAliasedBuffer::AntiAliasedBuffer(const unsigned int &_width, const unsigned int &_height) : AntiAliasedBuffer() {
@@ -70,20 +62,11 @@ AntiAliasedBuffer::~AntiAliasedBuffer() {
 }
 
 void AntiAliasedBuffer::bind() {
-// #ifndef PLATFORM_RPI
     m_fbo_in->bind();
-// #else
-//     Tangram::GL::viewport(0.0f, 0.0f, m_width, m_height);
-//     Tangram::GL::clearColor(0.0f, 0.0f, 0.0f, 1.0f);
-//     Tangram::GL::clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-//     Tangram::GL::enable(GL_DEPTH_TEST);
-// #endif
 }
 
 void AntiAliasedBuffer::unbind() {
-// #ifndef PLATFORM_RPI
     m_fbo_in->unbind();
-// #endif
 }
 
 void AntiAliasedBuffer::setSize(const unsigned int &_width, const unsigned int &_height) {
@@ -91,19 +74,8 @@ void AntiAliasedBuffer::setSize(const unsigned int &_width, const unsigned int &
         m_width = _width;
         m_height = _height;
 
-// #ifndef PLATFORM_RPI
-        if (!m_fbo_in) {
-            m_fbo_in = std::unique_ptr<Fbo>(new Fbo(m_width*m_scale, m_height*m_scale));
-        } else {
-            m_fbo_in->resize(m_width*m_scale, m_height*m_scale);
-        }
-
-        if (!m_fbo_out) {
-            m_fbo_out = std::unique_ptr<Fbo>(new Fbo(m_width, m_height, false));
-        } else {
-            m_fbo_out->resize(m_width, m_height, false);
-        }
-// #endif
+        m_fbo_in->resize(m_width*m_scale, m_height*m_scale);
+        m_fbo_out->resize(m_width, m_height);
     }
 }
 
@@ -118,7 +90,6 @@ void write_func(void *context, void *data, int size) {
 }
 
 void AntiAliasedBuffer::getPixelsAsString(std::string &_image) {
-// #ifndef PLATFORM_RPI
     m_fbo_out->bind();
     Tangram::GL::viewport(0.0f, 0.0f, m_width, m_height);
     Tangram::GL::clearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -133,31 +104,11 @@ void AntiAliasedBuffer::getPixelsAsString(std::string &_image) {
     Tangram::GL::enableVertexAttribArray(0);
     Tangram::GL::vertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
     Tangram::GL::drawArrays(GL_TRIANGLES, 0, 6);
-// #endif
 
     unsigned char *pixels = new unsigned char[m_width * m_height * IMAGE_DEPTH];   // allocate memory for the pixels
     Tangram::GL::readPixels(0, 0, m_width, m_height, GL_RGBA, GL_UNSIGNED_BYTE, pixels); // Read throug the current buffer pixels
-
-// #ifdef PLATFORM_RPI
-//     int row,col,z;
-//     stbi_uc temp;
-//     for (row = 0; row < (m_height>>1); row++) {
-//         for (col = 0; col < m_width; col++) {
-//             for (z = 0; z < IMAGE_DEPTH; z++) {
-//                 temp = pixels[(row * m_width + col) * IMAGE_DEPTH + z];
-//                 pixels[(row * m_width + col) * IMAGE_DEPTH + z] = pixels[((m_height - row - 1) * m_width + col) * IMAGE_DEPTH + z];
-//                 pixels[((m_height - row - 1) * m_width + col) * IMAGE_DEPTH + z] = temp;
-//             }
-//         }
-//     }
-// #endif
-
     stbi_write_png_to_func(&write_func, &_image, m_width, m_height, IMAGE_DEPTH, pixels, m_width * IMAGE_DEPTH);
     delete [] pixels;
 
-// #ifndef PLATFORM_RPI
     m_fbo_out->unbind();
-// #else
-    // renderGL();
-// #endif
 }
