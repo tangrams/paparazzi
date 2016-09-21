@@ -3,7 +3,7 @@
 #define IMAGE_DEPTH 4
 
 #ifdef PLATFORM_RPI
-#include "context.cpp"
+#include "context.h"
 #endif
 
 // Tangram
