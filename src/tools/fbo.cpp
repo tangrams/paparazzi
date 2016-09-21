@@ -54,10 +54,17 @@ void Fbo::resize(const unsigned int &_width, const unsigned int &_height, bool _
 
         // Depth Texture
         if (_depth) {
+
+#ifndef PLATFORM_RPI
             Tangram::GL::bindTexture(GL_TEXTURE_2D, m_depth_texture);
             Tangram::GL::texImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT,
                                     m_width, m_height,
                                     0, GL_DEPTH_COMPONENT, GL_UNSIGNED_SHORT, NULL);
+#else
+            Tangram::GL::texImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT16,
+                                    m_width, m_height,
+                                    0, GL_DEPTH_COMPONENT16, GL_UNSIGNED_SHORT, NULL);
+#endif
 
             Tangram::GL::texParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
             Tangram::GL::texParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
