@@ -22,8 +22,8 @@ public:
     void    getPixelsAsString(std::string &_image);
 
 protected:
-    #ifndef PLATFORM_RPI
     std::unique_ptr<Fbo>    m_fbo_in;
+    #ifndef PLATFORM_RPI
     std::unique_ptr<Fbo>    m_fbo_out;
     #endif
     std::unique_ptr<Shader> m_shader;
