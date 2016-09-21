@@ -8,7 +8,7 @@
 #include <prime_server/http_protocol.hpp>
 using namespace prime_server;
 
-#include "tools/aab.h"        // AntiAliased Buffer
+#include "tools/aab.h"  // AntiAliased Buffer
 #include "tangram.h"    // Tangram-ES
 
 class Paparazzi {

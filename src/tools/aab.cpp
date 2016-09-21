@@ -98,7 +98,9 @@ void AntiAliasedBuffer::setSize(const unsigned int &_width, const unsigned int &
 }
 
 void AntiAliasedBuffer::setScale(const float &_scale){
-    m_scale = _scale;
+    if (_scale != m_scale) {
+        m_scale = _scale;
+    }
 }
 
 void write_func(void *context, void *data, int size) {
