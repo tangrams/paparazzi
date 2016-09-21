@@ -105,7 +105,7 @@ void initGL(int width, int height) {
     src_rect.width = screen_width << 16;
     src_rect.height = screen_height << 16;
 
-    // DISPMANX_RESOURCE_HANDLE_T dispman_resource;
+    DISPMANX_RESOURCE_HANDLE_T dispman_resource;
     dispman_resource = vc_dispmanx_resource_create(VC_IMAGE_RGBA32, screen_width, screen_height, &dest_image_handle);
     dispman_display = vc_dispmanx_display_open_offscreen(dispman_resource, DISPMANX_NO_ROTATE);
     // dispman_display = vc_dispmanx_display_open( 0 /* LCD */);
