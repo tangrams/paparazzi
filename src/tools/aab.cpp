@@ -48,9 +48,6 @@ void main() {\n\
     Tangram::GL::genBuffers(1, &m_vbo);
     Tangram::GL::bindBuffer(GL_ARRAY_BUFFER, m_vbo);
     Tangram::GL::bufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-    m_fbo_in = std::unique_ptr<Fbo>(new Fbo());
-    m_fbo_out = std::unique_ptr<Fbo>(new Fbo());
 }
 
 AntiAliasedBuffer::AntiAliasedBuffer(const unsigned int &_width, const unsigned int &_height) : AntiAliasedBuffer() {
@@ -74,8 +71,17 @@ void AntiAliasedBuffer::setSize(const unsigned int &_width, const unsigned int &
         m_width = _width;
         m_height = _height;
 
-        m_fbo_in->resize(m_width*m_scale, m_height*m_scale);
-        m_fbo_out->resize(m_width, m_height);
+        if (!m_fbo_in) {
+            m_fbo_in = std::unique_ptr<Fbo>(new Fbo(m_width*m_scale, m_height*m_scale));
+        } else {
+            m_fbo_in->resize(m_width*m_scale, m_height*m_scale);
+        }
+
+        if (!m_fbo_out) {
+            m_fbo_out = std::unique_ptr<Fbo>(new Fbo(m_width, m_height, false));
+        } else {
+            m_fbo_out->resize(m_width, m_height, false);
+        }
     }
 }
 
