@@ -88,13 +88,12 @@ void AntiAliasedBuffer::setSize(const unsigned int &_width, const unsigned int &
     if (_width != m_width || _height != m_height) {
         m_width = _width;
         m_height = _height;
-        bool depth = true;
 
 #ifndef PLATFORM_RPI
         if (!m_fbo_in) {
-            m_fbo_in = std::unique_ptr<Fbo>(new Fbo(m_width*m_scale, m_height*m_scale, depth));
+            m_fbo_in = std::unique_ptr<Fbo>(new Fbo(m_width*m_scale, m_height*m_scale));
         } else {
-            m_fbo_in->resize(m_width*m_scale, m_height*m_scale, depth);
+            m_fbo_in->resize(m_width*m_scale, m_height*m_scale);
         }
 
         if (!m_fbo_out) {

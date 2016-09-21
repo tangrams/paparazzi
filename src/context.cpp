@@ -134,10 +134,6 @@ void initGL(int width, int height) {
     assert(EGL_FALSE != result);
     check();
 
-    // Set background color and clear buffers
-    //glClearColor(0.f, 0.f, 0.f, 0.0f);
-    //glClear( GL_COLOR_BUFFER_BIT );
-
     glViewport(0.0f, 0.0f, (float)screen_width, (float)screen_height);
     check();
 
