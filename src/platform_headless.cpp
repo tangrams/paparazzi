@@ -1,9 +1,6 @@
-// //#ifdef PLATFORM_RPI
 #include "platform.h"
-// #include "gl.h"
 #include "log.h"
 #include "context.h"
-// //#endif
 
 #include <stdio.h>
 #include <stdarg.h>

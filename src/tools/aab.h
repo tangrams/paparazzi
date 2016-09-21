@@ -22,12 +22,10 @@ public:
     void    getPixelsAsString(std::string &_image);
 
 protected:
-// #ifndef PLATFORM_RPI
     std::unique_ptr<Fbo>    m_fbo_in;
     std::unique_ptr<Fbo>    m_fbo_out;
     std::unique_ptr<Shader> m_shader;
     GLuint                  m_vbo;
-// #endif
 
     unsigned int            m_width;
     unsigned int            m_height;

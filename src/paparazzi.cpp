@@ -1,6 +1,10 @@
 #include "paparazzi.h"
 
+#ifdef PLATFORM_RPI
+#define AA_SCALE 1.0
+#else
 #define AA_SCALE 2.0
+#endif
 #define MAX_WAITING_TIME 5.0
 
 #include "platform.h"       // Tangram platform specifics

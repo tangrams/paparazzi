@@ -97,9 +97,6 @@ void write_func(void *context, void *data, int size) {
 
 void AntiAliasedBuffer::getPixelsAsString(std::string &_image) {
     m_fbo_out->bind();
-    Tangram::GL::viewport(0.0f, 0.0f, m_width, m_height);
-    Tangram::GL::clearColor(0.0f, 0.0f, 0.0f, 1.0f);
-    Tangram::GL::clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     
     // Load the vertex data
     Tangram::GL::bindBuffer(GL_ARRAY_BUFFER, m_vbo);
