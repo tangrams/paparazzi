@@ -1,1 +1,4 @@
 
+[submodule "worker/tangram-es"]
+	path = worker/tangram-es
+	url = https://github.com/tangrams/tangram-es.git

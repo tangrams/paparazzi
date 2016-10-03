@@ -19,9 +19,7 @@ CMAKE_ARG=""
 N_CORES=1
 
 # Installing
-WORKER_FOLDER="proxy"
-WORKER_FOLDER="worder"
-INSTALL_FOLDER="/usr/local/bin/"
+INSTALL_FOLDER="/usr/local/bin"
 
 # Running
 PORT=8080
@@ -146,9 +144,9 @@ case "$1" in
         git submodule update --init --recursive
 
         # Other needed files/folders
-        if [ ! -e fonts ]; then
+        if [ ! -d fonts ]; then
             echo "Installing fonts"
-            ln -s tangram-es/scenes/fonts .
+            cp tangram-es/scenes/fonts fonts
         fi
 
         # Other needed files/folders
@@ -184,26 +182,36 @@ case "$1" in
             CMAKE_ARG="-DPLATFORM_TARGET=osx"
         fi
 
-        if [ "$2" == "xcode" ]; then
-            echo "Making XCode project"
-            mkdir build
-            cd build
-            cmake .. -GXcode -DPLATFORM_TARGET=osx
+        if [ "$2" == "all" ]; then
+            $0 make proxy
+            $0 make worker
+        elif [ "$2" == "proxy" ]; then
+            echo "Compiling proxy"
         else
-            echo "Compiling"
-            cmake . -Bbuild $CMAKE_ARG
-            cd build
-            make -j $N_CORES
-        fi
+            cd worker
+            if [ "$2" == "xcode" ]; then
+                echo "Making XCode project"
+                mkdir build
+                cd build
+                cmake .. -GXcode -DPLATFORM_TARGET=osx
+            else
+                echo "Compiling worker"
+                cmake . -Bbuild $CMAKE_ARG
+                cd build
+                make -j $N_CORES
+            fi
 
-        echo "Installing"
-        ../$0 stop
-        sudo cp bin/paparazzi_worker /usr/local/bin/paparazzi_worker
-        cd ..
+            echo "Installing"
+            ../../$0 stop
+            sudo cp bin/paparazzi_worker $INSTALL_FOLDER/paparazzi_worker
+            cd ../..
+        fi        
         ;;
 
     clean)
-        rm -rf build
+        if [ ! -d worker/build ]; then
+            rm -rf build
+        fi        
         ;;
 
     remake)
