@@ -244,7 +244,7 @@ case "$1" in
         fi
 
         echo "Adding $N_THREAD paparazzi threads" 
-        for i in $(eval echo "{0..$N_THREAD}"); do 
+        for i in $(eval echo "{1..$N_THREAD}"); do 
             paparazzi_worker ipc:///tmp/proxy_out ipc:///tmp/loopback &> worker_$i.log &
         done 
         ;;
