@@ -19,6 +19,8 @@ CMAKE_ARG=""
 N_CORES=1
 
 # Installing
+WORKER_FOLDER="proxy"
+WORKER_FOLDER="worder"
 INSTALL_FOLDER="/usr/local/bin/"
 
 # Running
