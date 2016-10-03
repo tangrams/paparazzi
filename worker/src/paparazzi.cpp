@@ -309,7 +309,6 @@ worker_t::result_t Paparazzi::work (const std::list<zmq::message_t>& job, void* 
                 // If no HEIGHT QUERRY return error
                 // throw std::runtime_error("height is required punk");
             
-
             //  POSITION
             //  ---------------------
             auto lat_itr = request.query.find("lat");
@@ -341,6 +340,7 @@ worker_t::result_t Paparazzi::work (const std::list<zmq::message_t>& job, void* 
 
                 if (std::regex_search(request.path, match, re) && match.size() == 4) {
                     setSize(256,256);
+                    
                     int tile_coord[3] = {0,0,0};
                     for (int i = 0; i < 3; i++) {
                         std::istringstream cur(match.str(i+1));
@@ -356,39 +356,37 @@ worker_t::result_t Paparazzi::work (const std::list<zmq::message_t>& job, void* 
                     futile_coord_to_bounds(&tile, &bounds);
 
                     setPosition(bounds.minx + (bounds.maxx-bounds.minx)*0.5,bounds.miny + (bounds.maxy-bounds.miny)*0.5);
-                } else {
+                }
+                else {
                     LOG("not enought data to construct image");
                     throw std::runtime_error("not enought data to construct image");
                 }
             }
 
-            // //  TILT (optional)
-            // //  ---------------------
-            // std::cout << "Tilt" << std::endl;
-            // auto tilt_itr = request.query.find("tilt");
-            // if (tilt_itr == request.query.cend() && tilt_itr->second.size() == 0) {
-            //     // If TILT QUERRY is provided assigned ...
-            //     setTilt(std::stof(tilt_itr->second.front()));
-            // }
-            // else {
-            //     // othewise use default (0.)
-            //     setTilt(0.0f);
-            // }
-        
-            // //  ROTATION (OPTIONAL)
-            // //  ---------------------
-            // std::cout << "Rotation" << std::endl;
-            // auto rotation_itr = request.query.find("rotation");
-            // if (rotation_itr != request.query.cend() && rotation_itr->second.size() != 0) {
-            //     // If ROTATION QUERRY is provided assigned ...
-            //     setRotation(std::stof(rotation_itr->second.front()));
-            // }
-            // else {
-            //     // othewise use default (0.)
-            //     setRotation(0.0f);
-            // }
+            //  OPTIONAL tilt and rotation
+            //  ---------------------
+            auto tilt_itr = request.query.find("tilt");
+            if (tilt_itr != request.query.cend() && tilt_itr->second.size() != 0) {
+                // If TILT QUERRY is provided assigned ...
+                setTilt(std::stof(tilt_itr->second.front()));
+            }
+            else {
+                // othewise use default (0.)
+                setTilt(0.0f);
+            }
 
-            std::cout << "Rendering" << std::endl;
+            auto rotation_itr = request.query.find("rotation");
+            if (rotation_itr != request.query.cend() && rotation_itr->second.size() != 0) {
+                // If ROTATION QUERRY is provided assigned ...
+                setRotation(std::stof(rotation_itr->second.front()));
+            }
+            else {
+                // othewise use default (0.)
+                setRotation(0.0f);
+            }
+
+            // Time to render
+            //  ---------------------
             resetTimer("Rendering");
             std::string image;
             if (m_map) {
