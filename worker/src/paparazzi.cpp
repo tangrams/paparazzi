@@ -192,10 +192,6 @@ static double min(double a, double b) {
     return a < b ? a : b;
 }
 
-static double max(double a, double b) {
-    return a > b ? a : b;
-}
-
 static double radians_to_degrees(double radians) {
     return radians * 180 / M_PI;
 }
@@ -340,7 +336,7 @@ worker_t::result_t Paparazzi::work (const std::list<zmq::message_t>& job, void* 
 
                 if (std::regex_search(request.path, match, re) && match.size() == 4) {
                     setSize(256,256);
-                    
+
                     int tile_coord[3] = {0,0,0};
                     for (int i = 0; i < 3; i++) {
                         std::istringstream cur(match.str(i+1));
