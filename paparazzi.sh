@@ -220,13 +220,13 @@ case "$1" in
         ;;
 
     start)
-        rm worker_*.log
+        rm *.log
 
         # start http server
-        prime_httpd tcp://*:$PORT ipc:///tmp/proxy_in ipc:///tmp/loopback &
+        prime_httpd tcp://*:$PORT ipc:///tmp/proxy_in ipc:///tmp/loopback &> httpd.log &
 
         # start proxy
-        prime_proxyd ipc:///tmp/proxy_in ipc:///tmp/proxy_out &
+        prime_proxyd ipc:///tmp/proxy_in ipc:///tmp/proxy_out &> proxy.log &
         
         # Is important to attach the threads to the display on the Amazon servers 
         if [ "$DIST" == "Amazon Linux AMI" ]; then
