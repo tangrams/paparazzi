@@ -220,6 +220,8 @@ case "$1" in
         ;;
 
     start)
+        rm worker_*.log
+
         # start http server
         prime_httpd tcp://*:$PORT ipc:///tmp/proxy_in ipc:///tmp/loopback &
 
@@ -243,7 +245,7 @@ case "$1" in
 
         echo "Adding $N_THREAD paparazzi threads" 
         for i in $(eval echo "{0..$N_THREAD}"); do 
-            paparazzi_worker ipc:///tmp/proxy_out ipc:///tmp/loopback &
+            paparazzi_worker ipc:///tmp/proxy_out ipc:///tmp/loopback &> worker_$i.log &
         done 
         ;;
 
@@ -259,9 +261,14 @@ case "$1" in
         ;;
 
     status)
-        ps -ef | grep -v grep | grep prime_httpd
-        ps -ef | grep -v grep | grep prime_proxyd
-        ps -ef | grep -v grep | grep paparazzi_worker
+
+        if [ $# -eq 2 ]; then
+            tail -f worker_$2.log
+        else
+            ps -ef | grep -v grep | grep prime_httpd
+            ps -ef | grep -v grep | grep prime_proxyd
+            ps -ef | grep -v grep | grep paparazzi_worker
+        fi
         ;;
 
     *)
