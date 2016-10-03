@@ -17,6 +17,8 @@
 #include <functional>
 #include <csignal>
 #include <fstream>
+#include <regex>
+#include <sstream>
 #include <curl/curl.h>      // Curl
 #include "glm/trigonometric.hpp" // GLM for the radians/degree calc
 
@@ -163,6 +165,96 @@ void Paparazzi::update () {
     LOG("FINISH");
 }
 
+/**
+ * @brief Bounds representation: minx, miny, maxx, maxy
+ */
+typedef struct futile_bounds_s {
+    /** @brief minimum x value */
+    double minx;
+    /** @brief minimum y value */
+    double miny;
+    /** @brief maximum x value */
+    double maxx;
+    /** @brief maximum y value */
+    double maxy;
+} futile_bounds_s;
+
+typedef struct futile_coord_s {
+    /** @brief coordinate x or column value */
+    uint32_t x;
+    /** @brief coordinate y or row value */
+    uint32_t y;
+    /** @brief coordinate z or zoom value */
+    uint32_t z;
+} futile_coord_s;
+
+static double min(double a, double b) {
+    return a < b ? a : b;
+}
+
+static double max(double a, double b) {
+    return a > b ? a : b;
+}
+
+static double radians_to_degrees(double radians) {
+    return radians * 180 / M_PI;
+}
+
+static double degrees_to_radians(double degrees) {
+    return degrees * M_PI / 180;
+}
+
+// http://wiki.openstreetmap.org/wiki/Slippy_map_tilenames
+// TODO make output into point
+void futile_coord_to_lnglat(futile_coord_s *coord, double *out_lng_deg, double *out_lat_deg) {
+    double n = pow(2, coord->z);
+    double lng_deg = coord->x / n * 360.0 - 180.0;
+    double lat_rad = atan(sinh(M_PI * (1 - 2 * coord->y / n)));
+    double lat_deg = radians_to_degrees(lat_rad);
+    *out_lng_deg = lng_deg;
+    *out_lat_deg = lat_deg;
+}
+
+// http://wiki.openstreetmap.org/wiki/Slippy_map_tilenames
+// make input point
+void futile_lnglat_to_coord(double lng_deg, double lat_deg, int zoom, futile_coord_s *out) {
+    double lat_rad = degrees_to_radians(lat_deg);
+    double n = pow(2.0, zoom);
+    out->x = (lng_deg + 180.0) / 360.0 * n;
+    out->y = (1.0 - log(tan(lat_rad) + (1 / cos(lat_rad))) / M_PI) / 2.0 * n;
+    out->z = zoom;
+}
+
+void futile_coord_to_bounds(futile_coord_s *coord, futile_bounds_s *out) {
+    double topleft_lng, topleft_lat, bottomright_lng, bottomright_lat;
+    futile_coord_s coord_bottomright = {
+        .x=coord->x + 1,
+        .y=coord->y + 1,
+        .z=coord->z
+    };
+    futile_coord_to_lnglat(coord, &topleft_lng, &topleft_lat);
+    futile_coord_to_lnglat(&coord_bottomright, &bottomright_lng, &bottomright_lat);
+    double minx = topleft_lng;
+    double miny = bottomright_lat;
+    double maxx = bottomright_lng;
+    double maxy = topleft_lat;
+
+    // coord_to_bounds is used to calculate boxes that could be off the grid
+    // clamp the max values in that scenario
+    maxx = min(180, maxx);
+    maxy = min(90, maxy);
+
+    *out = (futile_bounds_s){minx, miny, maxx, maxy};
+}
+
+void futile_bounds_center(futile_bounds_s *bounds, double *x, double*y) {
+    std::cout << "min:" << bounds->minx << " / " << bounds->miny << std::endl;
+    std::cout << "max:" << bounds->maxx << " / " << bounds->maxy << std::endl;
+
+    *x = bounds->minx + (bounds->maxx-bounds->minx)*0.5;
+    *y = bounds->miny + (bounds->maxy-bounds->miny)*0.5;
+}
+
 // prime_server stuff
 worker_t::result_t Paparazzi::work (const std::list<zmq::message_t>& job, void* request_info){
     //false means this is going back to the client, there is no next stage of the pipeline
@@ -184,7 +276,6 @@ worker_t::result_t Paparazzi::work (const std::list<zmq::message_t>& job, void* 
             // ELB check
             response = http_response_t(200, "OK", "OK", headers_t{CORS, TXT_MIME});
         } else {
-
             //  SCENE
             //  ---------------------
             auto scene_itr = request.query.find("scene");
@@ -202,35 +293,74 @@ worker_t::result_t Paparazzi::work (const std::list<zmq::message_t>& job, void* 
                 setScene(scene_itr->second.front());
             }
 
+
+            bool size_and_pos = true;
+
             //  SIZE
             //  ---------------------
             auto width_itr = request.query.find("width");
             if (width_itr == request.query.cend() || width_itr->second.size() == 0)
+                size_and_pos = false;
                 // If no WIDTH QUERRY return error
-                throw std::runtime_error("width is required punk");
+                // throw std::runtime_error("width is required punk");
             auto height_itr = request.query.find("height");
             if (height_itr == request.query.cend() || height_itr->second.size() == 0)
+                size_and_pos = false;
                 // If no HEIGHT QUERRY return error
-                throw std::runtime_error("height is required punk");
-            // Set Map and OpenGL context size
-            setSize(std::stoi(width_itr->second.front()), std::stoi(height_itr->second.front()));
+                // throw std::runtime_error("height is required punk");
+            
 
             //  POSITION
             //  ---------------------
             auto lat_itr = request.query.find("lat");
             if (lat_itr == request.query.cend() || lat_itr->second.size() == 0)
+                size_and_pos = false;
                 // If not LAT QUERRY return error
-                throw std::runtime_error("lat is required punk");
+                // throw std::runtime_error("lat is required punk");
             auto lon_itr = request.query.find("lon");
             if (lon_itr == request.query.cend() || lon_itr->second.size() == 0)
+                size_and_pos = false;
                 // If not LON QUERRY return error
-                throw std::runtime_error("lon is required punk");
-            setPosition(std::stod(lon_itr->second.front()), std::stod(lat_itr->second.front()));
+                // throw std::runtime_error("lon is required punk");
+            
             auto zoom_itr = request.query.find("zoom");
             if (zoom_itr == request.query.cend() || zoom_itr->second.size() == 0)
+                size_and_pos = false;
                 // If not ZOOM QUERRY return error
-                throw std::runtime_error("zoom is required punk");
-            setZoom(std::stof(zoom_itr->second.front()));
+                // throw std::runtime_error("zoom is required punk");
+            
+
+            if (size_and_pos) {
+                // Set Map and OpenGL context size
+                setSize(std::stoi(width_itr->second.front()), std::stoi(height_itr->second.front()));
+                setPosition(std::stod(lon_itr->second.front()), std::stod(lat_itr->second.front()));
+                setZoom(std::stof(zoom_itr->second.front()));
+            } else {
+                const std::regex re("\\/(\\d*)\\/(\\d*)\\/(\\d*)\\.png");
+                std::smatch match;
+
+                if (std::regex_search(request.path, match, re) && match.size() == 4) {
+                    setSize(256,256);
+                    int tile_coord[3] = {0,0,0};
+                    for (int i = 0; i < 3; i++) {
+                        std::istringstream cur(match.str(i+1));
+                        cur >> tile_coord[i];
+                    }
+                    futile_coord_s tile;
+                    tile.z = tile_coord[0];
+                    setZoom(tile.z);
+
+                    tile.x = tile_coord[1];
+                    tile.y = tile_coord[2];
+                    futile_bounds_s bounds;
+                    futile_coord_to_bounds(&tile, &bounds);
+
+                    setPosition(bounds.minx + (bounds.maxx-bounds.minx)*0.5,bounds.miny + (bounds.maxy-bounds.miny)*0.5);
+                } else {
+                    LOG("not enought data to construct image");
+                    throw std::runtime_error("not enought data to construct image");
+                }
+            }
 
             // //  TILT (optional)
             // //  ---------------------
