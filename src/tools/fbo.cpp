@@ -73,7 +73,9 @@ void Fbo::resize(const unsigned int &_width, const unsigned int &_height, bool _
         unbind();
 
         Tangram::GL::bindTexture(GL_TEXTURE_2D, 0);
-        glBindRenderbuffer(GL_RENDERBUFFER, 0);
+        if (_depth){
+            glBindRenderbuffer(GL_RENDERBUFFER, 0);
+        }
     }
 }
 
