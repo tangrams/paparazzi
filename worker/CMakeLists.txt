@@ -129,3 +129,5 @@ elseif(${PLATFORM_TARGET} MATCHES "osx")
 endif()
 
 add_resources(${EXECUTABLE_NAME} "${PROJECT_SOURCE_DIR}/scenes")
+
+install(TARGETS ${EXECUTABLE_NAME} RUNTIME DESTINATION bin)
