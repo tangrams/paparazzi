@@ -125,7 +125,7 @@ case "$1" in
         # Install  the super awesome PRIME_SERVER by Kevin Kreiser ( https://mapzen.com/blog/zmq-http-server )
         if [ ! -e /usr/local/bin/prime_httpd ]; then
             echo "installing prime_server"
-            c
+            export PKG_CONFIG_PATH=PKG_CONFIG_PATH:/usr/local/lib/pkgconfig/
             cd prime_server
             git submodule update --init --recursive
             ./autogen.sh
