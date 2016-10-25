@@ -211,7 +211,7 @@ case "$1" in
 
     clean)
         if [ ! -d worker/build ]; then
-            rm -rf worker/build
+            rm -rf build
         fi  
         if [ ! -e proxy/paparazzi_proxy ]; then
             cd proxy
