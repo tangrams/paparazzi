@@ -3,3 +3,5 @@ build
 fonts
 cache
 *.log
+*.o
+proxy/paparazzi_proxy

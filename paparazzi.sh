@@ -18,9 +18,6 @@ DEPS_DARWIN="glfw3 pkg-config zeromq"
 CMAKE_ARG=""
 N_CORES=1
 
-# Installing
-INSTALL_FOLDER="/usr/local/bin"
-
 # Running
 PORT=8080
 N_THREAD=1
@@ -155,7 +152,7 @@ case "$1" in
             mkdir cache
         fi
 
-        $0 make
+        $0 make all
         ;;
 
     make)
@@ -187,6 +184,10 @@ case "$1" in
             $0 make worker
         elif [ "$2" == "proxy" ]; then
             echo "Compiling proxy"
+            cd proxy
+            make
+            sudo make install
+            cd ..
         else
             cd worker
             if [ "$2" == "xcode" ]; then
@@ -203,14 +204,19 @@ case "$1" in
 
             echo "Installing"
             ../../$0 stop
-            sudo cp bin/paparazzi_worker $INSTALL_FOLDER/paparazzi_worker
+            sudo make install
             cd ../..
         fi        
         ;;
 
     clean)
         if [ ! -d worker/build ]; then
-            rm -rf build
+            rm -rf worker/build
+        fi  
+        if [ ! -e proxy/paparazzi_proxy ]; then
+            cd proxy
+            make clean
+            cd ..
         fi        
         ;;
 
@@ -226,7 +232,7 @@ case "$1" in
         prime_httpd tcp://*:$PORT ipc:///tmp/proxy_in ipc:///tmp/loopback &> httpd.log &
 
         # start proxy
-        prime_proxyd ipc:///tmp/proxy_in ipc:///tmp/proxy_out &> proxy.log &
+        paparazzi_proxy ipc:///tmp/proxy_in ipc:///tmp/proxy_out &> proxy.log &
         
         # Is important to attach the threads to the display on the Amazon servers 
         if [ "$DIST" == "Amazon Linux AMI" ]; then
@@ -252,7 +258,7 @@ case "$1" in
 
     stop)
         killall prime_httpd
-        killall prime_proxyd 
+        killall paparazzi_proxy 
         killall paparazzi_worker
         ;;
 
@@ -267,7 +273,7 @@ case "$1" in
             tail -f worker_$2.log
         else
             ps -ef | grep -v grep | grep prime_httpd
-            ps -ef | grep -v grep | grep prime_proxyd
+            ps -ef | grep -v grep | grep paparazzi_proxy
             ps -ef | grep -v grep | grep paparazzi_worker
         fi
         ;;
