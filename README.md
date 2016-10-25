@@ -21,7 +21,7 @@ cd paparazzi
 If you are trying things on the code and just want to compile do
 
 ```bash
-./paparazzi.sh make
+./paparazzi.sh make all
 ```
 
 **Note**: if you want to make a xcode project do: `./paparazzi.sh make xcode`
