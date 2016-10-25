@@ -36,7 +36,7 @@ int main(int argc, char** argv) {
                 //the heartbeat is the scene
                 std::string beat_type(static_cast<const char*>(heart_beat.data()));
                 //did this worker work on the same scene as this job
-                if(beat_type == *job_type)
+                if(beat_type == job_type)
                     return &heart_beat;
             }
             //all of the heartbeats sucked so pick whichever
