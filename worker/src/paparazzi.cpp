@@ -414,6 +414,7 @@ worker_t::result_t Paparazzi::work (const std::list<zmq::message_t>& job, void* 
     response.from_info(info);
 
     //formats the response to protocal that the client will understand
+    result.heart_beat = m_scene;
     result.messages.emplace_back(response.to_string());
     return result;
 }
