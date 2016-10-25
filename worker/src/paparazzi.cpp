@@ -283,10 +283,13 @@ worker_t::result_t Paparazzi::work (const std::list<zmq::message_t>& job, void* 
 
                 // ... other whise load content
                 setSceneContent(request.body);
+                // The size of the custom scene is unique enough
+                result.heart_beat = std::to_string(request.body.size());
             }
             else {
                 // If there IS a SCENE QUERRY value load it
                 setScene(scene_itr->second.front());
+                result.heart_beat = scene_itr->second.front();
             }
 
 
@@ -414,7 +417,6 @@ worker_t::result_t Paparazzi::work (const std::list<zmq::message_t>& job, void* 
     response.from_info(info);
 
     //formats the response to protocal that the client will understand
-    result.heart_beat = m_scene;
     result.messages.emplace_back(response.to_string());
     return result;
 }
