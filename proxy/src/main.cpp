@@ -1,7 +1,7 @@
-#include "prime_server.hpp"
-#include "http_protocol.hpp"
+#include <prime_server/prime_server.hpp>
+#include <prime_server/http_protocol.hpp>
 using namespace prime_server;
-#include "logging.hpp"
+#include <prime_server/logging.hpp>
 
 int main(int argc, char** argv) {
     if(argc < 3) {
