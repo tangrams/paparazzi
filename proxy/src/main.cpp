@@ -26,7 +26,7 @@ int main(int argc, char** argv) {
             auto scene_itr = request.query.find("scene");
             std::string job_type;
             //its a POST of a custom style, we'll assume the size of the thing is unique enough
-            if(scene_itr == request.query.cend())
+            if(scene_itr == request.query.cend() || scene_itr->second.size() == 0)
               job_type = std::to_string(request.body.size());
             //its in the request params
             else
