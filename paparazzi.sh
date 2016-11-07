@@ -9,7 +9,7 @@ DIST="UNKNOWN"
 # Dependencies
 DEPS_COMMON="cmake " 
 DEPS_LINUX_COMMON="libcurl4-openssl-dev uuid-dev libtool pkg-config build-essential autoconf automake lcov libzmq3-dev"
-DEPS_LINUX_RASPBIAN="curl "
+DEPS_LINUX_RASPBIAN="curl libfontconfig1-dev"
 DEPS_LINUX_UBUNTU="xorg-dev libgl1-mesa-dev "
 DEPS_LINUX_REDHAT="libX*-devel mesa-libGL-devel curl-devel glx-utils git libmpc-devel mpfr-devel gmp-devel"
 DEPS_DARWIN="glfw3 pkg-config zeromq"
@@ -210,9 +210,11 @@ case "$1" in
         ;;
 
     clean)
-        if [ ! -d worker/build ]; then
-            rm -rf build
-        fi  
+        # if [ ! -d worker/build ]; then
+            cd worker
+            sudo rm -rf build
+            cd ..
+        # fi  
         if [ ! -e proxy/paparazzi_proxy ]; then
             cd proxy
             make clean

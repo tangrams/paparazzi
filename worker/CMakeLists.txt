@@ -39,6 +39,7 @@ if(${PLATFORM_TARGET} MATCHES "rpi")
     include_directories(/opt/vc/include/)
     include_directories(/opt/vc/include/interface/vcos/pthreads)
     include_directories(/opt/vc/include/interface/vmcs_host/linux)
+    include_directories(SYSTEM "/usr/include/fontconfig")
 
 elseif(${PLATFORM_TARGET} MATCHES "linux")
     message(STATUS "Building config for Linux")
@@ -49,6 +50,8 @@ elseif(${PLATFORM_TARGET} MATCHES "linux")
     set(PLATFORM_LINUX ON)
     add_definitions(-DPLATFORM_LINUX)
     set(CORE_COMPILE_DEFS PLATFORM_LINUX)
+
+    include_directories(SYSTEM "/usr/include/fontconfig")
     
     # compiler options
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -fpermissive -g -std=c++1y")
@@ -58,7 +61,7 @@ elseif(${PLATFORM_TARGET} MATCHES "linux")
     if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-gnu-zero-variadic-macro-arguments")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
-        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}  -lc++ -lc++abi")
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lc++ -lc++abi")
     endif()
 
     if (CMAKE_COMPILER_IS_GNUCC)
@@ -92,8 +95,6 @@ elseif(${PLATFORM_TARGET} MATCHES "osx")
 
 endif()
 
-
-
 # add sources and include headers
 find_sources_and_include_directories(
     ${PROJECT_SOURCE_DIR}/tangram-es/linux/src/urlWorker.h
@@ -121,6 +122,8 @@ target_link_libraries(${EXECUTABLE_NAME} prime_server)
 if(${PLATFORM_TARGET} MATCHES "linux")
     target_link_libraries(${EXECUTABLE_NAME} glfw)
     target_link_libraries(${EXECUTABLE_NAME} ${OPENGL_LIBRARIES})
+    target_link_libraries(${EXECUTABLE_NAME} -lfontconfig)
+    target_link_libraries(${EXECUTABLE_NAME} -lfreetype)
 
 elseif(${PLATFORM_TARGET} MATCHES "osx")
     target_link_libraries(${EXECUTABLE_NAME} glfw)
