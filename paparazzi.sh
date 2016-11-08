@@ -210,6 +210,7 @@ case "$1" in
         ;;
 
     clean)
+        rm *.log
         if [ ! -d worker/build ]; then
             rm -rf build
         fi  
