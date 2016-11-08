@@ -62,7 +62,7 @@ Paparazzi::~Paparazzi() {
 }
 
 void Paparazzi::setSize (const int &_width, const int &_height, const float &_density) {
-    if (_width != m_width || _height != m_height || _density*AA_SCALE != m_map->getPixelScale()) {
+    if (_density*_width != m_width || _density*_height != m_height || _density*AA_SCALE != m_map->getPixelScale()) {
         resetTimer("set size");
 
         m_width = _width*_density;
@@ -70,7 +70,9 @@ void Paparazzi::setSize (const int &_width, const int &_height, const float &_de
 
         // Setup the size of the image
         if (_density*AA_SCALE != m_map->getPixelScale()) {
+            //LOG("Change density to %f", _density);
             m_map->setPixelScale(_density*AA_SCALE);
+            //LOG("getPixelScale %f", m_map->getPixelScale());
         }
         m_map->resize(m_width*AA_SCALE, m_height*AA_SCALE);
         update();
@@ -292,14 +294,12 @@ worker_t::result_t Paparazzi::work (const std::list<zmq::message_t>& job, void* 
             else {
                 // If there IS a SCENE QUERRY value load it
                 setScene(scene_itr->second.front());
-                LOG("result.heart_beat");
                 result.heart_beat = scene_itr->second.front();
             }
 
             bool size_and_pos = true;
             float pixel_density = 1.0f;
 
-            LOG("parse rest of the query");
             //  SIZE
             //  ---------------------
             auto width_itr = request.query.find("width");
@@ -309,8 +309,8 @@ worker_t::result_t Paparazzi::work (const std::list<zmq::message_t>& job, void* 
             if (height_itr == request.query.cend() || height_itr->second.size() == 0)
                 size_and_pos = false;
             auto density_itr = request.query.find("density");
-            if (density_itr != request.query.cend() && density_itr->second.size() != 0)
-                pixel_density = min(1.,std::stof(density_itr->second.front()));
+            if (density_itr != request.query.cend() && density_itr->second.size() > 0)
+                pixel_density = fmax(1.,std::stof(density_itr->second.front()));
             //  POSITION
             //  ---------------------
             auto lat_itr = request.query.find("lat");
@@ -325,9 +325,8 @@ worker_t::result_t Paparazzi::work (const std::list<zmq::message_t>& job, void* 
             
 
             if (size_and_pos) {
-                LOG("set size and pos");
                 // Set Map and OpenGL context size
-                setSize(std::stoi(width_itr->second.front()), std::stoi(height_itr->second.front()),pixel_density);
+                setSize(std::stoi(width_itr->second.front()), std::stoi(height_itr->second.front()), pixel_density);
                 setPosition(std::stod(lon_itr->second.front()), std::stod(lat_itr->second.front()));
                 setZoom(std::stof(zoom_itr->second.front()));
             } else {
@@ -335,7 +334,7 @@ worker_t::result_t Paparazzi::work (const std::list<zmq::message_t>& job, void* 
                 std::smatch match;
 
                 if (std::regex_search(request.path, match, re) && match.size() == 4) {
-                    setSize(256,256,pixel_density);
+                    setSize(256,256, pixel_density);
 
                     int tile_coord[3] = {0,0,0};
                     for (int i = 0; i < 3; i++) {
