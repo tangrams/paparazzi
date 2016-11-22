@@ -70,10 +70,7 @@ void Paparazzi::setSize (const int &_width, const int &_height, const float &_de
 
         // Setup the size of the image
         if (_density*AA_SCALE != m_map->getPixelScale()) {
-            //LOG("Change density to %f", _density);
             m_map->setPixelScale(_density*AA_SCALE);
-            m_map->setupGL();
-            //LOG("getPixelScale %f", m_map->getPixelScale());
         }
         m_map->resize(m_width*AA_SCALE, m_height*AA_SCALE);
         update();
