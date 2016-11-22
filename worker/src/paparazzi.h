@@ -16,7 +16,7 @@ public:
     Paparazzi();
     ~Paparazzi();
 
-    void    setSize(const int &_width, const int &_height);
+    void    setSize(const int &_width, const int &_height, const float &_density);
     void    setZoom(const float &_zoom);
     void    setTilt(const float &_deg);
     void    setRotation(const float &_deg);
