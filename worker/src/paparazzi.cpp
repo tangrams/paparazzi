@@ -48,7 +48,7 @@ Paparazzi::Paparazzi() : m_scene("scene.yaml"), m_lat(0.0), m_lon(0.0), m_zoom(0
     m_aab = std::unique_ptr<AntiAliasedBuffer>(new AntiAliasedBuffer(m_width, m_height));
     m_aab->setScale(AA_SCALE);
 
-    setSize(800, 600);
+    setSize(800, 600, 1.0);
 }
 
 Paparazzi::~Paparazzi() {
@@ -61,14 +61,17 @@ Paparazzi::~Paparazzi() {
     LOG("END\n");
 }
 
-void Paparazzi::setSize (const int &_width, const int &_height) {
-    if (_width != m_width || _height != m_height) {
+void Paparazzi::setSize (const int &_width, const int &_height, const float &_density) {
+    if (_density*_width != m_width || _density*_height != m_height || _density*AA_SCALE != m_map->getPixelScale()) {
         resetTimer("set size");
 
-        m_width = _width;
-        m_height = _height;
+        m_width = _width*_density;
+        m_height = _height*_density;
 
         // Setup the size of the image
+        if (_density*AA_SCALE != m_map->getPixelScale()) {
+            m_map->setPixelScale(_density*AA_SCALE);
+        }
         m_map->resize(m_width*AA_SCALE, m_height*AA_SCALE);
         update();
 
@@ -292,45 +295,36 @@ worker_t::result_t Paparazzi::work (const std::list<zmq::message_t>& job, void* 
                 result.heart_beat = scene_itr->second.front();
             }
 
-
             bool size_and_pos = true;
+            float pixel_density = 1.0f;
 
             //  SIZE
             //  ---------------------
             auto width_itr = request.query.find("width");
             if (width_itr == request.query.cend() || width_itr->second.size() == 0)
                 size_and_pos = false;
-                // If no WIDTH QUERRY return error
-                // throw std::runtime_error("width is required punk");
             auto height_itr = request.query.find("height");
             if (height_itr == request.query.cend() || height_itr->second.size() == 0)
                 size_and_pos = false;
-                // If no HEIGHT QUERRY return error
-                // throw std::runtime_error("height is required punk");
-            
+            auto density_itr = request.query.find("density");
+            if (density_itr != request.query.cend() && density_itr->second.size() > 0)
+                pixel_density = fmax(1.,std::stof(density_itr->second.front()));
             //  POSITION
             //  ---------------------
             auto lat_itr = request.query.find("lat");
             if (lat_itr == request.query.cend() || lat_itr->second.size() == 0)
                 size_and_pos = false;
-                // If not LAT QUERRY return error
-                // throw std::runtime_error("lat is required punk");
             auto lon_itr = request.query.find("lon");
             if (lon_itr == request.query.cend() || lon_itr->second.size() == 0)
                 size_and_pos = false;
-                // If not LON QUERRY return error
-                // throw std::runtime_error("lon is required punk");
-            
             auto zoom_itr = request.query.find("zoom");
             if (zoom_itr == request.query.cend() || zoom_itr->second.size() == 0)
                 size_and_pos = false;
-                // If not ZOOM QUERRY return error
-                // throw std::runtime_error("zoom is required punk");
             
 
             if (size_and_pos) {
                 // Set Map and OpenGL context size
-                setSize(std::stoi(width_itr->second.front()), std::stoi(height_itr->second.front()));
+                setSize(std::stoi(width_itr->second.front()), std::stoi(height_itr->second.front()), pixel_density);
                 setPosition(std::stod(lon_itr->second.front()), std::stod(lat_itr->second.front()));
                 setZoom(std::stof(zoom_itr->second.front()));
             } else {
@@ -338,7 +332,7 @@ worker_t::result_t Paparazzi::work (const std::list<zmq::message_t>& job, void* 
                 std::smatch match;
 
                 if (std::regex_search(request.path, match, re) && match.size() == 4) {
-                    setSize(256,256);
+                    setSize(256,256, pixel_density);
 
                     int tile_coord[3] = {0,0,0};
                     for (int i = 0; i < 3; i++) {
