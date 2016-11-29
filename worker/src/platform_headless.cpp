@@ -259,7 +259,6 @@ void setCurrentThreadPriority(int priority){
     //int  p1 = getpriority(PRIO_PROCESS, tid);
 
     setpriority(PRIO_PROCESS, tid, priority);
-
     //int  p2 = getpriority(PRIO_PROCESS, tid);
     //logMsg("set niceness: %d -> %d\n", p1, p2);
 }
