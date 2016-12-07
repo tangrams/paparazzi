@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8)
 project(tangram)
 
-# set(CMAKE_BUILD_TYPE Debug)
+set(CMAKE_BUILD_TYPE Debug)
 
 # helper functions
 include(${PROJECT_SOURCE_DIR}/tangram-es/toolchains/utils.cmake)
