@@ -19,7 +19,13 @@
 #include <sys/resource.h>
 #include <sys/syscall.h>
 
-#ifndef PLATFORM_OSX
+#ifdef PLATFORM_OSX
+#define DEFAULT "fonts/NotoSans-Regular.ttf"
+#define FONT_AR "fonts/NotoNaskh-Regular.ttf"
+#define FONT_HE "fonts/NotoSansHebrew-Regular.ttf"
+#define FONT_JA "fonts/DroidSansJapanese.ttf"
+#define FALLBACK "fonts/DroidSansFallback.ttf"
+#else
 #include <fontconfig.h>
 static std::vector<std::string> s_fallbackFonts;
 static FcConfig* s_fcConfig = nullptr;
@@ -109,7 +115,19 @@ unsigned char* bytesFromFile(const char* _path, size_t& _size) {
     return reinterpret_cast<unsigned char *>(cdata);
 }
 
-#ifndef PLATFORM_OSX
+#ifdef PLATFORM_OSX
+FontSourceHandle getFontHandle(const char* _path) {
+    FontSourceHandle fontSourceHandle = [_path](size_t* _size) -> unsigned char* {
+        LOG("Loading font %s", _path);
+
+        auto cdata = bytesFromFile(_path, *_size);
+
+        return cdata;
+    };
+
+    return fontSourceHandle;
+}
+#else
 void initPlatformFontSetup() {
     static bool s_platformFontsInit = false;
     if (s_platformFontsInit) { return; }
@@ -158,19 +176,45 @@ void initPlatformFontSetup() {
 }
 #endif
 
-std::string systemFontFallbackPath(int _importance, int _weightHint) {
-    #ifndef PLATFORM_OSX
-    if ((size_t)_importance >= s_fallbackFonts.size()) {
-        return "";
-    }
-    return s_fallbackFonts[_importance];
+std::vector<FontSourceHandle> systemFontFallbacksHandle() {
+    std::vector<FontSourceHandle> handles;
+
+    #ifdef PLATFORM_OSX
+        handles.push_back(getFontHandle(DEFAULT));
+        handles.push_back(getFontHandle(FONT_AR));
+        handles.push_back(getFontHandle(FONT_HE));
+        handles.push_back(getFontHandle(FONT_JA));
+        handles.push_back(getFontHandle(FALLBACK));
     #else
-    return "";
+    initPlatformFontSetup();
+    for (auto& path : s_fallbackFonts) {
+        FontSourceHandle fontSourceHandle = [&](size_t* _size) -> unsigned char* {
+            LOG("Loading font %s", path.c_str());
+
+            auto cdata = bytesFromFile(path.c_str(), *_size);
+
+            return cdata;
+        };
+
+        handles.push_back(fontSourceHandle);
+    }
     #endif
+
+    return handles;
 }
 
-std::string systemFontPath(const std::string& _name, const std::string& _weight,
-                           const std::string& _face) {
+// std::string fontFallbackPath(int _importance, int _weightHint) {
+//     #ifndef PLATFORM_OSX
+//     if ((size_t)_importance >= s_fallbackFonts.size()) {
+//         return "";
+//     }
+//     return s_fallbackFonts[_importance];
+//     #else
+//     return "";
+//     #endif
+// }
+
+std::string fontPath(const std::string& _name, const std::string& _weight, const std::string& _face) {
     #ifndef PLATFORM_OSX
     initPlatformFontSetup();
 
@@ -219,6 +263,14 @@ std::string systemFontPath(const std::string& _name, const std::string& _weight,
     #else
     return "";
     #endif
+}
+
+unsigned char* systemFont(const std::string& _name, const std::string& _weight, const std::string& _face, size_t* _size) {
+    std::string path = fontPath(_name, _weight, _face);
+
+    if (path.empty()) { return nullptr; }
+
+    return bytesFromFile(path.c_str(), *_size);
 }
 
 bool startUrlRequest(const std::string& _url, UrlCallback _callback) {
