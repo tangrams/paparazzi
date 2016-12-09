@@ -125,9 +125,10 @@ case "$1" in
         # Install  the super awesome PRIME_SERVER by Kevin Kreiser ( https://mapzen.com/blog/zmq-http-server )
         if [ ! -e /usr/local/bin/prime_httpd ]; then
             echo "installing prime_server"
+            git clone --quiet --branch 0.4.0 --depth 1 --recursive  https://github.com/kevinkreiser/prime_server.git
             export PKG_CONFIG_PATH=PKG_CONFIG_PATH:/usr/local/lib/pkgconfig/
             cd prime_server
-            git submodule update --init --recursive
+            #git submodule update --init --recursive
             ./autogen.sh
             ./configure
             make test -j $N_CORES
@@ -135,6 +136,15 @@ case "$1" in
             cd ..
             rm -rf prime_server
         fi
+
+        # Install FreeType
+        wget http://public.p-knowledge.co.jp/Savannah-nongnu-mirror//freetype/freetype-2.6.5.tar.gz
+        tar xzvf freetype-2.6.5.tar.gz
+        cd freetype-2.6.5
+        ./configure --prefix=/usr
+        make -j $N_CORES
+        sudo make install
+        cd ..
 
         # GET SUBMODULES
         echo "Installing submodules"
