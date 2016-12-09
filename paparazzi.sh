@@ -144,7 +144,14 @@ case "$1" in
         ./configure --prefix=/usr
         make -j $N_CORES
         sudo make install
+        # Do some linking
+        sudo rm /usr/lib64/libfreetype.so
+        sudo rm /usr/lib64/libfreetype.so.6
+        sudo ln -s /usr/lib/libfreetype.so /usr/lib64/
+        sudo ln -s /usr/lib/libfreetype.so.6 /usr/lib64/
+        sudo ln -s /usr/lib/libfreetype.so.6.12.5 /usr/lib64/
         cd ..
+
 
         # GET SUBMODULES
         echo "Installing submodules"
