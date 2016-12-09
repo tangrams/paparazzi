@@ -9,7 +9,7 @@ DIST="UNKNOWN"
 # Dependencies
 DEPS_COMMON="cmake " 
 DEPS_LINUX_COMMON="libcurl4-openssl-dev uuid-dev libtool pkg-config build-essential autoconf automake lcov libzmq3-dev"
-DEPS_LINUX_RASPBIAN="curl "
+DEPS_LINUX_RASPBIAN="curl libfontconfig1-dev"
 DEPS_LINUX_UBUNTU="xorg-dev libgl1-mesa-dev "
 DEPS_LINUX_REDHAT="libX*-devel mesa-libGL-devel curl-devel glx-utils git libmpc-devel mpfr-devel gmp-devel"
 DEPS_DARWIN="glfw3 pkg-config zeromq"
@@ -125,9 +125,10 @@ case "$1" in
         # Install  the super awesome PRIME_SERVER by Kevin Kreiser ( https://mapzen.com/blog/zmq-http-server )
         if [ ! -e /usr/local/bin/prime_httpd ]; then
             echo "installing prime_server"
+            git clone --quiet --branch 0.4.0 --depth 1 --recursive  https://github.com/kevinkreiser/prime_server.git
             export PKG_CONFIG_PATH=PKG_CONFIG_PATH:/usr/local/lib/pkgconfig/
             cd prime_server
-            git submodule update --init --recursive
+            #git submodule update --init --recursive
             ./autogen.sh
             ./configure
             make test -j $N_CORES
@@ -135,6 +136,22 @@ case "$1" in
             cd ..
             rm -rf prime_server
         fi
+
+        # Install FreeType
+        wget http://public.p-knowledge.co.jp/Savannah-nongnu-mirror//freetype/freetype-2.6.5.tar.gz
+        tar xzvf freetype-2.6.5.tar.gz
+        cd freetype-2.6.5
+        ./configure --prefix=/usr
+        make -j $N_CORES
+        sudo make install
+        # Do some linking
+        sudo rm /usr/lib64/libfreetype.so
+        sudo rm /usr/lib64/libfreetype.so.6
+        sudo ln -s /usr/lib/libfreetype.so /usr/lib64/
+        sudo ln -s /usr/lib/libfreetype.so.6 /usr/lib64/
+        sudo ln -s /usr/lib/libfreetype.so.6.12.5 /usr/lib64/
+        cd ..
+
 
         # GET SUBMODULES
         echo "Installing submodules"
@@ -210,7 +227,6 @@ case "$1" in
         ;;
 
     clean)
-        rm *.log
         if [ -d worker/build ]; then
             rm -rf worker/build
         fi  
@@ -218,7 +234,8 @@ case "$1" in
             cd proxy
             make clean
             cd ..
-        fi        
+        fi
+        rm *.log     
         ;;
 
     remake)
