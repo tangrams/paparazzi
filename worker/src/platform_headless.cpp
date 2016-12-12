@@ -128,6 +128,7 @@ FontSourceHandle getFontHandle(const char* _path) {
     return fontSourceHandle;
 }
 #else
+
 void initPlatformFontSetup() {
     static bool s_platformFontsInit = false;
     if (s_platformFontsInit) { return; }
@@ -174,6 +175,7 @@ void initPlatformFontSetup() {
     FcStrListDone(fcLangList);
     s_platformFontsInit = true;
 }
+
 #endif
 
 std::vector<FontSourceHandle> systemFontFallbacksHandle() {

@@ -125,6 +125,10 @@ if(${PLATFORM_TARGET} MATCHES "linux")
     target_link_libraries(${EXECUTABLE_NAME} -lfontconfig)
     target_link_libraries(${EXECUTABLE_NAME} -lfreetype)
 
+elseif(${PLATFORM_TARGET} MATCHES "rpi")
+    target_link_libraries(${EXECUTABLE_NAME} -lfontconfig)
+    target_link_libraries(${EXECUTABLE_NAME} -lfreetype)
+
 elseif(${PLATFORM_TARGET} MATCHES "osx")
     target_link_libraries(${EXECUTABLE_NAME} glfw)
     target_link_libraries(${EXECUTABLE_NAME} ${OPENGL_LIBRARIES})
