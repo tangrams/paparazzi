@@ -83,6 +83,21 @@ case "$1" in
                     fi
                 fi
 
+                # Install FreeType 2.6.5
+                wget http://public.p-knowledge.co.jp/Savannah-nongnu-mirror//freetype/freetype-2.6.5.tar.gz
+                tar xzvf freetype-2.6.5.tar.gz
+                cd freetype-2.6.5
+                ./configure --prefix=/usr
+                make -j $N_CORES
+                sudo make install
+                # Do some linking
+                sudo rm /usr/lib64/libfreetype.so
+                sudo rm /usr/lib64/libfreetype.so.6
+                sudo ln -s /usr/lib/libfreetype.so /usr/lib64/
+                sudo ln -s /usr/lib/libfreetype.so.6 /usr/lib64/
+                sudo ln -s /usr/lib/libfreetype.so.6.12.5 /usr/lib64/
+                cd ..
+
             elif [ "$DIST" == "Ubuntu" ]; then
 
                  # UBUNTU
@@ -136,22 +151,6 @@ case "$1" in
             cd ..
             rm -rf prime_server
         fi
-
-        # Install FreeType
-        wget http://public.p-knowledge.co.jp/Savannah-nongnu-mirror//freetype/freetype-2.6.5.tar.gz
-        tar xzvf freetype-2.6.5.tar.gz
-        cd freetype-2.6.5
-        ./configure --prefix=/usr
-        make -j $N_CORES
-        sudo make install
-        # Do some linking
-        sudo rm /usr/lib64/libfreetype.so
-        sudo rm /usr/lib64/libfreetype.so.6
-        sudo ln -s /usr/lib/libfreetype.so /usr/lib64/
-        sudo ln -s /usr/lib/libfreetype.so.6 /usr/lib64/
-        sudo ln -s /usr/lib/libfreetype.so.6.12.5 /usr/lib64/
-        cd ..
-
 
         # GET SUBMODULES
         echo "Installing submodules"
