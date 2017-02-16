@@ -25,10 +25,13 @@ const headers_t::value_type CORS{"Access-Control-Allow-Origin", "*"};
 const headers_t::value_type PNG_MIME{"Content-type", "image/png"};
 const headers_t::value_type TXT_MIME{"Content-type", "text/plain;charset=utf-8"};
 
+#include "platform_linux.h" // headless platforms (Linux and RPi)
+std::shared_ptr<LinuxPlatform> platform;
+
 Paparazzi::Paparazzi() : m_scene("scene.yaml"), m_lat(0.0), m_lon(0.0), m_zoom(0.0f), m_rotation(0.0f), m_tilt(0.0), m_width(100), m_height(100) {
 
     // Initialize Platform
-    m_platform = std::make_shared<LinuxPlatform>();
+    platform = std::make_shared<LinuxPlatform>();
 
     // Initialize cURL
     curl_global_init(CURL_GLOBAL_DEFAULT);
@@ -36,7 +39,7 @@ Paparazzi::Paparazzi() : m_scene("scene.yaml"), m_lat(0.0), m_lon(0.0), m_zoom(0
     // Start OpenGL ES context
     initGL(m_width, m_height);
 
-    m_map = std::unique_ptr<Tangram::Map>(new Tangram::Map(m_platform));
+    m_map = std::unique_ptr<Tangram::Map>(new Tangram::Map(platform));
     m_map->loadSceneAsync(m_scene.c_str());
     m_map->setupGL();
     m_map->setPixelScale(AA_SCALE);
@@ -142,7 +145,7 @@ void Paparazzi::update () {
     bool bFinish = false;
     while (delta < MAX_WAITING_TIME && !bFinish) {
         // Update Network Queue
-        m_platform->processNetworkQueue();
+        platform->processNetworkQueue();
         bFinish = m_map->update(10.);
         delta = float(getTime() - startTime);
     }

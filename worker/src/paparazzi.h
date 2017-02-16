@@ -11,9 +11,6 @@ using namespace prime_server;
 #include "tools/aab.h"  // AntiAliased Buffer
 #include "tangram.h"    // Tangram-ES
 
-#include "platform_linux.h" // headless platforms (Linux and RPi)
-
-
 class Paparazzi {
 public:
     Paparazzi();
@@ -43,7 +40,7 @@ protected:
     int                 m_width;
     int                 m_height;
 
-    std::shared_ptr<LinuxPlatform>     m_platform;
+    
     std::unique_ptr<Tangram::Map>       m_map;  // Tangram Map instance
     std::unique_ptr<AntiAliasedBuffer>  m_aab;  // Antialiased Buffer
 };
