@@ -112,7 +112,7 @@ include_directories(${CORE_INCLUDE_DIRS})
 include_directories(${CORE_LIBRARIES_INCLUDE_DIRS})
 
 # add executable
-add_executable(${EXECUTABLE_NAME} ${SOURCES})
+add_executable(${EXECUTABLE_NAME} ${SOURCES} ${LINUX_SOURCES})
 
 # link libraries
 target_link_libraries(${EXECUTABLE_NAME} ${CORE_LIBRARY})

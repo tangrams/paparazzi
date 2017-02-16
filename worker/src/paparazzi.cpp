@@ -4,11 +4,9 @@
 #define MAX_WAITING_TIME 5.0
 
 #include "platform.h"       // Tangram platform specifics
-#include "log.h"
-#include "gl.h"
+// #include "gl.h"
 
 #include "context.h"        // This set the headless context
-#include "platform_headless.h" // headless platforms (Linux and RPi)
 
 // MD5
 #include "tools/md5.h"
@@ -29,16 +27,16 @@ const headers_t::value_type TXT_MIME{"Content-type", "text/plain;charset=utf-8"}
 
 Paparazzi::Paparazzi() : m_scene("scene.yaml"), m_lat(0.0), m_lon(0.0), m_zoom(0.0f), m_rotation(0.0f), m_tilt(0.0), m_width(100), m_height(100) {
 
+    // Initialize Platform
+    m_platform = std::make_shared<LinuxPlatform>();
+
     // Initialize cURL
     curl_global_init(CURL_GLOBAL_DEFAULT);
 
     // Start OpenGL ES context
-    LOG("Creating OpenGL ES context");
-
     initGL(m_width, m_height);
 
-    LOG("Creating a new TANGRAM instances");
-    m_map = std::unique_ptr<Tangram::Map>(new Tangram::Map());
+    m_map = std::unique_ptr<Tangram::Map>(new Tangram::Map(m_platform));
     m_map->loadSceneAsync(m_scene.c_str());
     m_map->setupGL();
     m_map->setPixelScale(AA_SCALE);
@@ -52,19 +50,12 @@ Paparazzi::Paparazzi() : m_scene("scene.yaml"), m_lat(0.0), m_lon(0.0), m_zoom(0
 }
 
 Paparazzi::~Paparazzi() {
-    LOG("Closing...");
-
-    finishUrlRequests();
     curl_global_cleanup();
-
     closeGL();
-    LOG("END\n");
 }
 
 void Paparazzi::setSize (const int &_width, const int &_height, const float &_density) {
     if (_density*_width != m_width || _density*_height != m_height || _density*AA_SCALE != m_map->getPixelScale()) {
-        resetTimer("set size");
-
         m_width = _width*_density;
         m_height = _height*_density;
 
@@ -81,8 +72,6 @@ void Paparazzi::setSize (const int &_width, const int &_height, const float &_de
 
 void Paparazzi::setZoom (const float &_zoom) {
     if (_zoom != m_zoom) {
-        resetTimer("set zoom");
-
         m_zoom = _zoom;
 
         m_map->setZoom(_zoom);
@@ -92,8 +81,6 @@ void Paparazzi::setZoom (const float &_zoom) {
 
 void Paparazzi::setTilt (const float &_deg) {
     if (_deg != m_tilt) {
-        resetTimer("set tilt");
-
         m_tilt = _deg;
 
         m_map->setTilt(glm::radians(m_tilt));
@@ -102,8 +89,6 @@ void Paparazzi::setTilt (const float &_deg) {
 }
 void Paparazzi::setRotation (const float &_deg) {
     if (_deg != m_rotation) {
-        resetTimer("set rotation");
-
         m_rotation = _deg;
 
         m_map->setRotation(glm::radians(m_rotation));
@@ -113,8 +98,6 @@ void Paparazzi::setRotation (const float &_deg) {
 
 void Paparazzi::setPosition (const double &_lon, const double &_lat) {
     if (_lon != m_lon || _lat != m_lat) {
-        resetTimer("set position");
-
         m_lon = _lon;
         m_lat = _lat;
 
@@ -125,8 +108,6 @@ void Paparazzi::setPosition (const double &_lon, const double &_lat) {
 
 void Paparazzi::setScene (const std::string &_url) {
     if (_url != m_scene) {
-        resetTimer("set scene");
-
         m_scene = _url;
 
         m_map->loadSceneAsync(m_scene.c_str());
@@ -138,7 +119,6 @@ void Paparazzi::setSceneContent(const std::string &_yaml_content) {
     std::string md5_scene =  md5(_yaml_content);
 
     if (md5_scene != m_scene) {
-        resetTimer("set scene");
         m_scene = md5_scene;
 
         // TODO:
@@ -161,11 +141,10 @@ void Paparazzi::update () {
     bool bFinish = false;
     while (delta < MAX_WAITING_TIME && !bFinish) {
         // Update Network Queue
-        processNetworkQueue();
+        m_platform->processNetworkQueue();
         bFinish = m_map->update(10.);
         delta = float(getTime() - startTime);
     }
-    LOG("FINISH");
 }
 
 /**
@@ -351,7 +330,6 @@ worker_t::result_t Paparazzi::work (const std::list<zmq::message_t>& job, void* 
                     setPosition(bounds.minx + (bounds.maxx-bounds.minx)*0.5,bounds.miny + (bounds.maxy-bounds.miny)*0.5);
                 }
                 else {
-                    LOG("not enought data to construct image");
                     throw std::runtime_error("not enought data to construct image");
                 }
             }
@@ -380,7 +358,6 @@ worker_t::result_t Paparazzi::work (const std::list<zmq::message_t>& job, void* 
 
             // Time to render
             //  ---------------------
-            resetTimer("Rendering");
             std::string image;
             if (m_map) {
                 update();
@@ -391,12 +368,10 @@ worker_t::result_t Paparazzi::work (const std::list<zmq::message_t>& job, void* 
                 m_aab->unbind();
    
                 // Once the main FBO is draw take a picture
-                resetTimer("Extracting pixels...");
                 m_aab->getPixelsAsString(image);
-
                 double total_time = getTime()-start_call;
-                LOG("TOTAL CALL: %f", total_time);
-                LOG("TOTAL speed: %f millisec per pixel", (total_time/((m_width * m_height)/1000.0)));
+                // LOG("TOTAL CALL: %f", total_time);
+                // LOG("TOTAL speed: %f millisec per pixel", (total_time/((m_width * m_height)/1000.0)));
             }
 
             response = http_response_t(200, "OK", image, headers_t{CORS, PNG_MIME});
