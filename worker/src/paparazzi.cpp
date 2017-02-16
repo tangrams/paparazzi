@@ -9,7 +9,7 @@
 #include "context.h"        // This set the headless context
 
 // MD5
-#include "hash-library/md5.cpp"
+#include "hash-library/md5.h"
 
 //nuts and bolts required
 #include <functional>
