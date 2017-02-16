@@ -96,9 +96,10 @@ elseif(${PLATFORM_TARGET} MATCHES "osx")
 endif()
 
 # add sources and include headers
-find_sources_and_include_directories(
-    ${PROJECT_SOURCE_DIR}/tangram-es/linux/src/urlWorker.h
-    ${PROJECT_SOURCE_DIR}/tangram-es/linux/src/urlWorker.cpp)
+set(LINUX_SOURCES
+    ${PROJECT_SOURCE_DIR}/tangram-es/linux/src/urlWorker.cpp
+    ${PROJECT_SOURCE_DIR}/tangram-es/linux/src/platform_linux.cpp)
+include_directories(${PROJECT_SOURCE_DIR}/tangram-es/linux/src)
 
 # add sources and include headers
 find_sources_and_include_directories(
