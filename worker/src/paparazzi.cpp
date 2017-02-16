@@ -9,7 +9,7 @@
 #include "context.h"        // This set the headless context
 
 // MD5
-#include "tools/md5.h"
+#include "hash-library/md5.cpp"
 
 //nuts and bolts required
 #include <functional>
@@ -116,6 +116,7 @@ void Paparazzi::setScene (const std::string &_url) {
 }
 
 void Paparazzi::setSceneContent(const std::string &_yaml_content) {
+    MD5 md5;
     std::string md5_scene =  md5(_yaml_content);
 
     if (md5_scene != m_scene) {
@@ -226,9 +227,8 @@ void futile_coord_to_bounds(futile_coord_s *coord, futile_bounds_s *out) {
 }
 
 void futile_bounds_center(futile_bounds_s *bounds, double *x, double*y) {
-    std::cout << "min:" << bounds->minx << " / " << bounds->miny << std::endl;
-    std::cout << "max:" << bounds->maxx << " / " << bounds->maxy << std::endl;
-
+    // std::cout << "min:" << bounds->minx << " / " << bounds->miny << std::endl;
+    // std::cout << "max:" << bounds->maxx << " / " << bounds->maxy << std::endl;
     *x = bounds->minx + (bounds->maxx-bounds->minx)*0.5;
     *y = bounds->miny + (bounds->maxy-bounds->miny)*0.5;
 }
@@ -369,7 +369,7 @@ worker_t::result_t Paparazzi::work (const std::list<zmq::message_t>& job, void* 
    
                 // Once the main FBO is draw take a picture
                 m_aab->getPixelsAsString(image);
-                double total_time = getTime()-start_call;
+                // double total_time = getTime()-start_call;
                 // LOG("TOTAL CALL: %f", total_time);
                 // LOG("TOTAL speed: %f millisec per pixel", (total_time/((m_width * m_height)/1000.0)));
             }
