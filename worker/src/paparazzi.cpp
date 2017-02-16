@@ -247,7 +247,7 @@ worker_t::result_t Paparazzi::work (const std::list<zmq::message_t>& job, void* 
     // Try to generate a response 
     http_response_t response;
     try {
-        double start_call = getTime();
+        // double start_call = getTime();
 
         //TODO: 
         //   - actually use/validate the request parameters
