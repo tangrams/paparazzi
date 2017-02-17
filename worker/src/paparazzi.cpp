@@ -1,7 +1,7 @@
 #include "paparazzi.h"
 
 #define AA_SCALE 2.0
-#define MAX_WAITING_TIME 5.0
+#define MAX_WAITING_TIME 100.0
 
 // #include "platform.h"       // Tangram platform specifics
 // #include "gl.h"
@@ -26,8 +26,6 @@ std::shared_ptr<LinuxPlatform> platform;
 const headers_t::value_type CORS{"Access-Control-Allow-Origin", "*"};
 const headers_t::value_type PNG_MIME{"Content-type", "image/png"};
 const headers_t::value_type TXT_MIME{"Content-type", "text/plain;charset=utf-8"};
-
-
 
 Paparazzi::Paparazzi() : m_scene("scene.yaml"), m_lat(0.0), m_lon(0.0), m_zoom(0.0f), m_rotation(0.0f), m_tilt(0.0), m_width(100), m_height(100) {
 
@@ -149,7 +147,11 @@ void Paparazzi::update () {
         platform->processNetworkQueue();
         bFinish = m_map->update(10.);
         delta = float(getTime() - startTime);
+        if (bFinish) {
+            logMsg("Tangram::Update: Finish!\n");
+        }
     }
+    logMsg("Paparazzi::Update: Done waiting...\n");
 }
 
 /**
