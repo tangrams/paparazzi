@@ -30,7 +30,12 @@ const headers_t::value_type TXT_MIME{"Content-type", "text/plain;charset=utf-8"}
 Paparazzi::Paparazzi() : m_scene("scene.yaml"), m_lat(0.0), m_lon(0.0), m_zoom(0.0f), m_rotation(0.0f), m_tilt(0.0), m_width(100), m_height(100) {
 
     // Initialize Platform
-    platform = std::make_shared<LinuxPlatform>();
+    UrlClient::Environment urlClientEnvironment;
+
+    UrlClient::Options urlClientOptions;
+    urlClientOptions.numberOfThreads = 10;
+
+    platform = std::make_shared<LinuxPlatform>(urlClientOptions);
 
     // Initialize cURL
     curl_global_init(CURL_GLOBAL_DEFAULT);
@@ -144,7 +149,6 @@ void Paparazzi::update () {
     bool bFinish = false;
     while (delta < MAX_WAITING_TIME && !bFinish) {
         // Update Network Queue
-        platform->processNetworkQueue();
         bFinish = m_map->update(10.);
         delta = float(getTime() - startTime);
         if (bFinish) {
