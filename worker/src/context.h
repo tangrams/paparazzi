@@ -8,4 +8,9 @@ void    initGL(int width, int height);
 void    renderGL();
 void    closeGL();
 
+// SET
+void    setRenderRequest(bool _render);
+
+// GET
+bool    getRenderRequest();
 double  getTime();

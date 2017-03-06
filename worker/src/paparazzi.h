@@ -42,5 +42,4 @@ protected:
 
     std::unique_ptr<Tangram::Map>       m_map;  // Tangram Map instance
     std::unique_ptr<AntiAliasedBuffer>  m_aab;  // Antialiased Buffer
-    
 };

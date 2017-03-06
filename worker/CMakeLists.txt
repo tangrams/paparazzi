@@ -11,7 +11,7 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
-if(NOT EXISTS "${PROJECT_SOURCE_DIR}/tangram-es/external/alfons/CMakeLists.txt")
+if(NOT EXISTS "${PROJECT_SOURCE_DIR}/tangram-es/core/deps/harfbuzz-icu-freetype/harfbuzz/README")
     message(SEND_ERROR "Missing submodules - Please run:\n 'git submodule update --init --recursive'")
     return()
 endif()
@@ -43,8 +43,6 @@ if(${PLATFORM_TARGET} MATCHES "rpi")
 
 elseif(${PLATFORM_TARGET} MATCHES "linux")
     message(STATUS "Building config for Linux")
-
-    find_package(OpenGL REQUIRED)
 
     # set for test in other cmake files
     set(PLATFORM_LINUX ON)
@@ -79,8 +77,6 @@ elseif(${PLATFORM_TARGET} MATCHES "linux")
 elseif(${PLATFORM_TARGET} MATCHES "osx")
     message(STATUS "Building config for Darwin OSX")
 
-    find_package(OpenGL REQUIRED)
-
     # set for test in other cmake files
     set(PLATFORM_OSX ON)
     add_definitions(-DPLATFORM_OSX)
@@ -95,44 +91,60 @@ elseif(${PLATFORM_TARGET} MATCHES "osx")
 
 endif()
 
-# add sources and include headers
-find_sources_and_include_directories(
-    ${PROJECT_SOURCE_DIR}/tangram-es/linux/src/urlWorker.h
-    ${PROJECT_SOURCE_DIR}/tangram-es/linux/src/urlWorker.cpp)
+
+set(COMMON_SOURCES
+    ${PROJECT_SOURCE_DIR}/tangram-es/platforms/common/platform_gl.cpp
+    ${PROJECT_SOURCE_DIR}/tangram-es/platforms/common/urlClient.cpp)
+include_directories(${PROJECT_SOURCE_DIR}/tangram-es/platforms/common)
 
 # add sources and include headers
-find_sources_and_include_directories(
-    ${PROJECT_SOURCE_DIR}/tangram-es/core/common/platform_gl.h
-    ${PROJECT_SOURCE_DIR}/tangram-es/core/common/platform_gl.cpp)
+set(LINUX_SOURCES
+    ${PROJECT_SOURCE_DIR}/tangram-es/platforms/linux/src/platform_linux.cpp)
+include_directories(${PROJECT_SOURCE_DIR}/tangram-es/platforms/linux/src)
 
 # add sources and include headers
-add_subdirectory(${PROJECT_SOURCE_DIR}/tangram-es/external)
 add_subdirectory(${PROJECT_SOURCE_DIR}/tangram-es/core)
 include_directories(${CORE_INCLUDE_DIRS})
 include_directories(${CORE_LIBRARIES_INCLUDE_DIRS})
 
 # add executable
-add_executable(${EXECUTABLE_NAME} ${SOURCES})
+add_executable(${EXECUTABLE_NAME} ${SOURCES} ${COMMON_SOURCES} ${LINUX_SOURCES})
 
 # link libraries
 target_link_libraries(${EXECUTABLE_NAME} ${CORE_LIBRARY})
 target_link_libraries(${EXECUTABLE_NAME} -lcurl)
 target_link_libraries(${EXECUTABLE_NAME} prime_server)
 
-if(${PLATFORM_TARGET} MATCHES "linux")
-    target_link_libraries(${EXECUTABLE_NAME} glfw)
-    target_link_libraries(${EXECUTABLE_NAME} ${OPENGL_LIBRARIES})
+
+if(NOT ${PLATFORM_TARGET} MATCHES "osx")
     target_link_libraries(${EXECUTABLE_NAME} -lfontconfig)
     target_link_libraries(${EXECUTABLE_NAME} -lfreetype)
+endif()
 
-elseif(${PLATFORM_TARGET} MATCHES "rpi")
-    target_link_libraries(${EXECUTABLE_NAME} -lfontconfig)
-    target_link_libraries(${EXECUTABLE_NAME} -lfreetype)
+if(NOT ${PLATFORM_TARGET} MATCHES "rpi")
+    find_package(OpenGL REQUIRED)
 
-elseif(${PLATFORM_TARGET} MATCHES "osx")
+    # Build GLFW.
+    if (USE_SYSTEM_GLFW_LIBS)
+        include(FindPkgConfig)
+        pkg_check_modules(GLFW REQUIRED glfw3)
+    else()
+        # configure GLFW to build only the library
+        set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "Build the GLFW example programs")
+        set(GLFW_BUILD_TESTS OFF CACHE BOOL "Build the GLFW test programs")
+        set(GLFW_BUILD_DOCS OFF CACHE BOOL "Build the GLFW documentation")
+        set(GLFW_INSTALL OFF CACHE BOOL "Generate installation target")
+        add_subdirectory(${PROJECT_SOURCE_DIR}/tangram-es/platforms/common/glfw)
+    endif()
+
+    target_include_directories(${EXECUTABLE_NAME}
+        PUBLIC
+        ${GLFW_SOURCE_DIR}/tangram-es/tangr/include
+        ${PROJECT_SOURCE_DIR}/tangram-es/platforms/common)
+
     target_link_libraries(${EXECUTABLE_NAME} glfw)
+    target_link_libraries(${EXECUTABLE_NAME} ${GLFW_LIBRARIES})
     target_link_libraries(${EXECUTABLE_NAME} ${OPENGL_LIBRARIES})
-
 endif()
 
 add_resources(${EXECUTABLE_NAME} "${PROJECT_SOURCE_DIR}/scenes")

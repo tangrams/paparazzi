@@ -1,5 +1,7 @@
 #include "context.h"
 
+static bool bRender;
+
 #ifdef PLATFORM_RPI
 #include <time.h>
 #include <sys/time.h>
@@ -206,3 +208,10 @@ double getTime() {
     #endif
 }
 
+void setRenderRequest(bool _render) {
+    bRender = _render;
+}
+
+bool getRenderRequest() {
+    return bRender;
+}
