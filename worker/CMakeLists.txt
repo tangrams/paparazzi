@@ -97,6 +97,10 @@ set(COMMON_SOURCES
     ${PROJECT_SOURCE_DIR}/tangram-es/platforms/common/urlClient.cpp)
 include_directories(${PROJECT_SOURCE_DIR}/tangram-es/platforms/common)
 
+if(NOT ${PLATFORM_TARGET} MATCHES "rpi")
+    include_directories(${PROJECT_SOURCE_DIR}/tangram-es/platforms/common/glfw/include/)
+endif()
+
 # add sources and include headers
 set(LINUX_SOURCES
     ${PROJECT_SOURCE_DIR}/tangram-es/platforms/linux/src/platform_linux.cpp)
